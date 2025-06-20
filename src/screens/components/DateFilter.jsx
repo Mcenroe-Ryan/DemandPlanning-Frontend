@@ -12,7 +12,7 @@ import { addDays, format, parse } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 
-export default function DateFilter() {
+export default function DateFilter({ onDateChange }) {
   const defaultRange = [
     {
       startDate: new Date(),
@@ -33,6 +33,7 @@ export default function DateFilter() {
   );
 
   const handleOpen = (event) => setAnchorEl(event.currentTarget);
+
   const handleCancel = () => {
     setTempRange(range);
     setStartInput(format(range[0].startDate, "MM/dd/yyyy"));
@@ -44,6 +45,9 @@ export default function DateFilter() {
     setRange(tempRange);
     setHasUserSelected(true);
     setAnchorEl(null);
+    const startDate = format(tempRange[0].startDate, "yyyy-MM-dd");
+    const endDate = format(tempRange[0].endDate, "yyyy-MM-dd");
+    onDateChange({ startDate, endDate }); // Send selected range to parent
   };
 
   const handleStartChange = (e) => {
@@ -74,34 +78,33 @@ export default function DateFilter() {
 
   return (
     <>
-     <Button
-  variant="outlined"
-  size="small"
-  sx={{
-    height: 32,
-    width:110,          // <-- Match City button width
-    px: 2,
-    fontSize: "13px",
-    bgcolor: "common.white",
-    textTransform: "none",
-    borderRadius: 1,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  }}
-  onClick={handleOpen}
->
-  <Typography
-    variant="body2"
-    sx={{ fontSize: "13px", color: "primary.main" }}
-  >
-    {getLabel()}
-  </Typography>
-</Button>
-
+      <Button
+        variant="outlined"
+        size="small"
+        sx={{
+          height: 32,
+          width: 110,
+          px: 2,
+          fontSize: "13px",
+          bgcolor: "common.white",
+          textTransform: "none",
+          borderRadius: 1,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        onClick={handleOpen}
+      >
+        <Typography
+          variant="body2"
+          sx={{ fontSize: "13px", color: "primary.main" }}
+        >
+          {getLabel()}
+        </Typography>
+      </Button>
 
       <Popover
         open={Boolean(anchorEl)}
@@ -113,8 +116,8 @@ export default function DateFilter() {
           sx: {
             p: 2,
             borderRadius: 2,
-            width: "fit-content", 
-            maxWidth: 360,       
+            width: "fit-content",
+            maxWidth: 360,
             overflow: "hidden",
           },
         }}
@@ -189,12 +192,7 @@ export default function DateFilter() {
 
         {/* Footer Buttons */}
         <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 1,
-            mt: 2,
-          }}
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
         >
           <Button
             size="small"

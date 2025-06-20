@@ -39,6 +39,7 @@ import {
   Search as SearchIcon,
   Share,
 } from "@mui/icons-material";
+import { format, addDays } from "date-fns";
 import AddBox from "@mui/icons-material/AddBox";
 import ArrowUpward from "@mui/icons-material/ArrowUpward";
 import OpenInFull from "@mui/icons-material/OpenInFull";
@@ -48,15 +49,13 @@ import ForecastTable from "./components/ForecastTable";
 
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options
-    .filter(opt => selectedIds.includes(opt[optionKey]))
-    .map(opt => opt[displayKey]);
+    .filter((opt) => selectedIds.includes(opt[optionKey]))
+    .map((opt) => opt[displayKey]);
 }
 // ... Listbox, DataRowsMenu, MultiSelectWithCheckboxes definitions unchanged ...
 // --- Listbox styled to match your screenshot ---
 const Listbox = () => {
-  const listItems = [
-    { id: 1, label: "Product Name" },
-  ];
+  const listItems = [{ id: 1, label: "Product Name" }];
   const [checked, setChecked] = useState([]);
   const handleToggle = (value) => () => {
     const currentIndex = checked.indexOf(value);
@@ -379,6 +378,12 @@ const pivotData = (data) => {
 };
 export const DemandProjectMonth = () => {
   const navigate = useNavigate();
+
+  const [dateRange, setDateRange] = useState({
+    startDate: format(new Date(), "yyyy-MM-dd"),
+    endDate: format(addDays(new Date(), 6), "yyyy-MM-dd"),
+  });
+
   const [activeTab, setActiveTab] = useState(0);
   const [timePeriod, setTimePeriod] = useState("M");
   const [showForecast, setShowForecast] = useState(true);
@@ -428,61 +433,25 @@ export const DemandProjectMonth = () => {
     { label: "Scenarios", count: null },
   ];
   const fetchCountries = () => {
-  setLoadingCountries(true);
-  axios
-    .get("http://localhost:5000/api/getAllCountries")
-    .then((res) => {
-      setFiltersData((prev) => ({
-        ...prev,
-        countries: Array.isArray(res.data) ? res.data : [],
-      }));
-    })
-    .catch(() =>
-      setFiltersData((prev) => ({
-        ...prev,
-        countries: [],
-      }))
-    )
-    .finally(() => setLoadingCountries(false));
-};
-useEffect(() => {
-  if (!selectedCountry.length) {
-    setFiltersData((prev) => ({
-      ...prev,
-      states: [],
-      cities: [],
-      plants: [],
-      categories: [],
-      skus: [],
-    }));
-    setSelectedState([]);
-    setSelectedCities([]);
-    setSelectedPlants([]);
-    setSelectedCategories([]);
-    setSelectedSKUs([]);
-    return;
-  }
-  setLoadingStates(true);
-  axios
-    .post("http://localhost:5000/api/states-by-country", {
-      countryIds: selectedCountry,
-    })
-    .then((res) => {
-      setFiltersData((prev) => ({
-        ...prev,
-        states: Array.isArray(res.data) ? res.data : [],
-        cities: [],
-        plants: [],
-        categories: [],
-        skus: [],
-      }));
-      setSelectedState([]);
-      setSelectedCities([]);
-      setSelectedPlants([]);
-      setSelectedCategories([]);
-      setSelectedSKUs([]);
-    })
-    .catch(() => {
+    setLoadingCountries(true);
+    axios
+      .get("http://localhost:5000/api/getAllCountries")
+      .then((res) => {
+        setFiltersData((prev) => ({
+          ...prev,
+          countries: Array.isArray(res.data) ? res.data : [],
+        }));
+      })
+      .catch(() =>
+        setFiltersData((prev) => ({
+          ...prev,
+          countries: [],
+        }))
+      )
+      .finally(() => setLoadingCountries(false));
+  };
+  useEffect(() => {
+    if (!selectedCountry.length) {
       setFiltersData((prev) => ({
         ...prev,
         states: [],
@@ -496,44 +465,48 @@ useEffect(() => {
       setSelectedPlants([]);
       setSelectedCategories([]);
       setSelectedSKUs([]);
-    })
-    .finally(() => setLoadingStates(false));
-}, [selectedCountry]);
+      return;
+    }
+    setLoadingStates(true);
+    axios
+      .post("http://localhost:5000/api/states-by-country", {
+        countryIds: selectedCountry,
+      })
+      .then((res) => {
+        setFiltersData((prev) => ({
+          ...prev,
+          states: Array.isArray(res.data) ? res.data : [],
+          cities: [],
+          plants: [],
+          categories: [],
+          skus: [],
+        }));
+        setSelectedState([]);
+        setSelectedCities([]);
+        setSelectedPlants([]);
+        setSelectedCategories([]);
+        setSelectedSKUs([]);
+      })
+      .catch(() => {
+        setFiltersData((prev) => ({
+          ...prev,
+          states: [],
+          cities: [],
+          plants: [],
+          categories: [],
+          skus: [],
+        }));
+        setSelectedState([]);
+        setSelectedCities([]);
+        setSelectedPlants([]);
+        setSelectedCategories([]);
+        setSelectedSKUs([]);
+      })
+      .finally(() => setLoadingStates(false));
+  }, [selectedCountry]);
 
-useEffect(() => {
-  if (!selectedState.length) {
-    setFiltersData((prev) => ({
-      ...prev,
-      cities: [],
-      plants: [],
-      categories: [],
-      skus: [],
-    }));
-    setSelectedCities([]);
-    setSelectedPlants([]);
-    setSelectedCategories([]);
-    setSelectedSKUs([]);
-    return;
-  }
-  setLoadingCities(true);
-  axios
-    .post("http://localhost:5000/api/cities-by-states", {
-      stateIds: selectedState,
-    })
-    .then((res) => {
-      setFiltersData((prev) => ({
-        ...prev,
-        cities: Array.isArray(res.data) ? res.data : [],
-        plants: [],
-        categories: [],
-        skus: [],
-      }));
-      setSelectedCities([]);
-      setSelectedPlants([]);
-      setSelectedCategories([]);
-      setSelectedSKUs([]);
-    })
-    .catch(() => {
+  useEffect(() => {
+    if (!selectedState.length) {
       setFiltersData((prev) => ({
         ...prev,
         cities: [],
@@ -545,9 +518,41 @@ useEffect(() => {
       setSelectedPlants([]);
       setSelectedCategories([]);
       setSelectedSKUs([]);
-    })
-    .finally(() => setLoadingCities(false));
-}, [selectedState]);
+      return;
+    }
+    setLoadingCities(true);
+    axios
+      .post("http://localhost:5000/api/cities-by-states", {
+        stateIds: selectedState,
+      })
+      .then((res) => {
+        setFiltersData((prev) => ({
+          ...prev,
+          cities: Array.isArray(res.data) ? res.data : [],
+          plants: [],
+          categories: [],
+          skus: [],
+        }));
+        setSelectedCities([]);
+        setSelectedPlants([]);
+        setSelectedCategories([]);
+        setSelectedSKUs([]);
+      })
+      .catch(() => {
+        setFiltersData((prev) => ({
+          ...prev,
+          cities: [],
+          plants: [],
+          categories: [],
+          skus: [],
+        }));
+        setSelectedCities([]);
+        setSelectedPlants([]);
+        setSelectedCategories([]);
+        setSelectedSKUs([]);
+      })
+      .finally(() => setLoadingCities(false));
+  }, [selectedState]);
 
   // ... cascading effect hooks for plants, categories, skus, channels unchanged ...
   // Fetch plants when cities change (selectedCities is array of IDs)
@@ -680,13 +685,6 @@ useEffect(() => {
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        width: "100vw",
-        overflow: "hidden",
-      }}
     >
       {/* AppBar */}
       <AppBar
@@ -811,57 +809,46 @@ useEffect(() => {
             style={{ width: 20, height: 19 }}
           />
         </IconButton>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{
-            bgcolor: "common.white",
-            color: "grey.600",
-            textTransform: "none",
-            borderRadius: 1,
-          }}
-        >
-          ABL
-        </Button>
         <Divider orientation="vertical" flexItem sx={{ bgcolor: "grey.500" }} />
         <Stack direction="row" spacing={0.625}>
-          <DateFilter />
+          {/* <DateFilter /> */}
+          <DateFilter onDateChange={(range) => setDateRange(range)} />
           <MultiSelectWithCheckboxes
-  label="Country"
-  options={filtersData.countries}
-  optionKey="country_id"
-  displayKey="country_name"
-  selected={selectedCountry}
-  setSelected={setSelectedCountry}
-  searchPlaceholder="Search country"
-  loading={loadingCountries}
-  onOpen={fetchCountries}
-    width={110}
-/>
-<MultiSelectWithCheckboxes
-  label="State"
-  options={filtersData.states}
-  optionKey="state_id"
-  displayKey="state_name"
-  selected={selectedState}
-  setSelected={setSelectedState}
-  searchPlaceholder="Search state"
-  loading={loadingStates}
-  disabled={!filtersData.states.length}
-    width={110}
-/>
-<MultiSelectWithCheckboxes
-  label="City"
-  options={filtersData.cities}
-  optionKey="city_id"
-  displayKey="city_name"
-  selected={selectedCities}
-  setSelected={setSelectedCities}
-  searchPlaceholder="Search city"
-  loading={loadingCities}
-  disabled={!filtersData.cities.length}
-    width={110}
-/>
+            label="Country"
+            options={filtersData.countries}
+            optionKey="country_id"
+            displayKey="country_name"
+            selected={selectedCountry}
+            setSelected={setSelectedCountry}
+            searchPlaceholder="Search country"
+            loading={loadingCountries}
+            onOpen={fetchCountries}
+            width={110}
+          />
+          <MultiSelectWithCheckboxes
+            label="State"
+            options={filtersData.states}
+            optionKey="state_id"
+            displayKey="state_name"
+            selected={selectedState}
+            setSelected={setSelectedState}
+            searchPlaceholder="Search state"
+            loading={loadingStates}
+            disabled={!filtersData.states.length}
+            width={110}
+          />
+          <MultiSelectWithCheckboxes
+            label="City"
+            options={filtersData.cities}
+            optionKey="city_id"
+            displayKey="city_name"
+            selected={selectedCities}
+            setSelected={setSelectedCities}
+            searchPlaceholder="Search city"
+            loading={loadingCities}
+            disabled={!filtersData.cities.length}
+            width={110}
+          />
 
           {/* Plant Filter - Select by ID, Display by Name */}
           <MultiSelectWithCheckboxes
@@ -874,7 +861,7 @@ useEffect(() => {
             searchPlaceholder="Search plant"
             loading={loadingPlants}
             disabled={!filtersData.plants.length}
-              width={110}
+            width={110}
           />
 
           {/* Category Filter - Select by ID, Display by Name */}
@@ -888,7 +875,7 @@ useEffect(() => {
             searchPlaceholder="Search category"
             loading={loadingCategories}
             disabled={!filtersData.categories.length}
-              width={110}
+            width={110}
           />
 
           {/* SKU Filter - Select by ID, Display by Code */}
@@ -902,7 +889,7 @@ useEffect(() => {
             searchPlaceholder="Search SKU"
             loading={loadingSkus}
             disabled={!filtersData.skus.length}
-              width={110}
+            width={110}
           />
 
           {/* Channel Filter - Assuming it has channel_id and channel_name/channel_code */}
@@ -915,7 +902,7 @@ useEffect(() => {
             setSelected={setSelectedChannels}
             searchPlaceholder="Search channel"
             loading={loadingChannels}
-              width={110}
+            width={110}
           />
 
           {/* --- Three dots menu for filters --- */}
@@ -985,11 +972,7 @@ useEffect(() => {
             borderColor: "grey.200",
           }}
         >
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-
-
-          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}></Box>
         </Box>
       )}
       <Box sx={{ flexGrow: 1, overflow: "auto" }}>
@@ -1011,15 +994,51 @@ useEffect(() => {
         ) : (
           <>
             {/* <ForecastTable /> */}
-
-<ForecastTable
-              selectedCountry={getSelectedNames(selectedCountry, filtersData.countries, "country_id", "country_name")}
-              selectedState={getSelectedNames(selectedState, filtersData.states, "state_id", "state_name")}
-              selectedCities={getSelectedNames(selectedCities, filtersData.cities, "city_id", "city_name")}
-              selectedPlants={getSelectedNames(selectedPlants, filtersData.plants, "plant_id", "plant_name")}
-              selectedCategories={getSelectedNames(selectedCategories, filtersData.categories, "category_id", "category_name")}
-              selectedSKUs={getSelectedNames(selectedSKUs, filtersData.skus, "sku_id", "sku_code")}
-              selectedChannels={getSelectedNames(selectedChannels, filtersData.channels, "channel_id", "channel_name")}
+            <ForecastTable
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+              selectedCountry={getSelectedNames(
+                selectedCountry,
+                filtersData.countries,
+                "country_id",
+                "country_name"
+              )}
+              selectedState={getSelectedNames(
+                selectedState,
+                filtersData.states,
+                "state_id",
+                "state_name"
+              )}
+              selectedCities={getSelectedNames(
+                selectedCities,
+                filtersData.cities,
+                "city_id",
+                "city_name"
+              )}
+              selectedPlants={getSelectedNames(
+                selectedPlants,
+                filtersData.plants,
+                "plant_id",
+                "plant_name"
+              )}
+              selectedCategories={getSelectedNames(
+                selectedCategories,
+                filtersData.categories,
+                "category_id",
+                "category_name"
+              )}
+              selectedSKUs={getSelectedNames(
+                selectedSKUs,
+                filtersData.skus,
+                "sku_id",
+                "sku_code"
+              )}
+              selectedChannels={getSelectedNames(
+                selectedChannels,
+                filtersData.channels,
+                "channel_id",
+                "channel_name"
+              )}
             />
           </>
         )}
