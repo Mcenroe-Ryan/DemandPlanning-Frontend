@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Box, IconButton } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import ListIcon from "@mui/icons-material/List";
@@ -11,19 +11,20 @@ const Layout = ({ children }) => {
 
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
-  // Blur effect style for main content
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   const blurStyle = sidebarOpen
     ? { filter: "blur(6px)", transition: "filter 0.3s" }
     : {};
 
   return (
     <Box sx={{ display: "flex", height: "100vh", position: "relative" }}>
-      {/* Sidebar */}
       {showSidebar && (
         <SideNavBar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       )}
 
-      {/* Overlay for blur and click-to-close */}
       {showSidebar && sidebarOpen && (
         <Box
           onClick={() => setSidebarOpen(false)}
@@ -40,13 +41,11 @@ const Layout = ({ children }) => {
         />
       )}
 
-      {/* Main Content */}
       <Box
         component="main"
         sx={{ flexGrow: 1, overflow: "auto", position: "relative" }}
         style={blurStyle}
       >
-        {/* Sidebar Icon (only show if sidebar is allowed and not open) */}
         {showSidebar && !sidebarOpen && (
           <IconButton
             onClick={() => setSidebarOpen(true)}

@@ -281,7 +281,7 @@ function MultiSelectWithCheckboxes({
 
   return (
     <>
-      <Button
+      {/* <Button
         variant="outlined"
         size="small"
         onClick={handleOpen}
@@ -308,7 +308,40 @@ function MultiSelectWithCheckboxes({
         disabled={disabled}
       >
         {getButtonLabel()}
+      </Button> */}
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={handleOpen}
+        sx={{
+          minWidth: 120, // Ensures consistency
+          flexShrink: 0, // Prevent shrinking on overflow
+          whiteSpace: "nowrap",
+          bgcolor: "common.white",
+          justifyContent: "flex-start",
+          borderColor: "#bdbdbd",
+          textTransform: "none",
+          px: 1.5,
+          transition: "all 0.2s ease",
+        }}
+        endIcon={
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {selected.length > 0 && (
+              <Chip
+                label={selected.length}
+                size="small"
+                color="primary"
+                sx={{ mr: 0.5, height: 20 }}
+              />
+            )}
+            <FilterAlt sx={{ width: 16, height: 16, color: "#757575" }} />
+          </Box>
+        }
+        disabled={disabled}
+      >
+        {getButtonLabel()}
       </Button>
+
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -684,8 +717,7 @@ export const DemandProjectMonth = () => {
   }, []);
 
   return (
-    <Box
-    >
+    <Box>
       {/* AppBar */}
       <AppBar
         position="static"
