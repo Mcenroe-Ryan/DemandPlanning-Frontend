@@ -7,6 +7,8 @@ import {
   Checkbox,
   Button,
   Menu,
+  Popover,
+  Avatar,
 } from "@mui/material";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
@@ -15,6 +17,7 @@ import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import ShareIcon from "@mui/icons-material/Share";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import CheckIcon from "@mui/icons-material/Check";
+import LockIcon from "@mui/icons-material/Lock";
 import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
 
@@ -57,7 +60,7 @@ function buildMonthLabelsBetween(startDate, endDate) {
   const months = [];
   const start = new Date(startDate);
   const end = new Date(endDate);
-  start.setDate(1); // Normalize
+  start.setDate(1);
   end.setDate(1);
 
   while (start <= end) {
@@ -80,7 +83,6 @@ function getMonthDate(label) {
 }
 
 // --- Helper to format numbers by country ---
-// If both India and USA are selected, use universal/international format
 function formatNumberByCountry(value, country) {
   if (
     value === null ||
@@ -91,7 +93,6 @@ function formatNumberByCountry(value, country) {
   ) {
     return value;
   }
-  // If both India and USA are selected, use universal/international format
   if (
     Array.isArray(country) &&
     country.includes("India") &&
@@ -99,7 +100,6 @@ function formatNumberByCountry(value, country) {
   ) {
     return Number(value).toLocaleString("en-US");
   }
-  // If only India is selected
   if (
     (Array.isArray(country) &&
       country.length === 1 &&
@@ -108,15 +108,88 @@ function formatNumberByCountry(value, country) {
   ) {
     return Number(value).toLocaleString("en-IN");
   }
-  // If only USA is selected
   if (
     (Array.isArray(country) && country.length === 1 && country[0] === "USA") ||
     country === "USA"
   ) {
     return Number(value).toLocaleString("en-US");
   }
-  // Fallback: browser default
   return Number(value).toLocaleString();
+}
+
+// Helper to determine if a month is locked (<= current month)
+function isMonthLocked(monthLabel) {
+  const [mon, yr] = monthLabel.split(" ");
+  const monthIdx = new Date(Date.parse(`${mon} 1, 20${yr}`)).getMonth();
+  const yearNum = 2000 + parseInt(yr, 10);
+  const now = new Date();
+  return (
+    yearNum < now.getFullYear() ||
+    (yearNum === now.getFullYear() && monthIdx <= now.getMonth())
+  );
+}
+
+// --- Lock Comment Popover ---
+function LockCommentPopover({ open, anchorEl, onClose }) {
+  return (
+    <Popover
+      open={open}
+      anchorEl={anchorEl}
+      onClose={onClose}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      transformOrigin={{ vertical: "top", horizontal: "left" }}
+      PaperProps={{ style: { minWidth: 270, padding: 16 } }}
+    >
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            width: "100%",
+            marginBottom: 8,
+          }}
+        >
+          {/* Left avatar */}
+          <Avatar
+            src="https://randomuser.me/api/portraits/men/32.jpg"
+            sx={{ width: 28, height: 28 }}
+          />
+
+          {/* Right-aligned name + timestamp */}
+          <div style={{ textAlign: "right", flexGrow: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Supreeth P</div>
+            <div style={{ fontSize: 12, color: "#888" }}>4 days ago</div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 14, marginBottom: 8 }}>
+          Edited The correct option is B. 24.
+          <br />
+          Demand of Company B<br />
+          Demand of Company
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Avatar
+            src="https://randomuser.me/api/portraits/men/32.jpg"
+            sx={{ width: 28, height: 28 }}
+          />
+          <input
+            style={{
+              width: "100%",
+              fontSize: 13,
+              padding: "6px 8px",
+              borderRadius: 6,
+              border: "1px solid #ddd",
+              marginTop: 4,
+            }}
+            placeholder="Reply"
+            disabled
+          />
+        </div>
+      </div>
+    </Popover>
+  );
 }
 
 export default function ForecastTable({
@@ -129,7 +202,6 @@ export default function ForecastTable({
   selectedChannels,
   startDate,
   endDate,
-  // actual_latest_month,
 }) {
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
@@ -137,14 +209,18 @@ export default function ForecastTable({
   const [optionalRows, setOptionalRows] = useState([]);
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // For Add New menu anchor
   const [anchorEl, setAnchorEl] = useState(null);
 
   // For editing consensus cells
   const [editingCell, setEditingCell] = useState({ month: null, row: null });
   const [editValue, setEditValue] = useState("");
   const [updatingCell, setUpdatingCell] = useState({ month: null, row: null });
+
+  // For lock comment popup
+  const [lockComment, setLockComment] = useState({
+    open: false,
+    anchor: null,
+  });
 
   const months = useMemo(() => {
     return buildMonthLabelsBetween(startDate, endDate);
@@ -154,7 +230,6 @@ export default function ForecastTable({
     const today = new Date();
     const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
     const set = new Set();
-
     months.forEach((label) => {
       const [mon, yr] = label.split(" ");
       const monthIdx = new Date(Date.parse(`${mon} 1, 20${yr}`)).getMonth();
@@ -164,7 +239,6 @@ export default function ForecastTable({
         set.add(label);
       }
     });
-
     return set;
   }, [months]);
 
@@ -181,7 +255,7 @@ export default function ForecastTable({
     "On Hand": "on_hand_units",
   };
 
-  // Fetch data function (refactored for reuse)
+  // Fetch data function
   const fetchForecastData = () => {
     setIsLoading(true);
     fetch("http://localhost:5000/api/forecast", {
@@ -202,7 +276,6 @@ export default function ForecastTable({
       .then((res) => res.json())
       .then((raw) => {
         const ds = {};
-        // Dynamically compute month names between startDate and endDate
         const monthSet = new Set();
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -252,18 +325,13 @@ export default function ForecastTable({
 
   useEffect(() => {
     if (!data) return;
-
-    // Get sorted months in descending order
     const months = Object.keys(data).sort((a, b) => {
       const aDate = new Date(getMonthDate(a));
       const bDate = new Date(getMonthDate(b));
       return bDate - aDate;
     });
-
-    // Take the latest month regardless of actual value
     const latestMonth = months[0] || null;
     setActualLatestMonth(latestMonth);
-    // console.log(latestMonth);
   }, [data]);
 
   useEffect(() => {
@@ -502,6 +570,7 @@ export default function ForecastTable({
                     editingCell.month === m && editingCell.row === label;
                   const isUpdating =
                     updatingCell.month === m && updatingCell.row === label;
+                  const locked = isConsensusRow && isMonthLocked(m);
                   return (
                     <td
                       key={m}
@@ -516,14 +585,46 @@ export default function ForecastTable({
                         minWidth: 90,
                         cursor: isConsensusRow ? "pointer" : "default",
                       }}
-                      onClick={() => {
-                        if (isConsensusRow && !isEditing && !isUpdating) {
+                      onClick={(e) => {
+                        // Open comment popup only for locked consensus with data
+                        if (
+                          isConsensusRow &&
+                          locked &&
+                          value &&
+                          value !== "-"
+                        ) {
+                          setLockComment({
+                            open: true,
+                            anchor: e.currentTarget,
+                          });
+                        }
+                        // Allow editing only for unlocked consensus cells
+                        if (
+                          isConsensusRow &&
+                          !locked &&
+                          !isEditing &&
+                          !isUpdating
+                        ) {
                           setEditingCell({ month: m, row: label });
                           setEditValue(value === "-" ? "" : value);
                         }
                       }}
                     >
-                      {isConsensusRow && isEditing ? (
+                      {isConsensusRow && locked ? (
+                        <span
+                          style={{
+                            color: "#aaa",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
+                          <LockIcon style={{ fontSize: 16 }} />
+                          {value === undefined || value === null
+                            ? "-"
+                            : formatNumberByCountry(value, selectedCountry)}
+                        </span>
+                      ) : isConsensusRow && isEditing ? (
                         <input
                           type="number"
                           value={editValue}
@@ -564,17 +665,13 @@ export default function ForecastTable({
                               start_date: startDate,
                               end_date: endDate,
                               consensus_forecast: editValue,
-                              // latest_actual_month: actual_latest_month,
-                              // latest_actual_month: actualLatestMonth ? getMonthDate(actualLatestMonth) : null,
                               latest_actual_month: m ? getMonthDate(m) : null,
                             };
-
                             try {
-                              const apiResponse =
-                                await updateConsensusForecastAPI(payload);
+                              await updateConsensusForecastAPI(payload);
                               setEditingCell({ month: null, row: null });
                               setUpdatingCell({ month: null, row: null });
-                              fetchForecastData(); // Refresh table after update
+                              fetchForecastData();
                             } catch (err) {
                               alert("Failed to update consensus forecast");
                               setEditingCell({ month: null, row: null });
@@ -608,6 +705,12 @@ export default function ForecastTable({
           </tbody>
         </table>
       </Box>
+      {/* Lock comment popover */}
+      <LockCommentPopover
+        open={lockComment.open}
+        anchorEl={lockComment.anchor}
+        onClose={() => setLockComment({ ...lockComment, open: false })}
+      />
       {data && <ForecastChart months={months} data={data} />}
     </>
   );
