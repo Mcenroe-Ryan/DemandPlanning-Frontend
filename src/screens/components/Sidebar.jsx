@@ -154,19 +154,27 @@ import {
 } from "@mui/material";
 
 const SideNavBar = ({ open, onClose }) => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   if (!open) return null;
 
   const menuItems = [
-    { icon: <BarChartIcon fontSize="small" />, text: "Demand", path: "/demand" },
-    { icon: <InventoryIcon fontSize="small" />, text: "Procurement"},
-    { icon: <AssignmentIcon fontSize="small" />, text: "Inventory"},
-    { icon: <NewspaperIcon fontSize="small" />, text: "Promotion & Marketing"},
-    { icon: <AccountBalanceWalletIcon fontSize="small" />, text: "Finance"},
-    { icon: <CloudUploadIcon fontSize="small" />, text: "Import / Load Data", path: "/import-load-data" },
-    { icon: <DescriptionIcon fontSize="small" />, text: "Reports"},
-    { icon: <SettingsIcon fontSize="small" />, text: "Settings"},
+    {
+      icon: <BarChartIcon fontSize="small" />,
+      text: "Demand",
+      path: "/demand",
+    },
+    { icon: <InventoryIcon fontSize="small" />, text: "Procurement" },
+    { icon: <AssignmentIcon fontSize="small" />, text: "Inventory" },
+    { icon: <NewspaperIcon fontSize="small" />, text: "Promotion & Marketing" },
+    { icon: <AccountBalanceWalletIcon fontSize="small" />, text: "Finance" },
+    {
+      icon: <CloudUploadIcon fontSize="small" />,
+      text: "Import / Load Data",
+      path: "/import-load-data",
+    },
+    { icon: <DescriptionIcon fontSize="small" />, text: "Reports" },
+    { icon: <SettingsIcon fontSize="small" />, text: "Settings" },
   ];
 
   return (

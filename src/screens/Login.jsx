@@ -616,7 +616,7 @@ const AuthPages = () => (
         <Route path="/addNewProject" element={<AddNewProject />} />
         <Route path="/demand" element={<DemandProjectMonth />} />
         <Route path="/import-load-data" element={<ImportProfilesData />} />
-        <Route path="/spreadsheet" element={<AddNewProjectSpreadsheet/>} />
+        <Route path="/spreadsheet" element={<AddNewProjectSpreadsheet />} />
       </Routes>
     </Layout>
   </Router>

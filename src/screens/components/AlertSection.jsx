@@ -59,9 +59,9 @@ export const AlertsSection = () => {
     },
     xAxis: {
       categories,
-      tickmarkPlacement: 'on', // Ensures lines start/end at first/last point
+      tickmarkPlacement: "on", // Ensures lines start/end at first/last point
       labels: {
-        align: 'center',
+        align: "center",
         rotation: 0,
         style: {
           fontSize: "12px",

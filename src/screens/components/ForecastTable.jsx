@@ -53,17 +53,20 @@ const OPTIONAL_ROWS = [
   "On Hand",
 ];
 
-function buildRollingMonths() {
+function buildMonthLabelsBetween(startDate, endDate) {
   const months = [];
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth() - 6, 1);
-  for (let i = 0; i < 12; i += 1) {
-    const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
-    const label = d.toLocaleString("default", {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  start.setDate(1); // Normalize
+  end.setDate(1);
+
+  while (start <= end) {
+    const label = start.toLocaleString("default", {
       month: "short",
       year: "2-digit",
     });
     months.push(label);
+    start.setMonth(start.getMonth() + 1);
   }
   return months;
 }
@@ -76,6 +79,46 @@ function getMonthDate(label) {
   return `${yearNum}-${monthIdx.toString().padStart(2, "0")}-01`;
 }
 
+// --- Helper to format numbers by country ---
+// If both India and USA are selected, use universal/international format
+function formatNumberByCountry(value, country) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value === "-" ||
+    isNaN(Number(value))
+  ) {
+    return value;
+  }
+  // If both India and USA are selected, use universal/international format
+  if (
+    Array.isArray(country) &&
+    country.includes("India") &&
+    country.includes("USA")
+  ) {
+    return Number(value).toLocaleString("en-US");
+  }
+  // If only India is selected
+  if (
+    (Array.isArray(country) &&
+      country.length === 1 &&
+      country[0] === "India") ||
+    country === "India"
+  ) {
+    return Number(value).toLocaleString("en-IN");
+  }
+  // If only USA is selected
+  if (
+    (Array.isArray(country) && country.length === 1 && country[0] === "USA") ||
+    country === "USA"
+  ) {
+    return Number(value).toLocaleString("en-US");
+  }
+  // Fallback: browser default
+  return Number(value).toLocaleString();
+}
+
 export default function ForecastTable({
   selectedCountry,
   selectedState,
@@ -86,6 +129,7 @@ export default function ForecastTable({
   selectedChannels,
   startDate,
   endDate,
+  // actual_latest_month,
 }) {
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
@@ -102,18 +146,25 @@ export default function ForecastTable({
   const [editValue, setEditValue] = useState("");
   const [updatingCell, setUpdatingCell] = useState({ month: null, row: null });
 
-  const months = useMemo(() => buildRollingMonths(), []);
+  const months = useMemo(() => {
+    return buildMonthLabelsBetween(startDate, endDate);
+  }, [startDate, endDate]);
+
   const futureMonthSet = useMemo(() => {
     const today = new Date();
     const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
     const set = new Set();
+
     months.forEach((label) => {
       const [mon, yr] = label.split(" ");
-      const monthIdx = new Date(Date.parse(mon + " 1, 20" + yr)).getMonth();
+      const monthIdx = new Date(Date.parse(`${mon} 1, 20${yr}`)).getMonth();
       const yearNum = 2000 + parseInt(yr, 10);
       const key = yearNum * 12 + monthIdx;
-      if (key > currentMonthKey) set.add(label);
+      if (key > currentMonthKey) {
+        set.add(label);
+      }
     });
+
     return set;
   }, [months]);
 
@@ -196,6 +247,24 @@ export default function ForecastTable({
         setIsLoading(false);
       });
   };
+
+  const [actualLatestMonth, setActualLatestMonth] = useState(null);
+
+  useEffect(() => {
+    if (!data) return;
+
+    // Get sorted months in descending order
+    const months = Object.keys(data).sort((a, b) => {
+      const aDate = new Date(getMonthDate(a));
+      const bDate = new Date(getMonthDate(b));
+      return bDate - aDate;
+    });
+
+    // Take the latest month regardless of actual value
+    const latestMonth = months[0] || null;
+    setActualLatestMonth(latestMonth);
+    // console.log(latestMonth);
+  }, [data]);
 
   useEffect(() => {
     fetchForecastData();
@@ -470,8 +539,6 @@ export default function ForecastTable({
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={async () => {
                             setUpdatingCell({ month: m, row: label });
-
-                            // Always send arrays for all filters
                             const payload = {
                               country_name: Array.isArray(selectedCountry)
                                 ? selectedCountry
@@ -497,22 +564,18 @@ export default function ForecastTable({
                               start_date: startDate,
                               end_date: endDate,
                               consensus_forecast: editValue,
+                              // latest_actual_month: actual_latest_month,
+                              // latest_actual_month: actualLatestMonth ? getMonthDate(actualLatestMonth) : null,
+                              latest_actual_month: m ? getMonthDate(m) : null,
                             };
-
-                            console.log("Consensus update payload:", payload);
 
                             try {
                               const apiResponse =
                                 await updateConsensusForecastAPI(payload);
-                              console.log(
-                                "Consensus update API response:",
-                                apiResponse
-                              );
                               setEditingCell({ month: null, row: null });
                               setUpdatingCell({ month: null, row: null });
                               fetchForecastData(); // Refresh table after update
                             } catch (err) {
-                              console.error("Consensus update API error:", err);
                               alert("Failed to update consensus forecast");
                               setEditingCell({ month: null, row: null });
                               setUpdatingCell({ month: null, row: null });
@@ -528,12 +591,14 @@ export default function ForecastTable({
                         />
                       ) : isConsensusRow ? (
                         <span style={{ color: "#1976d2", fontWeight: 500 }}>
-                          {value === undefined || value === null ? "-" : value}
+                          {value === undefined || value === null
+                            ? "-"
+                            : formatNumberByCountry(value, selectedCountry)}
                         </span>
                       ) : value === undefined || value === null ? (
                         "-"
                       ) : (
-                        value
+                        formatNumberByCountry(value, selectedCountry)
                       )}
                     </td>
                   );

@@ -26,7 +26,9 @@ import {
   TableRow,
   Switch,
 } from "@mui/material";
-import StepConnector, { stepConnectorClasses } from "@mui/material/StepConnector";
+import StepConnector, {
+  stepConnectorClasses,
+} from "@mui/material/StepConnector";
 import { styled } from "@mui/material/styles";
 
 // Step labels, matching Add New Project
@@ -202,7 +204,11 @@ export const AddNewProjectSpreadsheet = () => {
             Next
           </Button>
         </Stack>
-        <Button variant="outlined" color="primary" onClick={() => navigate("/dashboard")}>
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => navigate("/dashboard")}
+        >
           Cancel
         </Button>
       </Box>
@@ -297,7 +303,11 @@ export const AddNewProjectSpreadsheet = () => {
             Finish
           </Button>
         </Stack>
-        <Button variant="outlined" color="primary" onClick={() => navigate("/dashboard")}>
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => navigate("/dashboard")}
+        >
           Cancel
         </Button>
       </Box>
@@ -333,12 +343,20 @@ export const AddNewProjectSpreadsheet = () => {
                 >
                   Demand Planning
                 </Typography>
-                <Typography variant="caption" sx={{ color: "white", fontSize: 10 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "white", fontSize: 10 }}
+                >
                   Business Planner
                 </Typography>
               </Stack>
             </Stack>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ pl: 4 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ pl: 4 }}
+            >
               <Typography variant="body2" color="white">
                 Dashboard
               </Typography>
@@ -376,7 +394,9 @@ export const AddNewProjectSpreadsheet = () => {
         >
           Add New Project
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "flex-start", minHeight: "70vh" }}>
+        <Box
+          sx={{ display: "flex", alignItems: "flex-start", minHeight: "70vh" }}
+        >
           {/* Stepper - matches Add New Project */}
           <Box sx={{ width: 250, minHeight: 400, position: "relative", pt: 2 }}>
             <Stepper

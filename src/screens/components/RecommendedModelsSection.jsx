@@ -1,4 +1,3 @@
-
 import Add from "@mui/icons-material/Add";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CheckIcon from "@mui/icons-material/Check";
@@ -74,7 +73,9 @@ export default function ModelComparisonSection() {
       <Stack direction="row" spacing={0.5}>
         {/* Metrics column */}
         <Box>
-          <Box sx={{ height: 103, p: 2, display: "flex", alignItems: "flex-end" }}>
+          <Box
+            sx={{ height: 103, p: 2, display: "flex", alignItems: "flex-end" }}
+          >
             <Typography variant="subtitle2" color="text.secondary">
               Metric
             </Typography>
@@ -91,7 +92,11 @@ export default function ModelComparisonSection() {
                 alignItems: "center",
               }}
             >
-              <Typography variant="body1" fontWeight="medium" color="text.primary">
+              <Typography
+                variant="body1"
+                fontWeight="medium"
+                color="text.primary"
+              >
                 {metric.label}
               </Typography>
             </Box>
@@ -107,9 +112,13 @@ export default function ModelComparisonSection() {
               sx={{
                 width: 230,
                 borderTop: 6,
-                borderTopColor: model.isRecommended ? "primary.main" : "action.disabled",
+                borderTopColor: model.isRecommended
+                  ? "primary.main"
+                  : "action.disabled",
                 borderBottom: 2,
-                borderBottomColor: model.isRecommended ? "primary.main" : "action.disabled",
+                borderBottomColor: model.isRecommended
+                  ? "primary.main"
+                  : "action.disabled",
                 borderRadius: 1,
                 overflow: "hidden",
               }}
@@ -132,13 +141,26 @@ export default function ModelComparisonSection() {
                     borderColor: "divider",
                   }}
                 >
-                  <Typography variant="body1" color="primary" textAlign="center">
+                  <Typography
+                    variant="body1"
+                    color="primary"
+                    textAlign="center"
+                  >
                     {model.name}
                   </Typography>
-                  <Typography variant="h5" fontWeight="medium" color="text.primary" textAlign="center">
+                  <Typography
+                    variant="h5"
+                    fontWeight="medium"
+                    color="text.primary"
+                    textAlign="center"
+                  >
                     {model.accuracy}
                   </Typography>
-                  <Typography variant="subtitle2" color="text.secondary" textAlign="center">
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    textAlign="center"
+                  >
                     Accuracy
                   </Typography>
                 </Box>
@@ -148,21 +170,31 @@ export default function ModelComparisonSection() {
                     sx={{
                       p: 2,
                       display: "flex",
-                      justifyContent: metric.id.includes("FVA") ? "space-between" : "center",
+                      justifyContent: metric.id.includes("FVA")
+                        ? "space-between"
+                        : "center",
                       borderBottom: 1,
                       borderColor: "divider",
                     }}
                   >
-                    <Typography variant="body1" fontWeight="medium" color="text.primary">
+                    <Typography
+                      variant="body1"
+                      fontWeight="medium"
+                      color="text.primary"
+                    >
                       {model.metrics[metric.id]}
                     </Typography>
-                    {metric.id.includes("FVA") && <TrendingUpIcon fontSize="small" color="action" />}
+                    {metric.id.includes("FVA") && (
+                      <TrendingUpIcon fontSize="small" color="action" />
+                    )}
                   </Box>
                 ))}
                 <Box
                   sx={{
                     p: 2,
-                    bgcolor: model.isRecommended ? "primary.main" : "action.disabled",
+                    bgcolor: model.isRecommended
+                      ? "primary.main"
+                      : "action.disabled",
                     display: "flex",
                     justifyContent: "center",
                   }}
@@ -170,7 +202,9 @@ export default function ModelComparisonSection() {
                   <Typography
                     variant="body2"
                     textAlign="center"
-                    color={model.isRecommended ? "background.paper" : "text.primary"}
+                    color={
+                      model.isRecommended ? "background.paper" : "text.primary"
+                    }
                   >
                     Explainability
                   </Typography>

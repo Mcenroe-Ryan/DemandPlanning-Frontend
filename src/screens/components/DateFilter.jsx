@@ -8,15 +8,15 @@ import {
   Typography,
   Stack,
 } from "@mui/material";
-import { addDays, format, parse } from "date-fns";
+import { addDays, format, parse, addMonths, subMonths } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 
 export default function DateFilter({ onDateChange }) {
   const defaultRange = [
     {
-      startDate: new Date(),
-      endDate: addDays(new Date(), 6),
+      startDate: subMonths(new Date(), 6), // 6 months historical
+      endDate: addMonths(new Date(), 6), // 6 months forecast
       key: "selection",
     },
   ];

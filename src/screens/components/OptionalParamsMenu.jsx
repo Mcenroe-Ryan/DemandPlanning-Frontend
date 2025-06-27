@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 /**
  * OptionalParamsMenu component renders the dropdown shown when the `+` button is clicked.
@@ -10,18 +10,25 @@ import React, { useState } from 'react';
  *  - onChange (function): (newSelected: string[]) => void – sent whenever the selection changes.
  */
 const PARAM_OPTIONS = [
-  'Sales',
-  'Promotion/Marketing',
-  'Inventory Level %',
-  'Stock out days',
-  'On Hand',
+  "Sales",
+  "Promotion/Marketing",
+  "Inventory Level %",
+  "Stock out days",
+  "On Hand",
 ];
 
-export default function OptionalParamsMenu({ open, onClose, selected, onChange }) {
-  const [search, setSearch] = useState('');
+export default function OptionalParamsMenu({
+  open,
+  onClose,
+  selected,
+  onChange,
+}) {
+  const [search, setSearch] = useState("");
 
   // Filter options by search query (case-insensitive contains)
-  const filteredOptions = PARAM_OPTIONS.filter((opt) => opt.toLowerCase().includes(search.toLowerCase()));
+  const filteredOptions = PARAM_OPTIONS.filter((opt) =>
+    opt.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleToggle = (option) => {
     const newSel = selected.includes(option)
@@ -32,14 +39,15 @@ export default function OptionalParamsMenu({ open, onClose, selected, onChange }
 
   // Close dropdown when user presses Escape
   const handleKeyDown = (e) => {
-    if (e.key === 'Escape') onClose();
+    if (e.key === "Escape") onClose();
   };
 
   if (!open) return null;
 
   return (
     <div
-      className="position-absolute end-0 mt-2 p-2 border bg-white shadow rounded" style={{ minWidth: '220px' }}
+      className="position-absolute end-0 mt-2 p-2 border bg-white shadow rounded"
+      style={{ minWidth: "220px" }}
       role="menu"
       aria-label="Optional parameters menu"
       onKeyDown={handleKeyDown}
@@ -62,7 +70,11 @@ export default function OptionalParamsMenu({ open, onClose, selected, onChange }
             id="chk-all"
             type="checkbox"
             checked={selected.length === PARAM_OPTIONS.length}
-            onChange={() => onChange(selected.length === PARAM_OPTIONS.length ? [] : PARAM_OPTIONS)}
+            onChange={() =>
+              onChange(
+                selected.length === PARAM_OPTIONS.length ? [] : PARAM_OPTIONS
+              )
+            }
           />
           <label htmlFor="chk-all" className="ms-2 cursor-pointer select-none">
             All
@@ -76,7 +88,10 @@ export default function OptionalParamsMenu({ open, onClose, selected, onChange }
               checked={selected.includes(opt)}
               onChange={() => handleToggle(opt)}
             />
-            <label htmlFor={`chk-${opt}`} className="ms-2 cursor-pointer select-none">
+            <label
+              htmlFor={`chk-${opt}`}
+              className="ms-2 cursor-pointer select-none"
+            >
               {opt}
             </label>
           </li>

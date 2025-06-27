@@ -56,7 +56,7 @@ export const ChartSection = () => {
     alertsData.reduce((acc, alert) => {
       acc[alert.id] = alert.checked;
       return acc;
-    }, {}),
+    }, {})
   );
 
   const handleCheckboxChange = (id) => {
@@ -186,8 +186,8 @@ export const ChartSection = () => {
                       alert.style === "underline"
                         ? "underline"
                         : alert.style === "lineThrough"
-                          ? "line-through"
-                          : "none",
+                        ? "line-through"
+                        : "none",
                   }}
                 >
                   {alert.message}
