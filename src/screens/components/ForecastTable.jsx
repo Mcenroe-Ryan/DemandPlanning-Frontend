@@ -56,6 +56,13 @@ const OPTIONAL_ROWS = [
   "On Hand",
 ];
 
+// FIXED: Month mapping to avoid Date.parse issues
+const MONTH_MAP = {
+  "JAN": 0, "FEB": 1, "MAR": 2, "APR": 3,
+  "MAY": 4, "JUN": 5, "JUL": 6, "AUG": 7,
+  "SEP": 8, "OCT": 9, "NOV": 10, "DEC": 11
+};
+
 function buildMonthLabelsBetween(startDate, endDate) {
   const months = [];
   const start = new Date(startDate);
@@ -74,12 +81,32 @@ function buildMonthLabelsBetween(startDate, endDate) {
   return months;
 }
 
-// Helper to get YYYY-MM-01 from "Apr 25"
+// FIXED: Helper to get YYYY-MM-01 from "Apr 25" using explicit month mapping
 function getMonthDate(label) {
   const [mon, yr] = label.split(" ");
   const yearNum = 2000 + parseInt(yr, 10);
-  const monthIdx = new Date(Date.parse(mon + " 1, 20" + yr)).getMonth() + 1;
-  return `${yearNum}-${monthIdx.toString().padStart(2, "0")}-01`;
+  
+  // FIXED: Use explicit month mapping instead of unreliable Date.parse
+  const monthIdx = MONTH_MAP[mon.toUpperCase()];
+  
+  if (monthIdx === undefined) {
+    console.error(`Invalid month abbreviation: ${mon}`);
+    return null;
+  }
+  
+  return `${yearNum}-${(monthIdx + 1).toString().padStart(2, "0")}-01`;
+}
+
+// FIXED: Helper to convert API date (month-end) back to month label consistently
+function dateToMonthLabel(dateStr) {
+  if (!dateStr) return null;
+  
+  const date = new Date(dateStr);
+  // Always use the month/year from the date, regardless of whether it's month-start or month-end
+  return date.toLocaleString("default", {
+    month: "short",
+    year: "2-digit",
+  });
 }
 
 // --- Helper to format numbers by country ---
@@ -117,12 +144,19 @@ function formatNumberByCountry(value, country) {
   return Number(value).toLocaleString();
 }
 
-// Helper to determine if a month is locked (<= current month)
+// FIXED: Helper to determine if a month is locked (<= current month) using explicit mapping
 function isMonthLocked(monthLabel) {
   const [mon, yr] = monthLabel.split(" ");
-  const monthIdx = new Date(Date.parse(`${mon} 1, 20${yr}`)).getMonth();
+  
+  const monthIdx = MONTH_MAP[mon.toUpperCase()];
+  if (monthIdx === undefined) {
+    console.error(`Invalid month abbreviation in isMonthLocked: ${mon}`);
+    return false;
+  }
+  
   const yearNum = 2000 + parseInt(yr, 10);
   const now = new Date();
+  
   return (
     yearNum < now.getFullYear() ||
     (yearNum === now.getFullYear() && monthIdx <= now.getMonth())
@@ -150,19 +184,15 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
             marginBottom: 8,
           }}
         >
-          {/* Left avatar */}
           <Avatar
             src="https://randomuser.me/api/portraits/men/32.jpg"
             sx={{ width: 28, height: 28 }}
           />
-
-          {/* Right-aligned name + timestamp */}
           <div style={{ textAlign: "right", flexGrow: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Supreeth P</div>
             <div style={{ fontSize: 12, color: "#888" }}>4 days ago</div>
           </div>
         </div>
-
         <div style={{ fontSize: 14, marginBottom: 8 }}>
           Edited The correct option is B. 24.
           <br />
@@ -226,17 +256,22 @@ export default function ForecastTable({
     return buildMonthLabelsBetween(startDate, endDate);
   }, [startDate, endDate]);
 
+  // FIXED: futureMonthSet calculation using explicit month mapping
   const futureMonthSet = useMemo(() => {
     const today = new Date();
     const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
     const set = new Set();
+    
     months.forEach((label) => {
       const [mon, yr] = label.split(" ");
-      const monthIdx = new Date(Date.parse(`${mon} 1, 20${yr}`)).getMonth();
-      const yearNum = 2000 + parseInt(yr, 10);
-      const key = yearNum * 12 + monthIdx;
-      if (key > currentMonthKey) {
-        set.add(label);
+      const monthIdx = MONTH_MAP[mon.toUpperCase()];
+      
+      if (monthIdx !== undefined) {
+        const yearNum = 2000 + parseInt(yr, 10);
+        const key = yearNum * 12 + monthIdx;
+        if (key > currentMonthKey) {
+          set.add(label);
+        }
       }
     });
     return set;
@@ -255,7 +290,7 @@ export default function ForecastTable({
     "On Hand": "on_hand_units",
   };
 
-  // Fetch data function
+  // FIXED: Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
     fetch("http://localhost:5000/api/forecast", {
@@ -275,41 +310,47 @@ export default function ForecastTable({
     })
       .then((res) => res.json())
       .then((raw) => {
+        console.log("Raw API response:", raw); // DEBUG: Log raw response
+        
         const ds = {};
-        const monthSet = new Set();
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        while (start <= end) {
-          const label = start.toLocaleString("default", {
-            month: "short",
-            year: "2-digit",
-          });
-          monthSet.add(label);
-          start.setMonth(start.getMonth() + 1);
-        }
-        Array.from(monthSet).forEach((m) => {
+        
+        // Use consistent month label generation
+        const months = buildMonthLabelsBetween(startDate, endDate);
+        
+        // Initialize data structure with consistent month order
+        months.forEach((m) => {
           ds[m] = {};
           [...CORE_ROWS, ...OPTIONAL_ROWS].forEach((row) => {
             ds[m][row] = "-";
           });
         });
+
+        // FIXED: Improved data mapping with debugging
         raw.forEach((item) => {
-          const dateStr =
-            item.month_name || item.item_date || item.forecast_month;
+          const dateStr = item.month_name || item.item_date || item.forecast_month;
           if (!dateStr) return;
-          const date = new Date(dateStr);
-          const label = date.toLocaleString("default", {
-            month: "short",
-            year: "2-digit",
-          });
-          if (!ds[label]) return;
+          
+          // FIXED: Use the new consistent date-to-label converter
+          const label = dateToMonthLabel(dateStr);
+          console.log(`Mapping API date '${dateStr}' to label '${label}'`); // DEBUG
+          
+          if (!ds[label]) {
+            console.warn(`No column found for label '${label}'`); // DEBUG
+            return;
+          }
+          
           Object.entries(keyMap).forEach(([rowLabel, jsonKey]) => {
             const val = item[jsonKey];
             if (val !== undefined && val !== null && val !== "NULL") {
               ds[label][rowLabel] = val === "" ? "-" : val;
+              if (rowLabel === "Consensus" && val !== "-") {
+                console.log(`Mapped consensus value ${val} to column ${label}`); // DEBUG
+              }
             }
           });
         });
+        
+        console.log("Final data structure:", ds); // DEBUG: Log final structure
         setData(ds);
       })
       .catch((error) => {
@@ -375,7 +416,6 @@ export default function ForecastTable({
         borderColor="action.disabled"
       >
         <Stack direction="row" spacing={5} alignItems="center">
-          {/* Period selector */}
           <Stack direction="row" spacing={1}>
             {periodOptions.map((label) => (
               <Button
@@ -427,7 +467,6 @@ export default function ForecastTable({
             </Typography>
           </Stack>
         </Stack>
-        {/* Right-side action buttons */}
         <Stack direction="row" spacing={1.5} alignItems="center">
           <IconButton size="small" onClick={handleAddRowsClick}>
             <AddBoxOutlinedIcon
@@ -479,6 +518,7 @@ export default function ForecastTable({
           </IconButton>
         </Stack>
       </Box>
+      
       {/* Table */}
       <Box
         sx={{
@@ -586,7 +626,6 @@ export default function ForecastTable({
                         cursor: isConsensusRow ? "pointer" : "default",
                       }}
                       onClick={(e) => {
-                        // Open comment popup only for locked consensus with data
                         if (
                           isConsensusRow &&
                           locked &&
@@ -598,7 +637,6 @@ export default function ForecastTable({
                             anchor: e.currentTarget,
                           });
                         }
-                        // Allow editing only for unlocked consensus cells
                         if (
                           isConsensusRow &&
                           !locked &&
@@ -639,6 +677,10 @@ export default function ForecastTable({
                           disabled={isUpdating}
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={async () => {
+                            console.log(`Updating consensus for column: ${m}`); // DEBUG
+                            const targetDate = getMonthDate(m);
+                            console.log(`getMonthDate('${m}') returns: ${targetDate}`); // DEBUG
+                            
                             setUpdatingCell({ month: m, row: label });
                             const payload = {
                               country_name: Array.isArray(selectedCountry)
@@ -665,14 +707,23 @@ export default function ForecastTable({
                               start_date: startDate,
                               end_date: endDate,
                               consensus_forecast: editValue,
-                              latest_actual_month: m ? getMonthDate(m) : null,
+                              target_month: targetDate,
                             };
+                            
+                            console.log("Sending payload:", payload); // DEBUG
+                            
                             try {
                               await updateConsensusForecastAPI(payload);
                               setEditingCell({ month: null, row: null });
                               setUpdatingCell({ month: null, row: null });
-                              fetchForecastData();
+                              
+                              // Add small delay to ensure backend update is complete
+                              setTimeout(() => {
+                                console.log("Refetching data after update..."); // DEBUG
+                                fetchForecastData();
+                              }, 100);
                             } catch (err) {
+                              console.error("Update failed:", err); // DEBUG
                               alert("Failed to update consensus forecast");
                               setEditingCell({ month: null, row: null });
                               setUpdatingCell({ month: null, row: null });
@@ -705,7 +756,7 @@ export default function ForecastTable({
           </tbody>
         </table>
       </Box>
-      {/* Lock comment popover */}
+      
       <LockCommentPopover
         open={lockComment.open}
         anchorEl={lockComment.anchor}

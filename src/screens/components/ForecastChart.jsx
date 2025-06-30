@@ -11,34 +11,33 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import GridViewIcon from "@mui/icons-material/GridView";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ShareIcon from "@mui/icons-material/Share";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
-import ExpandMore from "@mui/icons-material/ExpandMore";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
-import Checkbox from "@mui/material/Checkbox";
-import { styled } from "@mui/material/styles";
 
-// --- Custom Checkbox to match screenshot ---
+// Custom styled checkbox
 const BlueSquare = styled("span")({
   width: 18,
   height: 18,
   borderRadius: 3,
   border: "2px solid #2196f3",
   background: "#fff",
-  display: "block",
 });
-
 const BlueChecked = styled(BlueSquare)({
   background: "#2196f3",
-  border: "2px solid #2196f3",
   position: "relative",
   "&:before": {
     content: '""',
-    display: "block",
     position: "absolute",
     left: 4,
     top: 1,
@@ -46,11 +45,9 @@ const BlueChecked = styled(BlueSquare)({
     height: 12,
     border: "solid #fff",
     borderWidth: "0 2.5px 2.5px 0",
-    borderRadius: 1,
     transform: "rotate(45deg)",
   },
 });
-
 function BlueCheckbox(props) {
   return (
     <Checkbox
@@ -58,90 +55,42 @@ function BlueCheckbox(props) {
       color="default"
       checkedIcon={<BlueChecked />}
       icon={<BlueSquare />}
-      sx={{
-        p: 0.5,
-        "&:hover": { bgcolor: "transparent" },
-      }}
+      sx={{ p: 0.5, "&:hover": { bgcolor: "transparent" } }}
       {...props}
     />
   );
 }
 
-// --- Legend configuration ---
 const LEGEND_CONFIG = [
-  {
-    key: "actual",
-    label: "Actual",
-    color: "#ff4d4f",
-    dash: "Solid",
-    seriesIndex: 0,
-  },
-  {
-    key: "baseline",
-    label: "Baseline",
-    color: "#1890ff",
-    dash: "Solid",
-    seriesIndex: 1,
-  },
+  { key: "actual", label: "Actual", color: "#ff4d4f", dash: "Solid", seriesIndex: 0 },
+  { key: "baseline", label: "Baseline", color: "#1890ff", dash: "Solid", seriesIndex: 1 },
   { key: "ml", label: "ML", color: "#fadb14", dash: "Solid", seriesIndex: 2 },
-  {
-    key: "consensus",
-    label: "Consensus",
-    color: "#52c41a",
-    dash: "Solid",
-    seriesIndex: 3,
-  },
-  {
-    key: "baseline_forecast",
-    label: "Baseline Forecast",
-    color: "#1890ff",
-    dash: "Dot",
-    seriesIndex: 4,
-  },
-  {
-    key: "ml_forecast",
-    label: "ML Forecast",
-    color: "#fadb14",
-    dash: "Dot",
-    seriesIndex: 5,
-  },
-  {
-    key: "consensus_forecast",
-    label: "Consensus Forecast",
-    color: "#52c41a",
-    dash: "Dot",
-    seriesIndex: 6,
-  },
-  {
-    key: "holidays",
-    label: "Holidays",
-    color: "rgba(82,196,26,0.6)",
-    dash: "Solid",
-    isOverlay: true,
-  },
-  {
-    key: "promotions",
-    label: "Promotions",
-    color: "rgba(250,173,20,0.6)",
-    dash: "Solid",
-    isOverlay: true,
-  },
+  { key: "consensus", label: "Consensus", color: "#52c41a", dash: "Solid", seriesIndex: 3 },
+  { key: "baseline_forecast", label: "Baseline Forecast", color: "rgba(24,144,255,0.6)", dash: "Dash", seriesIndex: 4 },
+  { key: "ml_forecast", label: "ML Forecast", color: "rgba(250,173,20,0.6)", dash: "Dash", seriesIndex: 5 },
+  { key: "consensus_forecast", label: "Consensus Forecast", color: "rgba(82,196,26,0.6)", dash: "Dash", seriesIndex: 6 },
+  { key: "holidays", label: "Holidays", color: "rgba(82,196,26,0.4)", dash: "Solid", isOverlay: true },
+  { key: "promotions", label: "Promotions", color: "rgba(250,173,20,0.4)", dash: "Solid", isOverlay: true },
 ];
 
-// --- Tree menu data ---
+// Tree menu data
 const treeData = [
   {
     id: 1,
     title: "Model",
+    disabled: false,
+    type: "radio",
     items: [
-      { id: 11, label: "XGBoost", checked: true, starred: true },
-      { id: 12, label: "LightGBM", checked: false },
-      { id: 13, label: "ARIMA", checked: false },
+      { id: 11, label: "XGBoost", value: "xgboost", starred: true },
+      { id: 12, label: "LightGBM", value: "lightgbm" },
+      { id: 13, label: "ARIMA", value: "arima" },
     ],
   },
   {
     id: 2,
     title: "External Factors",
+    disabled: true,
+    type: "checkbox",
     items: [
       { id: 21, label: "All", checked: false },
       { id: 22, label: "CPI", checked: true, starred: true },
@@ -154,130 +103,124 @@ const treeData = [
   {
     id: 3,
     title: "Events",
+    disabled: true,
+    type: "checkbox",
     items: [
       { id: 31, label: "All", checked: true, starred: true },
       { id: 32, label: "Holidays", checked: true },
-      { id: 33, label: "Marketing and Promotion", checked: true },
+      { id: 33, label: "Marketing & Promotion", checked: true },
     ],
   },
 ];
 
-// --- Tree Menu Item ---
-const TreeMenuItem = ({ item, handleToggle }) => (
-  <ListItem
-    sx={{
-      px: 2,
-      py: 0.25,
-      borderRadius: 1,
-      "&:hover": { bgcolor: "rgba(0, 0, 0, 0.04)" },
-      minHeight: 28,
-    }}
-    onClick={() => handleToggle(item.id)}
-    button
-  >
-    <ListItemIcon sx={{ minWidth: 28 }}>
-      <BlueCheckbox
-        edge="start"
-        checked={item.checked}
-        tabIndex={-1}
-        inputProps={{ "aria-labelledby": `checkbox-list-label-${item.id}` }}
+// Tree menu item (disabled sections)
+function TreeMenuItem({ item, disabled }) {
+  return (
+    <ListItem
+      sx={{
+        px: 2, py: 0.25, borderRadius: 1,
+        "&:hover": disabled ? {} : { bgcolor: "rgba(0,0,0,0.04)" },
+        minHeight: 28, opacity: disabled ? 0.5 : 1,
+        pointerEvents: disabled ? "none" : "auto",
+      }}
+    >
+      <ListItemIcon sx={{ minWidth: 28 }}>
+        <BlueCheckbox checked={item.checked} disabled />
+      </ListItemIcon>
+      {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main", mr: 0.5 }} />}
+      <ListItemText
+        primary={
+          <Typography variant="body2" color="text.secondary" sx={{ mt: -0.25 }}>
+            {item.label}
+          </Typography>
+        }
       />
-    </ListItemIcon>
-    {item.starred && (
-      <StarIcon
-        sx={{
-          fontSize: 14,
-          color: "warning.main",
-          mr: 0.5,
-        }}
-      />
-    )}
-    <ListItemText
-      primary={
-        <Typography variant="body2" color="text.secondary" sx={{ mt: -0.25 }}>
-          {item.label}
-        </Typography>
-      }
-    />
-  </ListItem>
-);
+    </ListItem>
+  );
+}
 
-// --- Tree Menu Section ---
-const TreeMenuSection = ({ section, handleToggle }) => {
-  const [expanded, setExpanded] = useState(true);
-  const toggleExpand = () => setExpanded(!expanded);
+// Tree menu section
+function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
+  const [expanded, setExpanded] = useState(section.id === 1);
+  const toggle = () => !section.disabled && setExpanded(!expanded);
 
   return (
     <>
       <Box
+        onClick={toggle}
         sx={{
-          px: 0.5,
-          py: 1,
-          bgcolor: "primary.50",
-          borderRadius: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          mb: 0.5,
-          cursor: "pointer",
+          px: 1, py: 1, bgcolor: section.disabled ? "grey.100" : "primary.lighter",
+          borderRadius: 1, display: "flex", alignItems: "center", gap: 1,
+          mb: 0.5, cursor: section.disabled ? "not-allowed" : "pointer",
+          opacity: section.disabled ? 0.6 : 1,
         }}
-        onClick={toggleExpand}
       >
-        <ExpandMore
+        <ExpandMoreIcon
           sx={{
-            color: "primary.main",
-            width: 20,
-            height: 20,
             transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
             transition: "transform 0.2s",
+            color: section.disabled ? "grey.500" : "primary.main",
           }}
         />
-        <DescriptionOutlined
-          sx={{ color: "primary.main", width: 20, height: 20 }}
-        />
+        <DescriptionOutlined sx={{ color: section.disabled ? "grey.500" : "primary.main" }} />
         <Typography
           variant="subtitle2"
           fontWeight={600}
-          color="primary.main"
-          sx={{ flexGrow: 1, fontSize: 14 }}
+          sx={{ flexGrow: 1, color: section.disabled ? "grey.600" : "primary.main" }}
         >
           {section.title}
         </Typography>
       </Box>
+
       {expanded && (
-        <List disablePadding sx={{ pl: 2, pr: 0, py: 0 }}>
-          {section.items.map((item) => (
-            <TreeMenuItem
-              key={item.id}
-              item={item}
-              handleToggle={handleToggle}
-            />
-          ))}
-        </List>
+        <Box
+          sx={{
+            pl: 3,
+            opacity: section.disabled ? 0.5 : 1,
+            pointerEvents: section.disabled ? "none" : "auto",
+          }}
+        >
+          {section.type === "radio" ? (
+            <RadioGroup
+              value={selectedModel}
+              onChange={e => setSelectedModel(e.target.value)}
+              sx={{ display: "flex", gap: 0.5 }}
+            >
+              {section.items.map(item => (
+                <FormControlLabel
+                  key={item.id}
+                  value={item.value}
+                  control={<Radio size="small" />}
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main" }} />}
+                      <Typography variant="body2">{item.label}</Typography>
+                    </Box>
+                  }
+                  sx={{ mr: 0 }}
+                />
+              ))}
+            </RadioGroup>
+          ) : (
+            <List disablePadding>
+              {section.items.map(item => (
+                <TreeMenuItem key={item.id} item={item} disabled={section.disabled} />
+              ))}
+            </List>
+          )}
+        </Box>
       )}
     </>
   );
-};
+}
 
-// --- Tree Menu ---
-const TreeMenu = ({ open, onClose }) => {
-  const [menuData, setMenuData] = useState(treeData);
+// Floating TreeMenu
+function TreeMenu({ open, onClose }) {
+  const [selectedModel, setSelectedModel] = useState("xgboost");
 
-  const handleToggle = (itemId) => {
-    setMenuData((prevData) =>
-      prevData.map((section) => ({
-        ...section,
-        items: section.items.map((item) =>
-          item.id === itemId ? { ...item, checked: !item.checked } : item
-        ),
-      }))
-    );
-  };
-
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
-    const handleClick = (e) => {
+    const handleClick = e => {
       if (!e.target.closest(".tree-menu-float")) onClose();
     };
     window.addEventListener("mousedown", handleClick);
@@ -288,286 +231,204 @@ const TreeMenu = ({ open, onClose }) => {
 
   return (
     <Paper
-      elevation={4}
       className="tree-menu-float"
+      elevation={4}
       sx={{
         position: "fixed",
         top: 80,
         right: 40,
         zIndex: 2000,
-        border: 1,
-        borderColor: "grey.200",
-        bgcolor: "background.paper",
-        width: 220,
-        maxHeight: 340,
+        width: 260,
+        maxHeight: 360,
         overflowY: "auto",
-        boxShadow: 8,
         p: 1,
       }}
     >
       <Stack spacing={0.5}>
-        {menuData.map((section) => (
+        {treeData.map(sec => (
           <TreeMenuSection
-            key={section.id}
-            section={section}
-            handleToggle={handleToggle}
+            key={sec.id}
+            section={sec}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
           />
         ))}
       </Stack>
     </Paper>
   );
-};
-// --- Main Chart Component ---
+}
+
+// Box-style custom legend
+function CustomLegend({ activeKeys, onToggle }) {
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+      {LEGEND_CONFIG.map(({ key, label, color }) => {
+        const isActive = activeKeys.includes(key);
+        return (
+          <Box
+            key={key}
+            onClick={() => onToggle(key)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              opacity: isActive ? 1 : 0.5,
+              borderRadius: 1,
+              border: "1px solid",
+              borderColor: color,
+              padding: "4px 12px",
+              userSelect: "none",
+              transition: "opacity 0.2s",
+              "&:hover": { opacity: 0.8 },
+            }}
+          >
+            <Box
+              sx={{
+                width: 16,
+                height: 16,
+                backgroundColor: color,
+                borderRadius: 1,
+                marginRight: 1,
+              }}
+            />
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "#222" }}>
+              {label}
+            </Typography>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
+// Main ForecastChart component
 export default function ForecastChart({ months, data }) {
   const [treeMenuOpen, setTreeMenuOpen] = useState(false);
   const chartRef = useRef();
-  const [overlays, setOverlays] = useState({
-    holidays: true,
-    promotions: true,
-  });
+  const [overlays, setOverlays] = useState({ holidays: true, promotions: true });
   const [hiddenSeries, setHiddenSeries] = useState({});
 
   const today = new Date();
-  const currentMonthStr = today.toLocaleString("default", {
-    month: "short",
-    year: "2-digit",
-  });
-  const currentIdx = months.indexOf(currentMonthStr);
+  const currentIdx = months.indexOf(
+    today.toLocaleString("default", { month: "short", year: "2-digit" })
+  );
 
-  // --- Helper: Seamless forecast line continuation ---
-  const joinSeries = (histArr, forecastArr) => {
-    const joined = [...forecastArr];
-    for (let i = 0; i < joined.length; i++) {
-      if (joined[i] !== null) {
-        if (i > 0 && joined[i - 1] === null) {
-          joined[i - 1] = histArr[currentIdx];
-        }
+  const joinSeries = (hist, fc) => {
+    const out = [...fc];
+    for (let i = 0; i < out.length; i++) {
+      if (out[i] != null && i > 0 && out[i - 1] == null) {
+        out[i - 1] = hist[currentIdx];
         break;
       }
     }
-    return joined;
+    return out;
   };
 
-  // --- Build series for actual, historical, and forecast ---
   const seriesData = useMemo(() => {
-    const getSeries = (rowLabel) =>
-      months.map((m) => {
-        const v = data?.[m]?.[rowLabel];
-        if (v === undefined || v === null || v === "-" || v === "NULL")
-          return null;
-        return Number(v);
-      });
+    const get = label => months.map(m => {
+      const v = data?.[m]?.[label];
+      return v == null || v === "-" || v === "NULL" ? null : Number(v);
+    });
+    const baseFull = get("Baseline Forecast");
+    const mlFull = get("ML Forecast");
+    const consFull = get("Consensus");
+    const actual = get("Actual");
 
-    const baselineFull = getSeries("Baseline Forecast");
-    const mlFull = getSeries("ML Forecast");
-    const consensusFull = getSeries("Consensus Forecast");
-    const actual = getSeries("Actual");
-
-    const baselineHist = baselineFull.map((v, i) =>
-      i <= currentIdx ? v : null
-    );
+    const baseHist = baseFull.map((v, i) => (i <= currentIdx ? v : null));
     const mlHist = mlFull.map((v, i) => (i <= currentIdx ? v : null));
-    const consensusHist = consensusFull.map((v, i) =>
-      i <= currentIdx ? v : null
-    );
+    const consHist = consFull.map((v, i) => (i <= currentIdx ? v : null));
 
-    const baselineForecast = baselineFull.map((v, i) =>
-      i > currentIdx ? v : null
-    );
-    const mlForecast = mlFull.map((v, i) => (i > currentIdx ? v : null));
-    const consensusForecast = consensusFull.map((v, i) =>
-      i > currentIdx ? v : null
-    );
+    const baseFc = baseFull.map((v, i) => (i > currentIdx ? v : null));
+    const mlFc = mlFull.map((v, i) => (i > currentIdx ? v : null));
+    const consFc = consFull.map((v, i) => (i > currentIdx ? v : null));
 
     return {
       actual,
-      baseline: baselineHist,
-      baseline_forecast: joinSeries(baselineHist, baselineForecast),
+      baseline: baseHist,
+      baseline_forecast: joinSeries(baseHist, baseFc),
       ml: mlHist,
-      ml_forecast: joinSeries(mlHist, mlForecast),
-      consensus: consensusHist,
-      consensus_forecast: joinSeries(consensusHist, consensusForecast),
+      ml_forecast: joinSeries(mlHist, mlFc),
+      consensus: consHist,
+      consensus_forecast: joinSeries(consHist, consFc),
     };
   }, [months, data, currentIdx]);
-  // Plot bands for overlays (holidays/promotions)
+
   const plotBands = useMemo(() => {
     const bands = [];
     if (overlays.holidays) {
-      for (let i = 0; i < 3; i += 1) {
+      for (let i = 0; i < 3; i++) {
         const idx = Math.floor(Math.random() * months.length);
-        bands.push({
-          id: `holiday-${i}`,
-          color: "rgba(82,196,26,0.2)",
-          from: idx - 0.1,
-          to: idx + 0.1,
-          zIndex: -1,
-        });
+        bands.push({ id: `h${i}`, color: "rgba(82,196,26,0.1)", from: idx - 0.1, to: idx + 0.1 });
       }
     }
     if (overlays.promotions) {
-      for (let i = 0; i < 3; i += 1) {
+      for (let i = 0; i < 3; i++) {
         const idx = Math.floor(Math.random() * months.length);
-        bands.push({
-          id: `promo-${i}`,
-          color: "rgba(250,173,20,0.2)",
-          from: idx - 0.25,
-          to: idx + 0.25,
-          zIndex: -1,
-        });
+        bands.push({ id: `p${i}`, color: "rgba(250,173,20,0.1)", from: idx - 0.25, to: idx + 0.25 });
       }
     }
     return bands;
   }, [months, overlays]);
 
-  // Chart options
-  const options = useMemo(
-    () => ({
-      title: { text: "" },
-      chart: { height: 400, spacingTop: 20, animation: false },
-      xAxis: {
-        categories: months,
-        tickmarkPlacement: "on",
-        tickInterval: 1,
-        gridLineWidth: 1,
-        plotBands,
-      },
-      yAxis: {
-        title: { text: "Units (in thousands)" },
-        gridLineDashStyle: "Dot",
-        gridLineWidth: 1,
-        minorGridLineWidth: 0,
-      },
-      tooltip: { shared: true },
-      legend: { enabled: false }, // We use our own legend
-      series: [
-        {
-          name: "Actual",
-          data: seriesData.actual,
-          color: "#ff4d4f",
-          type: "line",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Solid",
-          visible: hiddenSeries[0] !== true,
-        },
-        {
-          name: "Baseline",
-          data: seriesData.baseline,
-          color: "#1890ff",
-          type: "line",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Solid",
-          visible: hiddenSeries[1] !== true,
-        },
-        {
-          name: "ML",
-          data: seriesData.ml,
-          color: "#fadb14",
-          type: "line",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Solid",
-          visible: hiddenSeries[2] !== true,
-        },
-        {
-          name: "Consensus",
-          data: seriesData.consensus,
-          color: "#52c41a",
-          type: "line",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Solid",
-          visible: hiddenSeries[3] !== true,
-        },
-        {
-          name: "Baseline Forecast",
-          data: seriesData.baseline_forecast,
-          color: "#1890ff",
-          type: "line",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Dot",
-          visible: hiddenSeries[4] !== true,
-        },
-        {
-          name: "ML Forecast",
-          data: seriesData.ml_forecast,
-          color: "#fadb14",
-          type: "line",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Dot",
-          visible: hiddenSeries[5] !== true,
-        },
-        {
-          name: "Consensus Forecast",
-          data: seriesData.consensus_forecast,
-          color: "#52c41a",
-          type: "line",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Dot",
-          visible: hiddenSeries[6] !== true,
-        },
-        {
-          name: "Holidays",
-          type: "line",
-          data: [],
-          color: "rgba(82,196,26,0.6)",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Solid",
-          enableMouseTracking: false,
-          showInLegend: true,
-          visible: overlays.holidays,
-        },
-        {
-          name: "Promotions",
-          type: "line",
-          data: [],
-          color: "rgba(250,173,20,0.6)",
-          marker: { enabled: false },
-          lineWidth: 3,
-          dashStyle: "Solid",
-          enableMouseTracking: false,
-          showInLegend: true,
-          visible: overlays.promotions,
-        },
-      ],
-      credits: { enabled: false },
-    }),
-    [months, seriesData, plotBands, hiddenSeries, overlays]
-  );
+  const options = useMemo(() => ({
+    chart: {
+      backgroundColor: "#fafafa",
+      style: { fontFamily: "Arial, sans-serif" },
+      zoomType: "x",
+    },
+    title: { text: "" },
+    xAxis: {
+      categories: months,
+      gridLineWidth: 1,
+      gridLineColor: "#e0e0e0",
+      labels: { style: { color: "#555" } },
+      plotBands,
+    },
+    yAxis: {
+      type: "linear",
+      title: { text: "Units", style: { color: "#333" } },
+      gridLineDashStyle: "ShortDash",
+      gridLineColor: "#e0e0e0",
+      labels: { style: { color: "#555" } },
+      min: 1,
+    },
+    tooltip: {
+      backgroundColor: "rgba(255,255,255,0.9)",
+      borderColor: "#999",
+      borderRadius: 4,
+      style: { color: "#333" },
+      shared: true,
+    },
+    legend: { enabled: false },
+    series: [
+      { name: "Actual", data: seriesData.actual, color: "#ff4d4f", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[0] },
+      { name: "Baseline", data: seriesData.baseline, color: "#1890ff", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[1] },
+      { name: "ML", data: seriesData.ml, color: "#fadb14", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[2] },
+      { name: "Consensus", data: seriesData.consensus, color: "#52c41a", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[3] },
+      { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: "rgba(24,144,255,0.6)", dashStyle: "Dash", lineWidth: 2, visible: !hiddenSeries[4] },
+      { name: "ML Forecast", data: seriesData.ml_forecast, color: "rgba(250,173,20,0.6)", dashStyle: "Dash", lineWidth: 2, visible: !hiddenSeries[5] },
+      { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: "rgba(82,196,26,0.6)", dashStyle: "Dash", lineWidth: 2, visible: !hiddenSeries[6] },
+      { name: "Holidays", data: [], color: "rgba(82,196,26,0.4)", enableMouseTracking: false, showInLegend: true, visible: overlays.holidays },
+      { name: "Promotions", data: [], color: "rgba(250,173,20,0.4)", enableMouseTracking: false, showInLegend: true, visible: overlays.promotions },
+    ],
+    credits: { enabled: false },
+  }), [months, seriesData, plotBands, hiddenSeries, overlays]);
 
-  // Handle legend item click
-  const handleLegendClick = (item) => {
+  const handleLegendClick = item => {
     const chart = chartRef.current?.chart;
     if (!chart) return;
     if (item.isOverlay) {
-      setOverlays((prev) => {
+      setOverlays(prev => {
         const next = { ...prev, [item.key]: !prev[item.key] };
-        chart.xAxis[0].update({ plotBands: plotBands }, false);
-        chart.series[item.key === "holidays" ? 7 : 8].setVisible(
-          !prev[item.key],
-          false
-        );
+        chart.series[item.key === "holidays" ? 8 : 9].setVisible(!prev[item.key], false);
         chart.redraw();
         return next;
       });
     } else {
-      const idx = item.seriesIndex;
-      const series = chart.series[idx];
-      if (series) {
-        if (series.visible) {
-          series.hide();
-        } else {
-          series.show();
-        }
-        setHiddenSeries((prev) => ({
-          ...prev,
-          [idx]: !series.visible,
-        }));
+      const s = chart.series[item.seriesIndex];
+      if (s) {
+        s.visible ? s.hide() : s.show();
+        setHiddenSeries(prev => ({ ...prev, [item.seriesIndex]: !s.visible }));
       }
     }
   };
@@ -576,146 +437,69 @@ export default function ForecastChart({ months, data }) {
     const chart = chartRef.current?.chart;
     if (!chart) return;
     const newHidden = {};
-    chart.series.forEach((s, idx) => {
-      newHidden[idx] = !s.visible;
-    });
+    chart.series.forEach((s, i) => { newHidden[i] = !s.visible; });
     setHiddenSeries(newHidden);
   }, [chartRef, overlays]);
 
-  // Custom legend rendering
-  const legendBox = (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        mt: 2,
-        mb: 1,
-        flexWrap: "wrap",
-        minHeight: 32,
-      }}
-    >
-      {LEGEND_CONFIG.map((item) => {
-        let isActive = true;
-        if (item.isOverlay) isActive = overlays[item.key];
-        else if (typeof item.seriesIndex === "number")
-          isActive = !hiddenSeries[item.seriesIndex];
-        return (
-          <Box
-            key={item.key}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              mr: 4,
-              cursor: "pointer",
-              opacity: isActive ? 1 : 0.4,
-              userSelect: "none",
-              transition: "opacity 0.2s",
-              "&:hover": { opacity: 0.7 },
-            }}
-            onClick={() => handleLegendClick(item)}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                width: 18,
-                height: 8,
-                borderRadius: 8,
-                marginRight: 8,
-                background: item.dash !== "Solid" ? "transparent" : item.color,
-                border:
-                  item.dash !== "Solid"
-                    ? `2px dashed ${item.color}`
-                    : `2px solid ${item.color}`,
-                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-                transition: "all 0.2s",
-              }}
-            />
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#222",
-                fontWeight: isActive ? 600 : 400,
-                fontSize: 14,
-                textDecoration: isActive ? "none" : "line-through",
-                letterSpacing: 0.2,
-              }}
-            >
-              {item.label}
-            </Typography>
-          </Box>
-        );
-      })}
-    </Box>
-  );
+  // Compute MAPE
+  const mape = useMemo(() => {
+    const actual = seriesData.actual;
+    const consensusNum = seriesData.consensus;
+    let totalPctErr = 0, count = 0;
+    for (let i = 0; i < actual.length; i++) {
+      if (actual[i] && consensusNum[i]) {
+        totalPctErr += Math.abs((actual[i] - consensusNum[i]) / actual[i]);
+        count++;
+      }
+    }
+    return count ? ((totalPctErr / count) * 100).toFixed(1) : "-";
+  }, [seriesData]);
+
+  // Determine active keys for custom legend
+  const activeKeys = LEGEND_CONFIG
+    .filter(item => {
+      if (item.isOverlay) return overlays[item.key];
+      else return !hiddenSeries[item.seriesIndex];
+    })
+    .map(item => item.key);
+
+  // Handler for custom legend toggle
+  const handleCustomLegendToggle = (key) => {
+    const item = LEGEND_CONFIG.find(i => i.key === key);
+    if (!item) return;
+    handleLegendClick(item);
+  };
 
   return (
-    <Box
-      sx={{
-        mt: 3,
-        bgcolor: "white",
-        borderRadius: 1,
-        boxShadow: 1,
-        p: 2,
-        position: "relative",
-      }}
-    >
-      {/* Header row */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 1,
-          flexWrap: "wrap",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="subtitle1" fontWeight={600}>
-            Demand Forecast
+    <Box sx={{ mt: 3, p: 2, bgcolor: "#fff", borderRadius: 1, boxShadow: 1, position: "relative" }}>
+      {/* Header */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Typography variant="h6" fontWeight={600}>
+          Demand Forecast
+          <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+            MAPE: <Box component="span" sx={{ fontWeight: 700, color: "#22c55e" }}>{mape}%</Box>
           </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 500, color: "#222" }}>
-            | MAPE:{" "}
-            <span style={{ fontWeight: 700, color: "#22c55e" }}>12</span>
-            <span
-              style={{
-                display: "inline-block",
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: "#22c55e",
-                marginLeft: 4,
-                marginRight: 8,
-                verticalAlign: "middle",
-              }}
-            />
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton size="small" onClick={() => setTreeMenuOpen((v) => !v)}>
-            <GridViewIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small">
-            <ChatBubbleOutlineIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small">
-            <ShareIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small">
-            <SettingsIcon fontSize="small" />
-          </IconButton>
+        </Typography>
+        <Box>
+          <IconButton size="small" onClick={() => setTreeMenuOpen(v => !v)}><GridViewIcon /></IconButton>
+          <IconButton size="small"><ChatBubbleOutlineIcon /></IconButton>
+          <IconButton size="small"><ShareIcon /></IconButton>
+          <IconButton size="small"><SettingsIcon /></IconButton>
         </Box>
       </Box>
-      {/* Custom interactive legend */}
-      {legendBox}
+
+      {/* Custom box-style legend */}
+      <CustomLegend
+        activeKeys={activeKeys}
+        onToggle={handleCustomLegendToggle}
+      />
+
       {/* Chart */}
       <Box sx={{ height: 400 }}>
-        <HighchartsReact
-          highcharts={Highcharts}
-          options={options}
-          ref={chartRef}
-        />
+        <HighchartsReact highcharts={Highcharts} options={options} ref={chartRef} />
       </Box>
-      {/* Tree menu floating panel */}
+
+      {/* Tree menu */}
       <TreeMenu open={treeMenuOpen} onClose={() => setTreeMenuOpen(false)} />
     </Box>
   );
