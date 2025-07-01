@@ -33,6 +33,7 @@ const BlueSquare = styled("span")({
   border: "2px solid #2196f3",
   background: "#fff",
 });
+
 const BlueChecked = styled(BlueSquare)({
   background: "#2196f3",
   position: "relative",
@@ -48,6 +49,7 @@ const BlueChecked = styled(BlueSquare)({
     transform: "rotate(45deg)",
   },
 });
+
 function BlueCheckbox(props) {
   return (
     <Checkbox
@@ -276,7 +278,7 @@ function CustomLegend({ activeKeys, onToggle }) {
               borderRadius: 1,
               border: "1px solid",
               borderColor: color,
-              padding: "4px 12px",
+              padding: "2px 8px", // Reduced from "4px 12px"
               userSelect: "none",
               transition: "opacity 0.2s",
               "&:hover": { opacity: 0.8 },
@@ -284,14 +286,14 @@ function CustomLegend({ activeKeys, onToggle }) {
           >
             <Box
               sx={{
-                width: 16,
-                height: 16,
+                width: 12, // Reduced from 16
+                height: 12, // Reduced from 16
                 backgroundColor: color,
                 borderRadius: 1,
                 marginRight: 1,
               }}
             />
-            <Typography variant="body2" sx={{ fontWeight: 600, color: "#222" }}>
+            <Typography variant="body2" sx={{ fontWeight: 500, color: "#222" }}>
               {label}
             </Typography>
           </Box>
@@ -401,13 +403,18 @@ export default function ForecastChart({ months, data }) {
     },
     legend: { enabled: false },
     series: [
-      { name: "Actual", data: seriesData.actual, color: "#ff4d4f", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[0] },
-      { name: "Baseline", data: seriesData.baseline, color: "#1890ff", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[1] },
-      { name: "ML", data: seriesData.ml, color: "#fadb14", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[2] },
-      { name: "Consensus", data: seriesData.consensus, color: "#52c41a", marker: { enabled: true, radius: 5 }, lineWidth: 2, visible: !hiddenSeries[3] },
-      { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: "rgba(24,144,255,0.6)", dashStyle: "Dash", lineWidth: 2, visible: !hiddenSeries[4] },
-      { name: "ML Forecast", data: seriesData.ml_forecast, color: "rgba(250,173,20,0.6)", dashStyle: "Dash", lineWidth: 2, visible: !hiddenSeries[5] },
-      { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: "rgba(82,196,26,0.6)", dashStyle: "Dash", lineWidth: 2, visible: !hiddenSeries[6] },
+      // HISTORICAL LINES - markers removed
+      { name: "Actual", data: seriesData.actual, color: "#ff4d4f", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[0] },
+      { name: "Baseline", data: seriesData.baseline, color: "#1890ff", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[1] },
+      { name: "ML", data: seriesData.ml, color: "#fadb14", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[2] },
+      { name: "Consensus", data: seriesData.consensus, color: "#52c41a", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[3] },
+      
+      // FORECAST LINES - markers kept
+      { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: "rgba(24,144,255,0.6)", dashStyle: "Dash", marker: { enabled: true, radius: 5 }, lineWidth: 1, visible: !hiddenSeries[4] },
+      { name: "ML Forecast", data: seriesData.ml_forecast, color: "rgba(250,173,20,0.6)", dashStyle: "Dash", marker: { enabled: true, radius: 5 }, lineWidth: 1, visible: !hiddenSeries[5] },
+      { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: "rgba(82,196,26,0.6)", dashStyle: "Dash", marker: { enabled: true, radius: 5 }, lineWidth: 1, visible: !hiddenSeries[6] },
+      
+      // OVERLAYS
       { name: "Holidays", data: [], color: "rgba(82,196,26,0.4)", enableMouseTracking: false, showInLegend: true, visible: overlays.holidays },
       { name: "Promotions", data: [], color: "rgba(250,173,20,0.4)", enableMouseTracking: false, showInLegend: true, visible: overlays.promotions },
     ],
@@ -420,7 +427,7 @@ export default function ForecastChart({ months, data }) {
     if (item.isOverlay) {
       setOverlays(prev => {
         const next = { ...prev, [item.key]: !prev[item.key] };
-        chart.series[item.key === "holidays" ? 8 : 9].setVisible(!prev[item.key], false);
+        chart.series[item.key === "holidays" ? 7 : 8].setVisible(!prev[item.key], false);
         chart.redraw();
         return next;
       });
@@ -474,10 +481,10 @@ export default function ForecastChart({ months, data }) {
     <Box sx={{ mt: 3, p: 2, bgcolor: "#fff", borderRadius: 1, boxShadow: 1, position: "relative" }}>
       {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h6" fontWeight={600}>
+        <Typography variant="h6" fontWeight={500}>
           Demand Forecast
           <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-            MAPE: <Box component="span" sx={{ fontWeight: 700, color: "#22c55e" }}>{mape}%</Box>
+            MAPE: <Box component="span" sx={{ fontWeight: 600, color: "#22c55e" }}>{mape}%</Box>
           </Typography>
         </Typography>
         <Box>
