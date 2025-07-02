@@ -58,9 +58,18 @@ const OPTIONAL_ROWS = [
 
 // FIXED: Month mapping to avoid Date.parse issues
 const MONTH_MAP = {
-  "JAN": 0, "FEB": 1, "MAR": 2, "APR": 3,
-  "MAY": 4, "JUN": 5, "JUL": 6, "AUG": 7,
-  "SEP": 8, "OCT": 9, "NOV": 10, "DEC": 11
+  JAN: 0,
+  FEB: 1,
+  MAR: 2,
+  APR: 3,
+  MAY: 4,
+  JUN: 5,
+  JUL: 6,
+  AUG: 7,
+  SEP: 8,
+  OCT: 9,
+  NOV: 10,
+  DEC: 11,
 };
 
 function buildMonthLabelsBetween(startDate, endDate) {
@@ -85,22 +94,22 @@ function buildMonthLabelsBetween(startDate, endDate) {
 function getMonthDate(label) {
   const [mon, yr] = label.split(" ");
   const yearNum = 2000 + parseInt(yr, 10);
-  
+
   // FIXED: Use explicit month mapping instead of unreliable Date.parse
   const monthIdx = MONTH_MAP[mon.toUpperCase()];
-  
+
   if (monthIdx === undefined) {
     console.error(`Invalid month abbreviation: ${mon}`);
     return null;
   }
-  
+
   return `${yearNum}-${(monthIdx + 1).toString().padStart(2, "0")}-01`;
 }
 
 // FIXED: Helper to convert API date (month-end) back to month label consistently
 function dateToMonthLabel(dateStr) {
   if (!dateStr) return null;
-  
+
   const date = new Date(dateStr);
   // Always use the month/year from the date, regardless of whether it's month-start or month-end
   return date.toLocaleString("default", {
@@ -147,16 +156,16 @@ function formatNumberByCountry(value, country) {
 // FIXED: Helper to determine if a month is locked (<= current month) using explicit mapping
 function isMonthLocked(monthLabel) {
   const [mon, yr] = monthLabel.split(" ");
-  
+
   const monthIdx = MONTH_MAP[mon.toUpperCase()];
   if (monthIdx === undefined) {
     console.error(`Invalid month abbreviation in isMonthLocked: ${mon}`);
     return false;
   }
-  
+
   const yearNum = 2000 + parseInt(yr, 10);
   const now = new Date();
-  
+
   return (
     yearNum < now.getFullYear() ||
     (yearNum === now.getFullYear() && monthIdx <= now.getMonth())
@@ -190,7 +199,7 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
           />
           <div style={{ textAlign: "right", flexGrow: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Supreeth P</div>
-            <div style={{ fontSize: 12, color: "#888" }}>4 days ago</div>
+            <div style={{ fontSize: 14, color: "#888" }}>4 days ago</div>
           </div>
         </div>
         <div style={{ fontSize: 14, marginBottom: 8 }}>
@@ -207,7 +216,7 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
           <input
             style={{
               width: "100%",
-              fontSize: 13,
+              fontSize: 14,
               padding: "6px 8px",
               borderRadius: 6,
               border: "1px solid #ddd",
@@ -261,11 +270,11 @@ export default function ForecastTable({
     const today = new Date();
     const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
     const set = new Set();
-    
+
     months.forEach((label) => {
       const [mon, yr] = label.split(" ");
       const monthIdx = MONTH_MAP[mon.toUpperCase()];
-      
+
       if (monthIdx !== undefined) {
         const yearNum = 2000 + parseInt(yr, 10);
         const key = yearNum * 12 + monthIdx;
@@ -311,12 +320,12 @@ export default function ForecastTable({
       .then((res) => res.json())
       .then((raw) => {
         console.log("Raw API response:", raw); // DEBUG: Log raw response
-        
+
         const ds = {};
-        
+
         // Use consistent month label generation
         const months = buildMonthLabelsBetween(startDate, endDate);
-        
+
         // Initialize data structure with consistent month order
         months.forEach((m) => {
           ds[m] = {};
@@ -327,18 +336,19 @@ export default function ForecastTable({
 
         // FIXED: Improved data mapping with debugging
         raw.forEach((item) => {
-          const dateStr = item.month_name || item.item_date || item.forecast_month;
+          const dateStr =
+            item.month_name || item.item_date || item.forecast_month;
           if (!dateStr) return;
-          
+
           // FIXED: Use the new consistent date-to-label converter
           const label = dateToMonthLabel(dateStr);
           console.log(`Mapping API date '${dateStr}' to label '${label}'`); // DEBUG
-          
+
           if (!ds[label]) {
             console.warn(`No column found for label '${label}'`); // DEBUG
             return;
           }
-          
+
           Object.entries(keyMap).forEach(([rowLabel, jsonKey]) => {
             const val = item[jsonKey];
             if (val !== undefined && val !== null && val !== "NULL") {
@@ -349,7 +359,7 @@ export default function ForecastTable({
             }
           });
         });
-        
+
         console.log("Final data structure:", ds); // DEBUG: Log final structure
         setData(ds);
       })
@@ -429,7 +439,7 @@ export default function ForecastTable({
                   borderRadius: 1.5,
                   px: 1.5,
                   fontWeight: 600,
-                  fontSize: 13,
+                  fontSize: 14,
                   display: "flex",
                   alignItems: "center",
                   gap: 0.5,
@@ -439,7 +449,7 @@ export default function ForecastTable({
               >
                 {label}
                 {period === label && (
-                  <CheckIcon sx={{ fontSize: 16, ml: 0.5 }} />
+                  <CheckIcon sx={{ fontSize: 14, ml: 0.5 }} />
                 )}
               </Button>
             ))}
@@ -518,7 +528,7 @@ export default function ForecastTable({
           </IconButton>
         </Stack>
       </Box>
-      
+
       {/* Table */}
       <Box
         sx={{
@@ -537,7 +547,7 @@ export default function ForecastTable({
             borderCollapse: "separate",
             borderSpacing: 0,
             minWidth: 900,
-            fontFamily: "inherit",
+            fontFamily: "Inter",
           }}
         >
           <thead>
@@ -549,8 +559,8 @@ export default function ForecastTable({
                   background: "#f7fafd",
                   zIndex: 2,
                   fontWeight: 700,
-                  fontSize: 13,
-                  textTransform: "uppercase",
+                  fontSize: 14,
+                  // Removed: textTransform: "uppercase",
                   padding: "8px 16px",
                   borderRight: "1px solid #e0e7ef",
                   borderBottom: "2px solid #e0e7ef",
@@ -564,8 +574,8 @@ export default function ForecastTable({
                   style={{
                     background: "#f7fafd",
                     fontWeight: 700,
-                    fontSize: 13,
-                    textTransform: "uppercase",
+                    fontSize: 14,
+                    // Removed: textTransform: "uppercase",
                     padding: "8px 12px",
                     borderBottom: "2px solid #e0e7ef",
                     color: "#3c4257",
@@ -592,17 +602,19 @@ export default function ForecastTable({
                     left: 0,
                     background: "#fff",
                     zIndex: 1,
-                    fontWeight: 600,
+                    fontWeight: label === "Consensus" ? 700 : 500,
                     fontSize: 14,
+                    // Removed: textTransform: "uppercase",
                     padding: "8px 16px",
                     borderRight: "1px solid #e0e7ef",
                     borderBottom: "1px solid #e0e7ef",
-                    color: "#222a36",
+                    color: "#3c4257",
                     minWidth: 140,
                   }}
                 >
                   {label}
                 </td>
+
                 {months.map((m) => {
                   const value = data?.[m]?.[label];
                   const isConsensusRow = label === "Consensus";
@@ -657,7 +669,7 @@ export default function ForecastTable({
                             gap: 4,
                           }}
                         >
-                          <LockIcon style={{ fontSize: 16 }} />
+                          <LockIcon style={{ fontSize: 14 }} />
                           {value === undefined || value === null
                             ? "-"
                             : formatNumberByCountry(value, selectedCountry)}
@@ -679,8 +691,10 @@ export default function ForecastTable({
                           onBlur={async () => {
                             console.log(`Updating consensus for column: ${m}`); // DEBUG
                             const targetDate = getMonthDate(m);
-                            console.log(`getMonthDate('${m}') returns: ${targetDate}`); // DEBUG
-                            
+                            console.log(
+                              `getMonthDate('${m}') returns: ${targetDate}`
+                            ); // DEBUG
+
                             setUpdatingCell({ month: m, row: label });
                             const payload = {
                               country_name: Array.isArray(selectedCountry)
@@ -709,14 +723,14 @@ export default function ForecastTable({
                               consensus_forecast: editValue,
                               target_month: targetDate,
                             };
-                            
+
                             console.log("Sending payload:", payload); // DEBUG
-                            
+
                             try {
                               await updateConsensusForecastAPI(payload);
                               setEditingCell({ month: null, row: null });
                               setUpdatingCell({ month: null, row: null });
-                              
+
                               // Add small delay to ensure backend update is complete
                               setTimeout(() => {
                                 console.log("Refetching data after update..."); // DEBUG
@@ -756,7 +770,7 @@ export default function ForecastTable({
           </tbody>
         </table>
       </Box>
-      
+
       <LockCommentPopover
         open={lockComment.open}
         anchorEl={lockComment.anchor}

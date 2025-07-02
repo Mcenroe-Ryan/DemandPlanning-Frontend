@@ -64,15 +64,63 @@ function BlueCheckbox(props) {
 }
 
 const LEGEND_CONFIG = [
-  { key: "actual", label: "Actual", color: "#ff4d4f", dash: "Solid", seriesIndex: 0 },
-  { key: "baseline", label: "Baseline", color: "#1890ff", dash: "Solid", seriesIndex: 1 },
+  {
+    key: "actual",
+    label: "Actual",
+    color: "#ff4d4f",
+    dash: "Solid",
+    seriesIndex: 0,
+  },
+  {
+    key: "baseline",
+    label: "Baseline",
+    color: "#1890ff",
+    dash: "Solid",
+    seriesIndex: 1,
+  },
   { key: "ml", label: "ML", color: "#fadb14", dash: "Solid", seriesIndex: 2 },
-  { key: "consensus", label: "Consensus", color: "#52c41a", dash: "Solid", seriesIndex: 3 },
-  { key: "baseline_forecast", label: "Baseline Forecast", color: "rgba(24,144,255,0.6)", dash: "Dash", seriesIndex: 4 },
-  { key: "ml_forecast", label: "ML Forecast", color: "rgba(250,173,20,0.6)", dash: "Dash", seriesIndex: 5 },
-  { key: "consensus_forecast", label: "Consensus Forecast", color: "rgba(82,196,26,0.6)", dash: "Dash", seriesIndex: 6 },
-  { key: "holidays", label: "Holidays", color: "rgba(82,196,26,0.4)", dash: "Solid", isOverlay: true },
-  { key: "promotions", label: "Promotions", color: "rgba(250,173,20,0.4)", dash: "Solid", isOverlay: true },
+  {
+    key: "consensus",
+    label: "Consensus",
+    color: "#52c41a",
+    dash: "Solid",
+    seriesIndex: 3,
+  },
+  {
+    key: "baseline_forecast",
+    label: "Baseline Forecast",
+    color: "rgba(24,144,255,0.6)",
+    dash: "Dash",
+    seriesIndex: 4,
+  },
+  {
+    key: "ml_forecast",
+    label: "ML Forecast",
+    color: "rgba(250,173,20,0.6)",
+    dash: "Dash",
+    seriesIndex: 5,
+  },
+  {
+    key: "consensus_forecast",
+    label: "Consensus Forecast",
+    color: "rgba(82,196,26,0.6)",
+    dash: "Dash",
+    seriesIndex: 6,
+  },
+  {
+    key: "holidays",
+    label: "Holidays",
+    color: "rgba(82,196,26,0.4)",
+    dash: "Solid",
+    isOverlay: true,
+  },
+  {
+    key: "promotions",
+    label: "Promotions",
+    color: "rgba(250,173,20,0.4)",
+    dash: "Solid",
+    isOverlay: true,
+  },
 ];
 
 // Tree menu data
@@ -120,16 +168,21 @@ function TreeMenuItem({ item, disabled }) {
   return (
     <ListItem
       sx={{
-        px: 2, py: 0.25, borderRadius: 1,
+        px: 2,
+        py: 0.25,
+        borderRadius: 1,
         "&:hover": disabled ? {} : { bgcolor: "rgba(0,0,0,0.04)" },
-        minHeight: 28, opacity: disabled ? 0.5 : 1,
+        minHeight: 28,
+        opacity: disabled ? 0.5 : 1,
         pointerEvents: disabled ? "none" : "auto",
       }}
     >
       <ListItemIcon sx={{ minWidth: 28 }}>
         <BlueCheckbox checked={item.checked} disabled />
       </ListItemIcon>
-      {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main", mr: 0.5 }} />}
+      {item.starred && (
+        <StarIcon sx={{ fontSize: 14, color: "warning.main", mr: 0.5 }} />
+      )}
       <ListItemText
         primary={
           <Typography variant="body2" color="text.secondary" sx={{ mt: -0.25 }}>
@@ -151,9 +204,15 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
       <Box
         onClick={toggle}
         sx={{
-          px: 1, py: 1, bgcolor: section.disabled ? "grey.100" : "primary.lighter",
-          borderRadius: 1, display: "flex", alignItems: "center", gap: 1,
-          mb: 0.5, cursor: section.disabled ? "not-allowed" : "pointer",
+          px: 1,
+          py: 1,
+          bgcolor: section.disabled ? "grey.100" : "primary.lighter",
+          borderRadius: 1,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 0.5,
+          cursor: section.disabled ? "not-allowed" : "pointer",
           opacity: section.disabled ? 0.6 : 1,
         }}
       >
@@ -164,11 +223,16 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
             color: section.disabled ? "grey.500" : "primary.main",
           }}
         />
-        <DescriptionOutlined sx={{ color: section.disabled ? "grey.500" : "primary.main" }} />
+        <DescriptionOutlined
+          sx={{ color: section.disabled ? "grey.500" : "primary.main" }}
+        />
         <Typography
           variant="subtitle2"
           fontWeight={600}
-          sx={{ flexGrow: 1, color: section.disabled ? "grey.600" : "primary.main" }}
+          sx={{
+            flexGrow: 1,
+            color: section.disabled ? "grey.600" : "primary.main",
+          }}
         >
           {section.title}
         </Typography>
@@ -185,17 +249,23 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
           {section.type === "radio" ? (
             <RadioGroup
               value={selectedModel}
-              onChange={e => setSelectedModel(e.target.value)}
+              onChange={(e) => setSelectedModel(e.target.value)}
               sx={{ display: "flex", gap: 0.5 }}
             >
-              {section.items.map(item => (
+              {section.items.map((item) => (
                 <FormControlLabel
                   key={item.id}
                   value={item.value}
                   control={<Radio size="small" />}
                   label={
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main" }} />}
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
+                      {item.starred && (
+                        <StarIcon
+                          sx={{ fontSize: 14, color: "warning.main" }}
+                        />
+                      )}
                       <Typography variant="body2">{item.label}</Typography>
                     </Box>
                   }
@@ -205,8 +275,12 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
             </RadioGroup>
           ) : (
             <List disablePadding>
-              {section.items.map(item => (
-                <TreeMenuItem key={item.id} item={item} disabled={section.disabled} />
+              {section.items.map((item) => (
+                <TreeMenuItem
+                  key={item.id}
+                  item={item}
+                  disabled={section.disabled}
+                />
               ))}
             </List>
           )}
@@ -222,7 +296,7 @@ function TreeMenu({ open, onClose }) {
 
   useEffect(() => {
     if (!open) return;
-    const handleClick = e => {
+    const handleClick = (e) => {
       if (!e.target.closest(".tree-menu-float")) onClose();
     };
     window.addEventListener("mousedown", handleClick);
@@ -247,7 +321,7 @@ function TreeMenu({ open, onClose }) {
       }}
     >
       <Stack spacing={0.5}>
-        {treeData.map(sec => (
+        {treeData.map((sec) => (
           <TreeMenuSection
             key={sec.id}
             section={sec}
@@ -307,7 +381,10 @@ function CustomLegend({ activeKeys, onToggle }) {
 export default function ForecastChart({ months, data }) {
   const [treeMenuOpen, setTreeMenuOpen] = useState(false);
   const chartRef = useRef();
-  const [overlays, setOverlays] = useState({ holidays: true, promotions: true });
+  const [overlays, setOverlays] = useState({
+    holidays: true,
+    promotions: true,
+  });
   const [hiddenSeries, setHiddenSeries] = useState({});
 
   const today = new Date();
@@ -327,10 +404,11 @@ export default function ForecastChart({ months, data }) {
   };
 
   const seriesData = useMemo(() => {
-    const get = label => months.map(m => {
-      const v = data?.[m]?.[label];
-      return v == null || v === "-" || v === "NULL" ? null : Number(v);
-    });
+    const get = (label) =>
+      months.map((m) => {
+        const v = data?.[m]?.[label];
+        return v == null || v === "-" || v === "NULL" ? null : Number(v);
+      });
     const baseFull = get("Baseline Forecast");
     const mlFull = get("ML Forecast");
     const consFull = get("Consensus");
@@ -360,74 +438,156 @@ export default function ForecastChart({ months, data }) {
     if (overlays.holidays) {
       for (let i = 0; i < 3; i++) {
         const idx = Math.floor(Math.random() * months.length);
-        bands.push({ id: `h${i}`, color: "rgba(82,196,26,0.1)", from: idx - 0.1, to: idx + 0.1 });
+        bands.push({
+          id: `h${i}`,
+          color: "rgba(82,196,26,0.1)",
+          from: idx - 0.1,
+          to: idx + 0.1,
+        });
       }
     }
     if (overlays.promotions) {
       for (let i = 0; i < 3; i++) {
         const idx = Math.floor(Math.random() * months.length);
-        bands.push({ id: `p${i}`, color: "rgba(250,173,20,0.1)", from: idx - 0.25, to: idx + 0.25 });
+        bands.push({
+          id: `p${i}`,
+          color: "rgba(250,173,20,0.1)",
+          from: idx - 0.25,
+          to: idx + 0.25,
+        });
       }
     }
     return bands;
   }, [months, overlays]);
 
-  const options = useMemo(() => ({
-    chart: {
-      backgroundColor: "#fafafa",
-      style: { fontFamily: "Arial, sans-serif" },
-      zoomType: "x",
-    },
-    title: { text: "" },
-    xAxis: {
-      categories: months,
-      gridLineWidth: 1,
-      gridLineColor: "#e0e0e0",
-      labels: { style: { color: "#555" } },
-      plotBands,
-    },
-    yAxis: {
-      type: "linear",
-      title: { text: "Units", style: { color: "#333" } },
-      gridLineDashStyle: "ShortDash",
-      gridLineColor: "#e0e0e0",
-      labels: { style: { color: "#555" } },
-      min: 1,
-    },
-    tooltip: {
-      backgroundColor: "rgba(255,255,255,0.9)",
-      borderColor: "#999",
-      borderRadius: 4,
-      style: { color: "#333" },
-      shared: true,
-    },
-    legend: { enabled: false },
-    series: [
-      // HISTORICAL LINES - markers removed
-      { name: "Actual", data: seriesData.actual, color: "#ff4d4f", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[0] },
-      { name: "Baseline", data: seriesData.baseline, color: "#1890ff", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[1] },
-      { name: "ML", data: seriesData.ml, color: "#fadb14", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[2] },
-      { name: "Consensus", data: seriesData.consensus, color: "#52c41a", marker: { enabled: false }, lineWidth: 1, visible: !hiddenSeries[3] },
-      
-      // FORECAST LINES - markers kept
-      { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: "rgba(24,144,255,0.6)", dashStyle: "Dash", marker: { enabled: true, radius: 5 }, lineWidth: 1, visible: !hiddenSeries[4] },
-      { name: "ML Forecast", data: seriesData.ml_forecast, color: "rgba(250,173,20,0.6)", dashStyle: "Dash", marker: { enabled: true, radius: 5 }, lineWidth: 1, visible: !hiddenSeries[5] },
-      { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: "rgba(82,196,26,0.6)", dashStyle: "Dash", marker: { enabled: true, radius: 5 }, lineWidth: 1, visible: !hiddenSeries[6] },
-      
-      // OVERLAYS
-      { name: "Holidays", data: [], color: "rgba(82,196,26,0.4)", enableMouseTracking: false, showInLegend: true, visible: overlays.holidays },
-      { name: "Promotions", data: [], color: "rgba(250,173,20,0.4)", enableMouseTracking: false, showInLegend: true, visible: overlays.promotions },
-    ],
-    credits: { enabled: false },
-  }), [months, seriesData, plotBands, hiddenSeries, overlays]);
+  const options = useMemo(
+    () => ({
+      chart: {
+        backgroundColor: "#fafafa",
+        style: { fontFamily: "Inter" },
+        zoomType: "x",
+      },
+      title: { text: "" },
+      xAxis: {
+        categories: months,
+        gridLineWidth: 1,
+        gridLineColor: "#e0e0e0",
+        labels: { style: { color: "#555" } },
+        plotBands,
+      },
+      yAxis: {
+        type: "linear",
+        title: { text: "Units", style: { color: "#333" } },
+        gridLineDashStyle: "ShortDash",
+        gridLineColor: "#e0e0e0",
+        labels: { style: { color: "#555" } },
+        min: 1,
+      },
+      tooltip: {
+        backgroundColor: "rgba(255,255,255,0.9)",
+        borderColor: "#999",
+        borderRadius: 4,
+        style: { color: "#333" },
+        shared: true,
+      },
+      legend: { enabled: false },
+      series: [
+        // HISTORICAL LINES - markers removed
+        {
+          name: "Actual",
+          data: seriesData.actual,
+          color: "#ff4d4f",
+          marker: { enabled: false },
+          lineWidth: 1,
+          visible: !hiddenSeries[0],
+        },
+        {
+          name: "Baseline",
+          data: seriesData.baseline,
+          color: "#1890ff",
+          marker: { enabled: false },
+          lineWidth: 1,
+          visible: !hiddenSeries[1],
+        },
+        {
+          name: "ML",
+          data: seriesData.ml,
+          color: "#fadb14",
+          marker: { enabled: false },
+          lineWidth: 1,
+          visible: !hiddenSeries[2],
+        },
+        {
+          name: "Consensus",
+          data: seriesData.consensus,
+          color: "#52c41a",
+          marker: { enabled: false },
+          lineWidth: 1,
+          visible: !hiddenSeries[3],
+        },
 
-  const handleLegendClick = item => {
+        // FORECAST LINES - markers kept
+        {
+          name: "Baseline Forecast",
+          data: seriesData.baseline_forecast,
+          color: "rgba(24,144,255,0.6)",
+          dashStyle: "Dash",
+          marker: { enabled: true, radius: 5 },
+          lineWidth: 1,
+          visible: !hiddenSeries[4],
+        },
+        {
+          name: "ML Forecast",
+          data: seriesData.ml_forecast,
+          color: "rgba(250,173,20,0.6)",
+          dashStyle: "Dash",
+          marker: { enabled: true, radius: 5 },
+          lineWidth: 1,
+          visible: !hiddenSeries[5],
+        },
+        {
+          name: "Consensus Forecast",
+          data: seriesData.consensus_forecast,
+          color: "rgba(82,196,26,0.6)",
+          dashStyle: "Dash",
+          marker: { enabled: true, radius: 5 },
+          lineWidth: 1,
+          visible: !hiddenSeries[6],
+        },
+
+        // OVERLAYS
+        {
+          name: "Holidays",
+          data: [],
+          color: "rgba(82,196,26,0.4)",
+          enableMouseTracking: false,
+          showInLegend: true,
+          visible: overlays.holidays,
+        },
+        {
+          name: "Promotions",
+          data: [],
+          color: "rgba(250,173,20,0.4)",
+          enableMouseTracking: false,
+          showInLegend: true,
+          visible: overlays.promotions,
+        },
+      ],
+      credits: { enabled: false },
+    }),
+    [months, seriesData, plotBands, hiddenSeries, overlays]
+  );
+
+  const handleLegendClick = (item) => {
     const chart = chartRef.current?.chart;
     if (!chart) return;
     if (item.isOverlay) {
-      setOverlays(prev => {
+      setOverlays((prev) => {
         const next = { ...prev, [item.key]: !prev[item.key] };
-        chart.series[item.key === "holidays" ? 7 : 8].setVisible(!prev[item.key], false);
+        chart.series[item.key === "holidays" ? 7 : 8].setVisible(
+          !prev[item.key],
+          false
+        );
         chart.redraw();
         return next;
       });
@@ -435,7 +595,10 @@ export default function ForecastChart({ months, data }) {
       const s = chart.series[item.seriesIndex];
       if (s) {
         s.visible ? s.hide() : s.show();
-        setHiddenSeries(prev => ({ ...prev, [item.seriesIndex]: !s.visible }));
+        setHiddenSeries((prev) => ({
+          ...prev,
+          [item.seriesIndex]: !s.visible,
+        }));
       }
     }
   };
@@ -444,7 +607,9 @@ export default function ForecastChart({ months, data }) {
     const chart = chartRef.current?.chart;
     if (!chart) return;
     const newHidden = {};
-    chart.series.forEach((s, i) => { newHidden[i] = !s.visible; });
+    chart.series.forEach((s, i) => {
+      newHidden[i] = !s.visible;
+    });
     setHiddenSeries(newHidden);
   }, [chartRef, overlays]);
 
@@ -452,7 +617,8 @@ export default function ForecastChart({ months, data }) {
   const mape = useMemo(() => {
     const actual = seriesData.actual;
     const consensusNum = seriesData.consensus;
-    let totalPctErr = 0, count = 0;
+    let totalPctErr = 0,
+      count = 0;
     for (let i = 0; i < actual.length; i++) {
       if (actual[i] && consensusNum[i]) {
         totalPctErr += Math.abs((actual[i] - consensusNum[i]) / actual[i]);
@@ -463,35 +629,69 @@ export default function ForecastChart({ months, data }) {
   }, [seriesData]);
 
   // Determine active keys for custom legend
-  const activeKeys = LEGEND_CONFIG
-    .filter(item => {
-      if (item.isOverlay) return overlays[item.key];
-      else return !hiddenSeries[item.seriesIndex];
-    })
-    .map(item => item.key);
+  const activeKeys = LEGEND_CONFIG.filter((item) => {
+    if (item.isOverlay) return overlays[item.key];
+    else return !hiddenSeries[item.seriesIndex];
+  }).map((item) => item.key);
 
   // Handler for custom legend toggle
   const handleCustomLegendToggle = (key) => {
-    const item = LEGEND_CONFIG.find(i => i.key === key);
+    const item = LEGEND_CONFIG.find((i) => i.key === key);
     if (!item) return;
     handleLegendClick(item);
   };
 
   return (
-    <Box sx={{ mt: 3, p: 2, bgcolor: "#fff", borderRadius: 1, boxShadow: 1, position: "relative" }}>
+    <Box
+      sx={{
+        mt: 3,
+        p: 2,
+        bgcolor: "#fff",
+        borderRadius: 1,
+        boxShadow: 1,
+        position: "relative",
+      }}
+    >
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h6" fontWeight={500}>
-          Demand Forecast
-          <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-            MAPE: <Box component="span" sx={{ fontWeight: 600, color: "#22c55e" }}>{mape}%</Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 700, fontSize: "14px" }}
+          >
+            Demand Forecast
           </Typography>
-        </Typography>
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 700, fontSize: "14px", color: "#555" }}
+          >
+            MAPE:{" "}
+            <Box component="span" sx={{ color: "#22c55e" }}>
+              {mape}%
+            </Box>
+          </Typography>
+        </Box>
+
         <Box>
-          <IconButton size="small" onClick={() => setTreeMenuOpen(v => !v)}><GridViewIcon /></IconButton>
-          <IconButton size="small"><ChatBubbleOutlineIcon /></IconButton>
-          <IconButton size="small"><ShareIcon /></IconButton>
-          <IconButton size="small"><SettingsIcon /></IconButton>
+          <IconButton size="small" onClick={() => setTreeMenuOpen((v) => !v)}>
+            <GridViewIcon />
+          </IconButton>
+          <IconButton size="small">
+            <ChatBubbleOutlineIcon />
+          </IconButton>
+          <IconButton size="small">
+            <ShareIcon />
+          </IconButton>
+          <IconButton size="small">
+            <SettingsIcon />
+          </IconButton>
         </Box>
       </Box>
 
@@ -503,7 +703,11 @@ export default function ForecastChart({ months, data }) {
 
       {/* Chart */}
       <Box sx={{ height: 400 }}>
-        <HighchartsReact highcharts={Highcharts} options={options} ref={chartRef} />
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          ref={chartRef}
+        />
       </Box>
 
       {/* Tree menu */}
