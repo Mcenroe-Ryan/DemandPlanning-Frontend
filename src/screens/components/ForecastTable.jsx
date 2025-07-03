@@ -188,7 +188,7 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: "right",
             width: "100%",
             marginBottom: 8,
           }}
@@ -208,7 +208,7 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
           Demand of Company B<br />
           Demand of Company
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "right", gap: 8 }}>
           <Avatar
             src="https://randomuser.me/api/portraits/men/32.jpg"
             sx={{ width: 28, height: 28 }}
@@ -416,7 +416,7 @@ export default function ForecastTable({
         mt={0}
         display="flex"
         justifyContent="space-between"
-        alignItems="center"
+        alignItems="right"
         px={2.5}
         py={0.5}
         bgcolor="background.paper"
@@ -425,7 +425,7 @@ export default function ForecastTable({
         borderLeft={1}
         borderColor="action.disabled"
       >
-        <Stack direction="row" spacing={5} alignItems="center">
+        <Stack direction="row" spacing={5} alignItems="right">
           <Stack direction="row" spacing={1}>
             {periodOptions.map((label) => (
               <Button
@@ -441,7 +441,8 @@ export default function ForecastTable({
                   fontWeight: 600,
                   fontSize: 14,
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: "right",
+                  justifyContent:"flex-end",
                   gap: 0.5,
                   boxShadow: "none",
                   textTransform: "none",
@@ -477,7 +478,7 @@ export default function ForecastTable({
             </Typography>
           </Stack>
         </Stack>
-        <Stack direction="row" spacing={1.5} alignItems="center">
+        <Stack direction="row" spacing={1.5} alignItems="right">
           <IconButton size="small" onClick={handleAddRowsClick}>
             <AddBoxOutlinedIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
@@ -534,11 +535,13 @@ export default function ForecastTable({
         sx={{
           p: 3,
           bgcolor: "common.white",
+          padding:0,
           borderRadius: 2,
           boxShadow: 1,
           border: "1px solid",
           borderColor: "grey.200",
           overflowX: "auto",
+          fontFamily:"'Poppins', sans-serif !important"
         }}
       >
         <table
@@ -547,7 +550,7 @@ export default function ForecastTable({
             borderCollapse: "separate",
             borderSpacing: 0,
             minWidth: 900,
-            fontFamily: "Inter",
+            fontFamily:"'Poppins', sans-serif !important",
           }}
         >
           <thead>
@@ -561,21 +564,22 @@ export default function ForecastTable({
                   fontWeight: 700,
                   fontSize: 14,
                   // Removed: textTransform: "uppercase",
+                  textAlign:"left",                  
                   padding: "8px 16px",
                   borderRight: "1px solid #e0e7ef",
                   borderBottom: "2px solid #e0e7ef",
                   color: "#3c4257",
-                  minWidth: 140,
+                  minWidth: 240,
                 }}
               ></th>
               {months.map((m) => (
-                <th
+               <th
                   key={m}
                   style={{
                     background: "#f7fafd",
                     fontWeight: 700,
                     fontSize: 14,
-                    // Removed: textTransform: "uppercase",
+                    textAlign: "right", // Correct for text alignment
                     padding: "8px 12px",
                     borderBottom: "2px solid #e0e7ef",
                     color: "#3c4257",
@@ -605,6 +609,7 @@ export default function ForecastTable({
                     fontWeight: label === "Consensus" ? 700 : 500,
                     fontSize: 14,
                     // Removed: textTransform: "uppercase",
+                    textAlign: "left",
                     padding: "8px 16px",
                     borderRight: "1px solid #e0e7ef",
                     borderBottom: "1px solid #e0e7ef",
@@ -632,6 +637,7 @@ export default function ForecastTable({
                           : undefined,
                         padding: "8px 12px",
                         borderBottom: "1px solid #e0e7ef",
+                        textAlign: "right",
                         fontSize: 14,
                         color: "#222a36",
                         minWidth: 90,
@@ -665,7 +671,9 @@ export default function ForecastTable({
                           style={{
                             color: "#aaa",
                             display: "flex",
-                            alignItems: "center",
+                            alignItems: "right",
+                            textAlign:"right",
+                            justifyContent:"end",
                             gap: 4,
                           }}
                         >
