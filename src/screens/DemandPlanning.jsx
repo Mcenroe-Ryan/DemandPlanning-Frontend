@@ -420,8 +420,8 @@ export const DemandProjectMonth = () => {
   const [showActivities, setShowActivities] = useState(false);
 
   const [dateRange, setDateRange] = useState({
-    startDate: format(subMonths(new Date(), 6), "yyyy-MM-dd"),
-    endDate: format(addMonths(new Date(), 6), "yyyy-MM-dd"),
+    startDate: format(subMonths(new Date('2024-12-01'), 6), "yyyy-MM-dd"),
+    endDate: format(addMonths(new Date('2025-12-31'), 6), "yyyy-MM-dd"),
   });
 
   const [activeTab, setActiveTab] = useState(0);
@@ -817,7 +817,7 @@ export const DemandProjectMonth = () => {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "start",
           bgcolor: "grey.700",
           p: 1.25,
           gap: 2,
