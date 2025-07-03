@@ -34,6 +34,7 @@ const BlueSquare = styled("span")({
   border: "2px solid #2196f3",
   background: "#fff",
 });
+
 const BlueChecked = styled(BlueSquare)({
   background: "#2196f3",
   position: "relative",
@@ -49,6 +50,7 @@ const BlueChecked = styled(BlueSquare)({
     transform: "rotate(45deg)",
   },
 });
+
 function BlueCheckbox(props) {
   return (
     <Checkbox
@@ -259,8 +261,45 @@ function TreeMenuSection({ section, modelName, setModelName }) {
   );
 }
 
-/* ---------- floating tree-menu ---------- */
-function TreeMenu({ open, onClose, modelName, setModelName, treeData }) {
+/* ---------- floating tree-menu with dynamic positioning ---------- */
+function TreeMenu({
+  open,
+  onClose,
+  modelName,
+  setModelName,
+  treeData,
+  anchorEl,
+}) {
+  const [menuPosition, setMenuPosition] = useState({ top: 80, right: 40 });
+
+  useEffect(() => {
+    if (open && anchorEl) {
+      const rect = anchorEl.getBoundingClientRect();
+      const parentRect = anchorEl.offsetParent?.getBoundingClientRect();
+      const menuWidth = 260;
+      const menuHeight = 360;
+
+      if (!parentRect) return;
+
+      let top = rect.bottom - parentRect.top + 8;
+      let left = rect.left - parentRect.left;
+
+      if (top + menuHeight > parentRect.height) {
+        top = rect.top - parentRect.top - menuHeight - 8;
+      }
+
+      if (left + menuWidth > parentRect.width) {
+        left = parentRect.width - menuWidth - 16;
+      }
+
+      if (left < 16) {
+        left = 16;
+      }
+
+      setMenuPosition({ top, left });
+    }
+  }, [open, anchorEl]);
+
   useEffect(() => {
     if (!open) return;
     const handle = (e) => !e.target.closest(".tree-menu-float") && onClose();
@@ -275,9 +314,9 @@ function TreeMenu({ open, onClose, modelName, setModelName, treeData }) {
       className="tree-menu-float"
       elevation={4}
       sx={{
-        position: "fixed",
-        top: 80,
-        right: 40,
+        position: "absolute",
+        top: menuPosition.top,
+        left: menuPosition.left,
         width: 260,
         maxHeight: 360,
         overflowY: "auto",
@@ -349,6 +388,7 @@ export default function ForecastChart({
 }) {
   const [treeMenuOpen, setTreeMenuOpen] = useState(false);
   const chartRef = useRef();
+  const gridIconRef = useRef(); // ✅ NEW: Reference to grid icon button
   const [overlays, setOverlays] = useState({
     holidays: true,
     promotions: true,
@@ -621,7 +661,11 @@ export default function ForecastChart({
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.3 }}>
-          <IconButton size="small" onClick={() => setTreeMenuOpen((v) => !v)}>
+          <IconButton
+            ref={gridIconRef}
+            size="small"
+            onClick={() => setTreeMenuOpen((v) => !v)}
+          >
             <GridViewIcon fontSize="small" />
           </IconButton>
           <IconButton size="small">
@@ -660,6 +704,7 @@ export default function ForecastChart({
         modelName={modelName}
         setModelName={setModelName}
         treeData={treeData}
+        anchorEl={gridIconRef.current}
       />
     </Box>
   );
