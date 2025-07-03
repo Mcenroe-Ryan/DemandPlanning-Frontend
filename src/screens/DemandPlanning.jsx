@@ -420,8 +420,8 @@ export const DemandProjectMonth = () => {
   const [showActivities, setShowActivities] = useState(false);
 
   const [dateRange, setDateRange] = useState({
-    startDate: format(subMonths(new Date('2024-12-01'), 6), "yyyy-MM-dd"),
-    endDate: format(addMonths(new Date('2025-12-31'), 6), "yyyy-MM-dd"),
+    startDate: format(subMonths(new Date("2024-12-01"), 6), "yyyy-MM-dd"),
+    endDate: format(addMonths(new Date("2025-12-31"), 6), "yyyy-MM-dd"),
   });
 
   const [activeTab, setActiveTab] = useState(0);
@@ -458,6 +458,9 @@ export const DemandProjectMonth = () => {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingSkus, setLoadingSkus] = useState(false);
   const [loadingChannels, setLoadingChannels] = useState(false);
+  const [models, setModels] = useState([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelName, setModelName] = useState("XGBoost");
 
   // For plus button menu
   const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
@@ -471,6 +474,35 @@ export const DemandProjectMonth = () => {
 
   //chatbox
   const [chatOpen, setChatOpen] = useState(false);
+
+  //model selection
+  // Add this useEffect to fetch models on component mount
+  useEffect(() => {
+    const fetchModels = async () => {
+      setLoadingModels(true);
+      try {
+        const response = await fetch("http://localhost:5000/api/models");
+        if (response.ok) {
+          const modelsData = await response.json();
+          setModels(modelsData);
+
+          // Set default model (first one or XGBoost if available)
+          if (modelsData.length > 0) {
+            const defaultModel =
+              modelsData.find((m) => m.model_name === "XGBoost") ||
+              modelsData[0];
+            setModelName(defaultModel.model_name);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      } finally {
+        setLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   const tabs = [
     { label: "Demand", count: null },
@@ -740,6 +772,7 @@ export const DemandProjectMonth = () => {
           borderBottom: 1,
           borderColor: "#78909c",
           boxShadow: 0,
+          height: "56px",
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -802,7 +835,7 @@ export const DemandProjectMonth = () => {
             </IconButton>
             <Avatar
               src="https://c.animaapp.com/Jwk7dHU9/img/ellipse@2x.png"
-              sx={{ width: 35, height: 35 }}
+              sx={{ width: 38, height: 36 }}
             />
           </Stack>
         </Toolbar>
@@ -818,7 +851,7 @@ export const DemandProjectMonth = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "start",
-          bgcolor: "grey.700",
+          bgcolor: "#64748B",
           p: 1.25,
           gap: 2,
           overflowX: "auto", // enable horizontal scroll
@@ -1087,6 +1120,10 @@ export const DemandProjectMonth = () => {
             <ForecastTable
               startDate={dateRange.startDate}
               endDate={dateRange.endDate}
+              modelName={modelName}
+              setModelName={setModelName}
+              models={models}
+              loadingModels={loadingModels}
               // actual_latest_month={actual_latest_month}
               selectedCountry={getSelectedNames(
                 selectedCountry,

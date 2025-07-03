@@ -22,6 +22,7 @@ import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
 
 // --- Helper function for consensus update API ---
+
 async function updateConsensusForecastAPI(payload) {
   const response = await fetch("http://localhost:5000/api/forecast/consensus", {
     method: "PUT",
@@ -56,7 +57,7 @@ const OPTIONAL_ROWS = [
   "On Hand",
 ];
 
-// FIXED: Month mapping to avoid Date.parse issues
+//Month mapping to avoid Date.parse issues
 const MONTH_MAP = {
   JAN: 0,
   FEB: 1,
@@ -90,12 +91,12 @@ function buildMonthLabelsBetween(startDate, endDate) {
   return months;
 }
 
-// FIXED: Helper to get YYYY-MM-01 from "Apr 25" using explicit month mapping
+//Helper to get YYYY-MM-01 from "Apr 25" using explicit month mapping
 function getMonthDate(label) {
   const [mon, yr] = label.split(" ");
   const yearNum = 2000 + parseInt(yr, 10);
 
-  // FIXED: Use explicit month mapping instead of unreliable Date.parse
+  //Use explicit month mapping instead of unreliable Date.parse
   const monthIdx = MONTH_MAP[mon.toUpperCase()];
 
   if (monthIdx === undefined) {
@@ -106,7 +107,7 @@ function getMonthDate(label) {
   return `${yearNum}-${(monthIdx + 1).toString().padStart(2, "0")}-01`;
 }
 
-// FIXED: Helper to convert API date (month-end) back to month label consistently
+// Helper to convert API date (month-end) back to month label consistently
 function dateToMonthLabel(dateStr) {
   if (!dateStr) return null;
 
@@ -118,7 +119,7 @@ function dateToMonthLabel(dateStr) {
   });
 }
 
-// --- Helper to format numbers by country ---
+//Helper to format numbers by country ---
 function formatNumberByCountry(value, country) {
   if (
     value === null ||
@@ -153,7 +154,7 @@ function formatNumberByCountry(value, country) {
   return Number(value).toLocaleString();
 }
 
-// FIXED: Helper to determine if a month is locked (<= current month) using explicit mapping
+//Helper to determine if a month is locked (<= current month) using explicit mapping
 function isMonthLocked(monthLabel) {
   const [mon, yr] = monthLabel.split(" ");
 
@@ -188,7 +189,7 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "right",
+            alignItems: "center",
             width: "100%",
             marginBottom: 8,
           }}
@@ -208,7 +209,7 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
           Demand of Company B<br />
           Demand of Company
         </div>
-        <div style={{ display: "flex", alignItems: "right", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Avatar
             src="https://randomuser.me/api/portraits/men/32.jpg"
             sx={{ width: 28, height: 28 }}
@@ -241,6 +242,10 @@ export default function ForecastTable({
   selectedChannels,
   startDate,
   endDate,
+  modelName,
+  setModelName,
+  models,
+  loadingModels,
 }) {
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
@@ -261,11 +266,25 @@ export default function ForecastTable({
     anchor: null,
   });
 
+  // const months = useMemo(() => {
+  //   return buildMonthLabelsBetween(startDate, endDate);
+  // }, [startDate, endDate]);
   const months = useMemo(() => {
-    return buildMonthLabelsBetween(startDate, endDate);
-  }, [startDate, endDate]);
+    const today = new Date();
+    today.setDate(1); // start of current month
 
-  // FIXED: futureMonthSet calculation using explicit month mapping
+    // Clone today and move -6 months back
+    const past = new Date(today);
+    past.setMonth(past.getMonth() - 6);
+
+    // Clone today and move +6 months forward
+    const future = new Date(today);
+    future.setMonth(future.getMonth() + 6);
+
+    return buildMonthLabelsBetween(past.toISOString(), future.toISOString());
+  }, []);
+
+  //futureMonthSet calculation using explicit month mapping
   const futureMonthSet = useMemo(() => {
     const today = new Date();
     const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
@@ -299,7 +318,7 @@ export default function ForecastTable({
     "On Hand": "on_hand_units",
   };
 
-  // FIXED: Fetch data function with improved data mapping and consistent month ordering
+  //Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
     fetch("http://localhost:5000/api/forecast", {
@@ -315,6 +334,7 @@ export default function ForecastTable({
         categories: selectedCategories,
         skus: selectedSKUs,
         channels: selectedChannels,
+        model_name: modelName,
       }),
     })
       .then((res) => res.json())
@@ -334,13 +354,13 @@ export default function ForecastTable({
           });
         });
 
-        // FIXED: Improved data mapping with debugging
+        //Improved data mapping with debugging
         raw.forEach((item) => {
           const dateStr =
             item.month_name || item.item_date || item.forecast_month;
           if (!dateStr) return;
 
-          // FIXED: Use the new consistent date-to-label converter
+          // Use the new consistent date-to-label converter
           const label = dateToMonthLabel(dateStr);
           console.log(`Mapping API date '${dateStr}' to label '${label}'`); // DEBUG
 
@@ -398,6 +418,7 @@ export default function ForecastTable({
     selectedCategories,
     selectedSKUs,
     selectedChannels,
+    modelName,
   ]);
 
   const baseRows = [...CORE_ROWS, ...optionalRows];
@@ -416,7 +437,7 @@ export default function ForecastTable({
         mt={0}
         display="flex"
         justifyContent="space-between"
-        alignItems="right"
+        alignItems="center"
         px={2.5}
         py={0.5}
         bgcolor="background.paper"
@@ -425,7 +446,7 @@ export default function ForecastTable({
         borderLeft={1}
         borderColor="action.disabled"
       >
-        <Stack direction="row" spacing={5} alignItems="right">
+        <Stack direction="row" spacing={5} alignItems="center">
           <Stack direction="row" spacing={1}>
             {periodOptions.map((label) => (
               <Button
@@ -434,24 +455,21 @@ export default function ForecastTable({
                 color={period === label ? "primary" : "inherit"}
                 onClick={() => setPeriod(label)}
                 sx={{
-                  minWidth: 36,
+                  minWidth: 44,
                   height: 28,
-                  borderRadius: 1.5,
-                  px: 1.5,
+                  px: 2,
+                  borderRadius: 999, 
                   fontWeight: 600,
-                  fontSize: 14,
-                  display: "flex",
-                  alignItems: "right",
-                  justifyContent:"flex-end",
-                  gap: 0.5,
-                  boxShadow: "none",
+                  fontSize: 13,
+                  lineHeight: 1.2,
                   textTransform: "none",
+                  boxShadow: "none",
+                  "&.MuiButton-outlined": {
+                    borderColor: "#90a4ae",
+                  },
                 }}
               >
                 {label}
-                {period === label && (
-                  <CheckIcon sx={{ fontSize: 14, ml: 0.5 }} />
-                )}
               </Button>
             ))}
             <Checkbox
@@ -478,7 +496,7 @@ export default function ForecastTable({
             </Typography>
           </Stack>
         </Stack>
-        <Stack direction="row" spacing={1.5} alignItems="right">
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <IconButton size="small" onClick={handleAddRowsClick}>
             <AddBoxOutlinedIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
@@ -535,13 +553,13 @@ export default function ForecastTable({
         sx={{
           p: 3,
           bgcolor: "common.white",
-          padding:0,
+          padding: 0,
           borderRadius: 2,
           boxShadow: 1,
           border: "1px solid",
           borderColor: "grey.200",
           overflowX: "auto",
-          fontFamily:"'Poppins', sans-serif !important"
+          fontFamily: "'Poppins', sans-serif !important",
         }}
       >
         <table
@@ -550,7 +568,7 @@ export default function ForecastTable({
             borderCollapse: "separate",
             borderSpacing: 0,
             minWidth: 900,
-            fontFamily:"'Poppins', sans-serif !important",
+            fontFamily: "'Poppins', sans-serif !important",
           }}
         >
           <thead>
@@ -563,8 +581,7 @@ export default function ForecastTable({
                   zIndex: 2,
                   fontWeight: 700,
                   fontSize: 14,
-                  // Removed: textTransform: "uppercase",
-                  textAlign:"left",                  
+                  textAlign: "left",
                   padding: "8px 16px",
                   borderRight: "1px solid #e0e7ef",
                   borderBottom: "2px solid #e0e7ef",
@@ -573,13 +590,13 @@ export default function ForecastTable({
                 }}
               ></th>
               {months.map((m) => (
-               <th
+                <th
                   key={m}
                   style={{
                     background: "#f7fafd",
                     fontWeight: 700,
                     fontSize: 14,
-                    textAlign: "right", // Correct for text alignment
+                    textAlign: "right",
                     padding: "8px 12px",
                     borderBottom: "2px solid #e0e7ef",
                     color: "#3c4257",
@@ -608,7 +625,6 @@ export default function ForecastTable({
                     zIndex: 1,
                     fontWeight: label === "Consensus" ? 700 : 500,
                     fontSize: 14,
-                    // Removed: textTransform: "uppercase",
                     textAlign: "left",
                     padding: "8px 16px",
                     borderRight: "1px solid #e0e7ef",
@@ -671,9 +687,9 @@ export default function ForecastTable({
                           style={{
                             color: "#aaa",
                             display: "flex",
-                            alignItems: "right",
-                            textAlign:"right",
-                            justifyContent:"end",
+                            alignItems: "center",
+                            textAlign: "right",
+                            justifyContent: "end",
                             gap: 4,
                           }}
                         >
@@ -697,11 +713,11 @@ export default function ForecastTable({
                           disabled={isUpdating}
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={async () => {
-                            console.log(`Updating consensus for column: ${m}`); // DEBUG
+                            console.log(`Updating consensus for column: ${m}`);
                             const targetDate = getMonthDate(m);
                             console.log(
                               `getMonthDate('${m}') returns: ${targetDate}`
-                            ); // DEBUG
+                            );
 
                             setUpdatingCell({ month: m, row: label });
                             const payload = {
@@ -730,9 +746,10 @@ export default function ForecastTable({
                               end_date: endDate,
                               consensus_forecast: editValue,
                               target_month: targetDate,
+                              model_name: modelName, 
                             };
 
-                            console.log("Sending payload:", payload); // DEBUG
+                            console.log("Sending payload:", payload);
 
                             try {
                               await updateConsensusForecastAPI(payload);
@@ -741,11 +758,11 @@ export default function ForecastTable({
 
                               // Add small delay to ensure backend update is complete
                               setTimeout(() => {
-                                console.log("Refetching data after update..."); // DEBUG
+                                console.log("Refetching data after update...");
                                 fetchForecastData();
                               }, 100);
                             } catch (err) {
-                              console.error("Update failed:", err); // DEBUG
+                              console.error("Update failed:", err);
                               alert("Failed to update consensus forecast");
                               setEditingCell({ month: null, row: null });
                               setUpdatingCell({ month: null, row: null });
@@ -784,7 +801,16 @@ export default function ForecastTable({
         anchorEl={lockComment.anchor}
         onClose={() => setLockComment({ ...lockComment, open: false })}
       />
-      {data && <ForecastChart months={months} data={data} />}
+      {data && (
+        <ForecastChart
+          months={months}
+          data={data}
+          modelName={modelName}
+          setModelName={setModelName}
+          models={models}
+          loadingModels={loadingModels}
+        />
+      )}
     </>
   );
 }

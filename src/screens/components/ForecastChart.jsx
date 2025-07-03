@@ -15,6 +15,7 @@ import {
   Radio,
   FormControlLabel,
   Checkbox,
+  CircularProgress,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import GridViewIcon from "@mui/icons-material/GridView";
@@ -25,7 +26,7 @@ import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
 
-// Custom styled checkbox
+/* ---------- reusable styled checkbox ---------- */
 const BlueSquare = styled("span")({
   width: 18,
   height: 18,
@@ -33,7 +34,6 @@ const BlueSquare = styled("span")({
   border: "2px solid #2196f3",
   background: "#fff",
 });
-
 const BlueChecked = styled(BlueSquare)({
   background: "#2196f3",
   position: "relative",
@@ -49,7 +49,6 @@ const BlueChecked = styled(BlueSquare)({
     transform: "rotate(45deg)",
   },
 });
-
 function BlueCheckbox(props) {
   return (
     <Checkbox
@@ -63,29 +62,12 @@ function BlueCheckbox(props) {
   );
 }
 
+/* ---------- legend config ---------- */
 const LEGEND_CONFIG = [
-  {
-    key: "actual",
-    label: "Actual",
-    color: "#ff4d4f",
-    dash: "Solid",
-    seriesIndex: 0,
-  },
-  {
-    key: "baseline",
-    label: "Baseline",
-    color: "#1890ff",
-    dash: "Solid",
-    seriesIndex: 1,
-  },
-  { key: "ml", label: "ML", color: "#fadb14", dash: "Solid", seriesIndex: 2 },
-  {
-    key: "consensus",
-    label: "Consensus",
-    color: "#52c41a",
-    dash: "Solid",
-    seriesIndex: 3,
-  },
+  { key: "actual", label: "Actual", color: "#ff4d4f", seriesIndex: 0 },
+  { key: "baseline", label: "Baseline", color: "#1890ff", seriesIndex: 1 },
+  { key: "ml", label: "ML", color: "#fadb14", seriesIndex: 2 },
+  { key: "consensus", label: "Consensus", color: "#52c41a", seriesIndex: 3 },
   {
     key: "baseline_forecast",
     label: "Baseline Forecast",
@@ -107,63 +89,40 @@ const LEGEND_CONFIG = [
     dash: "Dash",
     seriesIndex: 6,
   },
-  {
-    key: "holidays",
-    label: "Holidays",
-    color: "rgba(82,196,26,0.4)",
-    dash: "Solid",
-    isOverlay: true,
-  },
-  {
-    key: "promotions",
-    label: "Promotions",
-    color: "rgba(250,173,20,0.4)",
-    dash: "Solid",
-    isOverlay: true,
-  },
+  { key: "holidays", label: "Holidays", color: "#BBF7D0", isOverlay: true },
+  { key: "promotions", label: "Promotions", color: "#FED7AA", isOverlay: true },
 ];
 
-// Tree menu data
-const treeData = [
-  {
-    id: 1,
-    title: "Model",
-    disabled: false,
-    type: "radio",
-    items: [
-      { id: 11, label: "XGBoost", value: "xgboost", starred: true },
-      { id: 12, label: "LightGBM", value: "lightgbm" },
-      { id: 13, label: "ARIMA", value: "arima" },
-    ],
-  },
-  {
-    id: 2,
-    title: "External Factors",
-    disabled: true,
-    type: "checkbox",
-    items: [
-      { id: 21, label: "All", checked: false },
-      { id: 22, label: "CPI", checked: true, starred: true },
-      { id: 23, label: "Interest Rate", checked: false },
-      { id: 24, label: "GDP", checked: true, starred: true },
-      { id: 25, label: "Unemployment Rate", checked: true, starred: true },
-      { id: 26, label: "Average Disposable Income", checked: false },
-    ],
-  },
-  {
-    id: 3,
-    title: "Events",
-    disabled: true,
-    type: "checkbox",
-    items: [
-      { id: 31, label: "All", checked: true, starred: true },
-      { id: 32, label: "Holidays", checked: true },
-      { id: 33, label: "Marketing & Promotion", checked: true },
-    ],
-  },
-];
+/* ---------- helper: plot bands from events ---------- */
+function createPlotBands(events, months, overlays) {
+  return events.reduce((acc, ev) => {
+    const sIdx = months.indexOf(
+      new Date(ev.start_date).toLocaleString("default", {
+        month: "short",
+        year: "2-digit",
+      })
+    );
+    const eIdx = months.indexOf(
+      new Date(ev.end_date).toLocaleString("default", {
+        month: "short",
+        year: "2-digit",
+      })
+    );
+    if (sIdx === -1) return acc;
+    const isHoliday = ev.event_type === "Holiday";
+    const show = isHoliday ? overlays.holidays : overlays.promotions;
+    if (!show) return acc;
+    acc.push({
+      id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
+      from: sIdx - 0.25,
+      to: (eIdx === -1 ? sIdx : eIdx) + 0.25,
+      color: isHoliday ? "rgba(82,196,26,0.1)" : "rgba(250,173,20,0.1)",
+    });
+    return acc;
+  }, []);
+}
 
-// Tree menu item (disabled sections)
+/* ---------- tree-menu items ---------- */
 function TreeMenuItem({ item, disabled }) {
   return (
     <ListItem
@@ -185,7 +144,7 @@ function TreeMenuItem({ item, disabled }) {
       )}
       <ListItemText
         primary={
-          <Typography variant="body2" color="text.secondary" sx={{ mt: -0.25 }}>
+          <Typography variant="body2" color="text.secondary">
             {item.label}
           </Typography>
         }
@@ -194,10 +153,10 @@ function TreeMenuItem({ item, disabled }) {
   );
 }
 
-// Tree menu section
-function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
+/* ---------- tree-menu section ---------- */
+function TreeMenuSection({ section, modelName, setModelName }) {
   const [expanded, setExpanded] = useState(section.id === 1);
-  const toggle = () => !section.disabled && setExpanded(!expanded);
+  const toggle = () => !section.disabled && setExpanded((v) => !v);
 
   return (
     <>
@@ -206,16 +165,19 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
         sx={{
           px: 1,
           py: 1,
-          bgcolor: section.disabled ? "grey.100" : "primary.lighter",
-          borderRadius: 1,
+          mb: 0.5,
           display: "flex",
           alignItems: "center",
           gap: 1,
-          mb: 0.5,
+          borderRadius: 1,
+          bgcolor: section.disabled ? "grey.100" : "primary.lighter",
           cursor: section.disabled ? "not-allowed" : "pointer",
           opacity: section.disabled ? 0.6 : 1,
         }}
       >
+        {section.id === 1 && section.disabled && (
+          <CircularProgress size={16} sx={{ mr: 1 }} />
+        )}
         <ExpandMoreIcon
           sx={{
             transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
@@ -235,6 +197,7 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
           }}
         >
           {section.title}
+          {section.id === 1 && section.disabled && " (Loading…)"}
         </Typography>
       </Box>
 
@@ -242,36 +205,42 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
         <Box
           sx={{
             pl: 3,
-            opacity: section.disabled ? 0.5 : 1,
             pointerEvents: section.disabled ? "none" : "auto",
+            opacity: section.disabled ? 0.5 : 1,
           }}
         >
           {section.type === "radio" ? (
             <RadioGroup
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+              value={modelName}
+              onChange={(e) => setModelName(e.target.value)}
               sx={{ display: "flex", gap: 0.5 }}
             >
-              {section.items.map((item) => (
-                <FormControlLabel
-                  key={item.id}
-                  value={item.value}
-                  control={<Radio size="small" />}
-                  label={
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                    >
-                      {item.starred && (
-                        <StarIcon
-                          sx={{ fontSize: 14, color: "warning.main" }}
-                        />
-                      )}
-                      <Typography variant="body2">{item.label}</Typography>
-                    </Box>
-                  }
-                  sx={{ mr: 0 }}
-                />
-              ))}
+              {section.items.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No models available
+                </Typography>
+              ) : (
+                section.items.map((item) => (
+                  <FormControlLabel
+                    key={item.id}
+                    value={item.value}
+                    control={<Radio size="small" />}
+                    label={
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        {item.starred && (
+                          <StarIcon
+                            sx={{ fontSize: 14, color: "warning.main" }}
+                          />
+                        )}
+                        <Typography variant="body2">{item.label}</Typography>
+                      </Box>
+                    }
+                    sx={{ mr: 0 }}
+                  />
+                ))
+              )}
             </RadioGroup>
           ) : (
             <List disablePadding>
@@ -290,17 +259,13 @@ function TreeMenuSection({ section, selectedModel, setSelectedModel }) {
   );
 }
 
-// Floating TreeMenu
-function TreeMenu({ open, onClose }) {
-  const [selectedModel, setSelectedModel] = useState("xgboost");
-
+/* ---------- floating tree-menu ---------- */
+function TreeMenu({ open, onClose, modelName, setModelName, treeData }) {
   useEffect(() => {
     if (!open) return;
-    const handleClick = (e) => {
-      if (!e.target.closest(".tree-menu-float")) onClose();
-    };
-    window.addEventListener("mousedown", handleClick);
-    return () => window.removeEventListener("mousedown", handleClick);
+    const handle = (e) => !e.target.closest(".tree-menu-float") && onClose();
+    window.addEventListener("mousedown", handle);
+    return () => window.removeEventListener("mousedown", handle);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -313,11 +278,11 @@ function TreeMenu({ open, onClose }) {
         position: "fixed",
         top: 80,
         right: 40,
-        zIndex: 2000,
         width: 260,
         maxHeight: 360,
         overflowY: "auto",
         p: 1,
+        zIndex: 2000,
       }}
     >
       <Stack spacing={0.5}>
@@ -325,8 +290,8 @@ function TreeMenu({ open, onClose }) {
           <TreeMenuSection
             key={sec.id}
             section={sec}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
+            modelName={modelName}
+            setModelName={setModelName}
           />
         ))}
       </Stack>
@@ -334,51 +299,54 @@ function TreeMenu({ open, onClose }) {
   );
 }
 
-// Box-style custom legend
+/* ---------- custom legend ---------- */
 function CustomLegend({ activeKeys, onToggle }) {
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
-      {LEGEND_CONFIG.map(({ key, label, color }) => {
-        const isActive = activeKeys.includes(key);
-        return (
+      {LEGEND_CONFIG.map(({ key, label, color }) => (
+        <Box
+          key={key}
+          onClick={() => onToggle(key)}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+            opacity: activeKeys.includes(key) ? 1 : 0.5,
+            borderRadius: 1,
+            border: "1px solid",
+            borderColor: color,
+            px: 1,
+            userSelect: "none",
+            "&:hover": { opacity: 0.8 },
+          }}
+        >
           <Box
-            key={key}
-            onClick={() => onToggle(key)}
             sx={{
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-              opacity: isActive ? 1 : 0.5,
+              width: 12,
+              height: 12,
+              bgcolor: color,
               borderRadius: 1,
-              border: "1px solid",
-              borderColor: color,
-              padding: "2px 8px", // Reduced from "4px 12px"
-              userSelect: "none",
-              transition: "opacity 0.2s",
-              "&:hover": { opacity: 0.8 },
+              mr: 1,
             }}
-          >
-            <Box
-              sx={{
-                width: 12, // Reduced from 16
-                height: 12, // Reduced from 16
-                backgroundColor: color,
-                borderRadius: 1,
-                marginRight: 1,
-              }}
-            />
-            <Typography variant="body2" sx={{ fontWeight: 500, color: "#222" }}>
-              {label}
-            </Typography>
-          </Box>
-        );
-      })}
+          />
+          <Typography variant="body2" fontWeight={500}>
+            {label}
+          </Typography>
+        </Box>
+      ))}
     </Box>
   );
 }
 
-// Main ForecastChart component
-export default function ForecastChart({ months, data }) {
+
+export default function ForecastChart({
+  months,
+  data,
+  modelName,
+  setModelName,
+  models,
+  loadingModels,
+}) {
   const [treeMenuOpen, setTreeMenuOpen] = useState(false);
   const chartRef = useRef();
   const [overlays, setOverlays] = useState({
@@ -386,80 +354,103 @@ export default function ForecastChart({ months, data }) {
     promotions: true,
   });
   const [hiddenSeries, setHiddenSeries] = useState({});
+  const [events, setEvents] = useState([]);
 
-  const today = new Date();
-  const currentIdx = months.indexOf(
-    today.toLocaleString("default", { month: "short", year: "2-digit" })
+  /* ---------- dynamic tree-data (now INSIDE component) ---------- */
+  const treeData = useMemo(
+    () => [
+      {
+        id: 1,
+        title: "Model",
+        disabled: loadingModels,
+        type: "radio",
+        items: models.map((m) => ({
+          id: m.model_id,
+          label: m.model_name,
+          value: m.model_name,
+          starred: m.model_name === "XGBoost",
+        })),
+      },
+      {
+        id: 2,
+        title: "External Factors",
+        disabled: true,
+        type: "checkbox",
+        items: [
+          { id: 21, label: "All", checked: false },
+          { id: 22, label: "CPI", checked: true, starred: true },
+          { id: 23, label: "Interest Rate", checked: false },
+          { id: 24, label: "GDP", checked: true, starred: true },
+          { id: 25, label: "Unemployment Rate", checked: true, starred: true },
+          { id: 26, label: "Average Disposable Income", checked: false },
+        ],
+      },
+      {
+        id: 3,
+        title: "Events",
+        disabled: true,
+        type: "checkbox",
+        items: [
+          { id: 31, label: "All", checked: true, starred: true },
+          { id: 32, label: "Holidays", checked: true },
+          { id: 33, label: "Marketing & Promotion", checked: true },
+        ],
+      },
+    ],
+    [models, loadingModels]
   );
 
-  const joinSeries = (hist, fc) => {
+  /* ---------- fetch events once ---------- */
+  useEffect(() => {
+    fetch("http://localhost:5000/api/events")
+      .then((r) => r.json())
+      .then(setEvents)
+      .catch(() => setEvents([]));
+  }, []);
+
+  /* ---------- split hist/forecast for stepped joins ---------- */
+  const todayIdx = months.indexOf(
+    new Date().toLocaleString("default", { month: "short", year: "2-digit" })
+  );
+  const join = (hist, fc) => {
     const out = [...fc];
-    for (let i = 0; i < out.length; i++) {
-      if (out[i] != null && i > 0 && out[i - 1] == null) {
-        out[i - 1] = hist[currentIdx];
+    for (let i = 1; i < out.length; i++) {
+      if (out[i] != null && out[i - 1] == null) {
+        out[i - 1] = hist[todayIdx];
         break;
       }
     }
     return out;
   };
 
+  /* ---------- series data ---------- */
   const seriesData = useMemo(() => {
-    const get = (label) =>
+    const get = (row) =>
       months.map((m) => {
-        const v = data?.[m]?.[label];
-        return v == null || v === "-" || v === "NULL" ? null : Number(v);
+        const v = data?.[m]?.[row];
+        return v == null || v === "-" ? null : +v;
       });
+
     const baseFull = get("Baseline Forecast");
     const mlFull = get("ML Forecast");
     const consFull = get("Consensus");
     const actual = get("Actual");
 
-    const baseHist = baseFull.map((v, i) => (i <= currentIdx ? v : null));
-    const mlHist = mlFull.map((v, i) => (i <= currentIdx ? v : null));
-    const consHist = consFull.map((v, i) => (i <= currentIdx ? v : null));
-
-    const baseFc = baseFull.map((v, i) => (i > currentIdx ? v : null));
-    const mlFc = mlFull.map((v, i) => (i > currentIdx ? v : null));
-    const consFc = consFull.map((v, i) => (i > currentIdx ? v : null));
+    const histCut = (arr) => arr.map((v, i) => (i <= todayIdx ? v : null));
+    const fcCut = (arr) => arr.map((v, i) => (i > todayIdx ? v : null));
 
     return {
       actual,
-      baseline: baseHist,
-      baseline_forecast: joinSeries(baseHist, baseFc),
-      ml: mlHist,
-      ml_forecast: joinSeries(mlHist, mlFc),
-      consensus: consHist,
-      consensus_forecast: joinSeries(consHist, consFc),
+      baseline: histCut(baseFull),
+      baseline_forecast: join(histCut(baseFull), fcCut(baseFull)),
+      ml: histCut(mlFull),
+      ml_forecast: join(histCut(mlFull), fcCut(mlFull)),
+      consensus: histCut(consFull),
+      consensus_forecast: join(histCut(consFull), fcCut(consFull)),
     };
-  }, [months, data, currentIdx]);
+  }, [months, data, todayIdx]);
 
-  const plotBands = useMemo(() => {
-    const bands = [];
-    if (overlays.holidays) {
-      for (let i = 0; i < 3; i++) {
-        const idx = Math.floor(Math.random() * months.length);
-        bands.push({
-          id: `h${i}`,
-          color: "rgba(82,196,26,0.1)",
-          from: idx - 0.1,
-          to: idx + 0.1,
-        });
-      }
-    }
-    if (overlays.promotions) {
-      for (let i = 0; i < 3; i++) {
-        const idx = Math.floor(Math.random() * months.length);
-        bands.push({
-          id: `p${i}`,
-          color: "rgba(250,173,20,0.1)",
-          from: idx - 0.25,
-          to: idx + 0.25,
-        });
-      }
-    }
-    return bands;
-  }, [months, overlays]);
-
+  /* ---------- highcharts options ---------- */
   const options = useMemo(
     () => ({
       chart: {
@@ -473,67 +464,47 @@ export default function ForecastChart({ months, data }) {
         gridLineWidth: 1,
         gridLineColor: "#e0e0e0",
         labels: { style: { color: "#555" } },
-        plotBands,
+        plotBands: createPlotBands(events, months, overlays),
       },
       yAxis: {
-        type: "linear",
-        title: { text: "Units", style: { color: "#333" } },
+        title: { text: "Units" },
         gridLineDashStyle: "ShortDash",
         gridLineColor: "#e0e0e0",
-        labels: { style: { color: "#555" } },
         min: 1,
       },
-      tooltip: {
-        backgroundColor: "rgba(255,255,255,0.9)",
-        borderColor: "#999",
-        borderRadius: 4,
-        style: { color: "#333" },
-        shared: true,
-      },
+      tooltip: { shared: true },
       legend: { enabled: false },
+      credits: { enabled: false },
       series: [
-        // HISTORICAL LINES - markers removed
         {
           name: "Actual",
           data: seriesData.actual,
           color: "#ff4d4f",
-          marker: { enabled: false },
-          lineWidth: 1,
           visible: !hiddenSeries[0],
         },
         {
           name: "Baseline",
           data: seriesData.baseline,
           color: "#1890ff",
-          marker: { enabled: false },
-          lineWidth: 1,
           visible: !hiddenSeries[1],
         },
         {
           name: "ML",
           data: seriesData.ml,
           color: "#fadb14",
-          marker: { enabled: false },
-          lineWidth: 1,
           visible: !hiddenSeries[2],
         },
         {
           name: "Consensus",
           data: seriesData.consensus,
           color: "#52c41a",
-          marker: { enabled: false },
-          lineWidth: 1,
           visible: !hiddenSeries[3],
         },
-
-        // FORECAST LINES - markers kept
         {
           name: "Baseline Forecast",
           data: seriesData.baseline_forecast,
           color: "rgba(24,144,255,0.6)",
           dashStyle: "Dash",
-          marker: { enabled: true, radius: 5 },
-          lineWidth: 1,
           visible: !hiddenSeries[4],
         },
         {
@@ -541,8 +512,6 @@ export default function ForecastChart({ months, data }) {
           data: seriesData.ml_forecast,
           color: "rgba(250,173,20,0.6)",
           dashStyle: "Dash",
-          marker: { enabled: true, radius: 5 },
-          lineWidth: 1,
           visible: !hiddenSeries[5],
         },
         {
@@ -550,96 +519,75 @@ export default function ForecastChart({ months, data }) {
           data: seriesData.consensus_forecast,
           color: "rgba(82,196,26,0.6)",
           dashStyle: "Dash",
-          marker: { enabled: true, radius: 5 },
-          lineWidth: 1,
           visible: !hiddenSeries[6],
         },
-
-        // OVERLAYS
         {
           name: "Holidays",
           data: [],
-          color: "rgba(82,196,26,0.4)",
-          enableMouseTracking: false,
+          color: "#BBF7D0",
           showInLegend: true,
+          enableMouseTracking: false,
           visible: overlays.holidays,
         },
         {
           name: "Promotions",
           data: [],
-          color: "rgba(250,173,20,0.4)",
-          enableMouseTracking: false,
+          color: "#FED7AA",
           showInLegend: true,
+          enableMouseTracking: false,
           visible: overlays.promotions,
         },
       ],
-      credits: { enabled: false },
     }),
-    [months, seriesData, plotBands, hiddenSeries, overlays]
+    [months, seriesData, events, overlays, hiddenSeries]
   );
 
+  /* ---------- legend click handler ---------- */
   const handleLegendClick = (item) => {
     const chart = chartRef.current?.chart;
     if (!chart) return;
+
     if (item.isOverlay) {
       setOverlays((prev) => {
-        const next = { ...prev, [item.key]: !prev[item.key] };
-        chart.series[item.key === "holidays" ? 7 : 8].setVisible(
-          !prev[item.key],
-          false
-        );
+        const vis = !prev[item.key];
+        chart.series[item.key === "holidays" ? 7 : 8].setVisible(vis, false);
         chart.redraw();
-        return next;
+        return { ...prev, [item.key]: vis };
       });
     } else {
       const s = chart.series[item.seriesIndex];
-      if (s) {
-        s.visible ? s.hide() : s.show();
-        setHiddenSeries((prev) => ({
-          ...prev,
-          [item.seriesIndex]: !s.visible,
-        }));
-      }
+      s.visible ? s.hide() : s.show();
+      setHiddenSeries((prev) => ({ ...prev, [item.seriesIndex]: !s.visible }));
     }
   };
 
+  /* ---------- sync hidden series state on first render ---------- */
   useEffect(() => {
     const chart = chartRef.current?.chart;
     if (!chart) return;
-    const newHidden = {};
-    chart.series.forEach((s, i) => {
-      newHidden[i] = !s.visible;
-    });
-    setHiddenSeries(newHidden);
-  }, [chartRef, overlays]);
+    const init = {};
+    chart.series.forEach((s, i) => (init[i] = !s.visible));
+    setHiddenSeries(init);
+  }, []);
 
-  // Compute MAPE
+  /* ---------- mape ---------- */
   const mape = useMemo(() => {
-    const actual = seriesData.actual;
-    const consensusNum = seriesData.consensus;
-    let totalPctErr = 0,
-      count = 0;
-    for (let i = 0; i < actual.length; i++) {
-      if (actual[i] && consensusNum[i]) {
-        totalPctErr += Math.abs((actual[i] - consensusNum[i]) / actual[i]);
-        count++;
+    const { actual, consensus } = seriesData;
+    let sum = 0,
+      cnt = 0;
+    actual.forEach((v, i) => {
+      if (v && consensus[i]) {
+        sum += Math.abs((v - consensus[i]) / v);
+        cnt += 1;
       }
-    }
-    return count ? ((totalPctErr / count) * 100).toFixed(1) : "-";
+    });
+    return cnt ? (100 * (sum / cnt)).toFixed(1) : "-";
   }, [seriesData]);
 
-  // Determine active keys for custom legend
-  const activeKeys = LEGEND_CONFIG.filter((item) => {
-    if (item.isOverlay) return overlays[item.key];
-    else return !hiddenSeries[item.seriesIndex];
-  }).map((item) => item.key);
-
-  // Handler for custom legend toggle
-  const handleCustomLegendToggle = (key) => {
-    const item = LEGEND_CONFIG.find((i) => i.key === key);
-    if (!item) return;
-    handleLegendClick(item);
-  };
+  /* ---------- active legend keys ---------- */
+  const activeKeys = LEGEND_CONFIG.filter((it) =>
+    it.isOverlay ? overlays[it.key] : !hiddenSeries[it.seriesIndex]
+  ).map((it) => it.key);
 
   return (
     <Box
@@ -652,7 +600,7 @@ export default function ForecastChart({ months, data }) {
         position: "relative",
       }}
     >
-      {/* Header */}
+      {/* header */}
       <Box
         sx={{
           display: "flex",
@@ -662,46 +610,41 @@ export default function ForecastChart({ months, data }) {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 700, fontSize: "14px" }}
-          >
+          <Typography variant="body2" fontWeight={700}>
             Demand Forecast
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{ fontWeight: 700, fontSize: "14px", color: "#555" }}
-          >
-            MAPE:{" "}
+          <Typography variant="body2" fontWeight={700} color="#555">
+            MAPE:&nbsp;
             <Box component="span" sx={{ color: "#22c55e" }}>
               {mape}%
             </Box>
           </Typography>
         </Box>
-
-        <Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.3 }}>
           <IconButton size="small" onClick={() => setTreeMenuOpen((v) => !v)}>
-            <GridViewIcon />
+            <GridViewIcon fontSize="small" />
           </IconButton>
           <IconButton size="small">
-            <ChatBubbleOutlineIcon />
+            <ChatBubbleOutlineIcon fontSize="small" />
           </IconButton>
           <IconButton size="small">
-            <ShareIcon />
+            <ShareIcon fontSize="small" />
           </IconButton>
           <IconButton size="small">
-            <SettingsIcon />
+            <SettingsIcon fontSize="small" />
           </IconButton>
         </Box>
       </Box>
 
-      {/* Custom box-style legend */}
+      {/* legend */}
       <CustomLegend
         activeKeys={activeKeys}
-        onToggle={handleCustomLegendToggle}
+        onToggle={(k) =>
+          handleLegendClick(LEGEND_CONFIG.find((i) => i.key === k))
+        }
       />
 
-      {/* Chart */}
+      {/* chart */}
       <Box sx={{ height: 400 }}>
         <HighchartsReact
           highcharts={Highcharts}
@@ -710,8 +653,14 @@ export default function ForecastChart({ months, data }) {
         />
       </Box>
 
-      {/* Tree menu */}
-      <TreeMenu open={treeMenuOpen} onClose={() => setTreeMenuOpen(false)} />
+      {/* floating tree-menu */}
+      <TreeMenu
+        open={treeMenuOpen}
+        onClose={() => setTreeMenuOpen(false)}
+        modelName={modelName}
+        setModelName={setModelName}
+        treeData={treeData}
+      />
     </Box>
   );
 }
