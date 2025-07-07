@@ -51,7 +51,9 @@ import { ChartSection } from "./components/ChartSection";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/chatbox";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+// const apiUrl = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options
@@ -483,7 +485,7 @@ export const DemandProjectMonth = () => {
     const fetchModels = async () => {
       setLoadingModels(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/models`);
+        const response = await fetch(`${API_BASE_URL}/models`);
         if (response.ok) {
           const modelsData = await response.json();
           setModels(modelsData);
@@ -516,7 +518,7 @@ export const DemandProjectMonth = () => {
   const fetchCountries = () => {
     setLoadingCountries(true);
     axios
-      .get(`http://localhost:5000/api/getAllCountries`)
+      .get(`${API_BASE_URL}/getAllCountries`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,
@@ -550,7 +552,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingStates(true);
     axios
-      .post(`http://localhost:5000/api/states-by-country`, {
+      .post(`${API_BASE_URL}/states-by-country`, {
         countryIds: selectedCountry,
       })
       .then((res) => {
@@ -603,7 +605,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingCities(true);
     axios
-      .post(`http://localhost:5000/api/cities-by-states`, {
+      .post(`${API_BASE_URL}/cities-by-states`, {
         stateIds: selectedState,
       })
       .then((res) => {
@@ -652,7 +654,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingPlants(true);
     axios
-      .post(`http://localhost:5000/api/plants-by-cities`, {
+      .post(`${API_BASE_URL}/plants-by-cities`, {
         cityIds: selectedCities,
       })
       .then((res) => {
@@ -695,7 +697,7 @@ export const DemandProjectMonth = () => {
     setLoadingCategories(true);
 
     axios
-      .post(`http://localhost:5000/api/categories-by-plants`, {
+      .post(`${API_BASE_URL}/categories-by-plants`, {
         plantIds: selectedPlants,
       })
       .then((res) => {
@@ -732,7 +734,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingSkus(true);
     axios
-      .post(`http://localhost:5000/api/skus-by-categories`, {
+      .post(`${API_BASE_URL}/skus-by-categories`, {
         categoryIds: selectedCategories,
       })
       .then((res) => {
@@ -755,7 +757,7 @@ export const DemandProjectMonth = () => {
   useEffect(() => {
     setLoadingChannels(true);
     axios
-      .get(`http://localhost:5000/api/getAllChannels`)
+      .get(`${API_BASE_URL}/getAllChannels`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,

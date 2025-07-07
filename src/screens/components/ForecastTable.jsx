@@ -22,8 +22,11 @@ import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
 // --- Helper function for consensus update API ---
 
+// const apiUrl = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 async function updateConsensusForecastAPI(payload) {
-  const response = await fetch(`http://localhost:5000/api/forecast/consensus`, {
+  const response = await fetch(`${API_BASE_URL}/forecast/consensus`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -332,7 +335,7 @@ const months = useMemo(() => {
   //Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
-    fetch(`http://localhost:5000/api/forecast`, {
+    fetch(`${API_BASE_URL}/forecast`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

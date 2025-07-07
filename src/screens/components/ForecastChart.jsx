@@ -25,7 +25,11 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
-const apiUrl = import.meta.env.VITE_API_URL;
+
+// const apiUrl = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+
 /* ---------- reusable styled checkbox ---------- */
 const BlueSquare = styled("span")({
   width: 18,
@@ -442,7 +446,7 @@ export default function ForecastChart({
 
   /* ---------- fetch events once ---------- */
   useEffect(() => {
-    fetch(`http://localhost:5000/api/events`)
+    fetch(`${API_BASE_URL}/events`)
       .then((r) => r.json())
       .then(setEvents)
       .catch(() => setEvents([]));
