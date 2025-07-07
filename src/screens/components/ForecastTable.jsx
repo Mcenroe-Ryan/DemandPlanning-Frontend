@@ -20,11 +20,11 @@ import CheckIcon from "@mui/icons-material/Check";
 import LockIcon from "@mui/icons-material/Lock";
 import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
-
+const apiUrl = import.meta.env.VITE_API_URL;
 // --- Helper function for consensus update API ---
 
 async function updateConsensusForecastAPI(payload) {
-  const response = await fetch("http://localhost:5000/api/forecast/consensus", {
+  const response = await fetch(`${apiUrl}/forecast/consensus`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -321,7 +321,7 @@ export default function ForecastTable({
   //Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
-    fetch("http://localhost:5000/api/forecast", {
+    fetch(`${apiUrl}/forecast`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
