@@ -483,7 +483,7 @@ export const DemandProjectMonth = () => {
     const fetchModels = async () => {
       setLoadingModels(true);
       try {
-        const response = await fetch(`${apiUrl}/models`);
+        const response = await fetch(`http://localhost:5000/api/models`);
         if (response.ok) {
           const modelsData = await response.json();
           setModels(modelsData);
@@ -516,7 +516,7 @@ export const DemandProjectMonth = () => {
   const fetchCountries = () => {
     setLoadingCountries(true);
     axios
-      .get(`${apiUrl}/getAllCountries`)
+      .get(`http://localhost:5000/api/getAllCountries`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,
@@ -550,7 +550,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingStates(true);
     axios
-      .post(`${apiUrl}/states-by-country`, {
+      .post(`http://localhost:5000/api/states-by-country`, {
         countryIds: selectedCountry,
       })
       .then((res) => {
@@ -603,7 +603,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingCities(true);
     axios
-      .post(`${apiUrl}/cities-by-states`, {
+      .post(`http://localhost:5000/api/cities-by-states`, {
         stateIds: selectedState,
       })
       .then((res) => {
@@ -652,7 +652,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingPlants(true);
     axios
-      .post(`${apiUrl}/plants-by-cities`, {
+      .post(`http://localhost:5000/api/plants-by-cities`, {
         cityIds: selectedCities,
       })
       .then((res) => {
@@ -695,7 +695,7 @@ export const DemandProjectMonth = () => {
     setLoadingCategories(true);
 
     axios
-      .post(`${apiUrl}/categories-by-plants`, {
+      .post(`http://localhost:5000/api/categories-by-plants`, {
         plantIds: selectedPlants,
       })
       .then((res) => {
@@ -732,7 +732,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingSkus(true);
     axios
-      .post(`${apiUrl}/skus-by-categories`, {
+      .post(`http://localhost:5000/api/skus-by-categories`, {
         categoryIds: selectedCategories,
       })
       .then((res) => {
@@ -755,7 +755,7 @@ export const DemandProjectMonth = () => {
   useEffect(() => {
     setLoadingChannels(true);
     axios
-      .get(`${apiUrl}/getAllChannels`)
+      .get(`http://localhost:5000/api/getAllChannels`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,

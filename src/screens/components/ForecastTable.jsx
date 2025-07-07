@@ -20,11 +20,10 @@ import CheckIcon from "@mui/icons-material/Check";
 import LockIcon from "@mui/icons-material/Lock";
 import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
-const apiUrl = import.meta.env.VITE_API_URL;
 // --- Helper function for consensus update API ---
 
 async function updateConsensusForecastAPI(payload) {
-  const response = await fetch(`${apiUrl}/forecast/consensus`, {
+  const response = await fetch(`http://localhost:5000/api/forecast/consensus`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -269,41 +268,53 @@ export default function ForecastTable({
   // const months = useMemo(() => {
   //   return buildMonthLabelsBetween(startDate, endDate);
   // }, [startDate, endDate]);
-  const months = useMemo(() => {
-    const today = new Date();
-    today.setDate(1); // start of current month
 
-    // Clone today and move -6 months back
-    const past = new Date(today);
-    past.setMonth(past.getMonth() - 6);
+const months = useMemo(() => {
+  // Use selected range if both are valid non-empty strings
+  if (
+    typeof startDate === "string" &&
+    typeof endDate === "string" &&
+    startDate.length > 0 &&
+    endDate.length > 0
+  ) {
+    return buildMonthLabelsBetween(startDate, endDate);
+  }
+  // Default: 5 months historical + 5 months forecast
+  const today = new Date();
+  today.setDate(1);
+  const start = new Date(today);
+  start.setMonth(start.getMonth() - 5);
+  const end = new Date(today);
+  end.setMonth(end.getMonth() + 5);
+  return buildMonthLabelsBetween(
+    start.toISOString().slice(0, 10),
+    end.toISOString().slice(0, 10)
+  );
+}, [startDate, endDate]);
 
-    // Clone today and move +6 months forward
-    const future = new Date(today);
-    future.setMonth(future.getMonth() + 6);
 
-    return buildMonthLabelsBetween(past.toISOString(), future.toISOString());
-  }, []);
 
   //futureMonthSet calculation using explicit month mapping
   const futureMonthSet = useMemo(() => {
-    const today = new Date();
-    const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
-    const set = new Set();
+  const today = new Date();
+  const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
+  const set = new Set();
 
-    months.forEach((label) => {
-      const [mon, yr] = label.split(" ");
-      const monthIdx = MONTH_MAP[mon.toUpperCase()];
+  months.forEach((label) => {
+    const [mon, yr] = label.split(" ");
+    const monthIdx = MONTH_MAP[mon.toUpperCase()];
 
-      if (monthIdx !== undefined) {
-        const yearNum = 2000 + parseInt(yr, 10);
-        const key = yearNum * 12 + monthIdx;
-        if (key > currentMonthKey) {
-          set.add(label);
-        }
+    if (monthIdx !== undefined) {
+      const yearNum = 2000 + parseInt(yr, 10);
+      const key = yearNum * 12 + monthIdx;
+      if (key > currentMonthKey) {
+        set.add(label);
       }
-    });
-    return set;
-  }, [months]);
+    }
+  });
+  return set;
+}, [months]);
+
 
   const keyMap = {
     Actual: "actual_units",
@@ -321,7 +332,7 @@ export default function ForecastTable({
   //Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
-    fetch(`${apiUrl}/forecast`, {
+    fetch(`http://localhost:5000/api/forecast`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

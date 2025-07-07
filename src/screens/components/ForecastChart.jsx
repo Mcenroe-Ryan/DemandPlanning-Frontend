@@ -442,7 +442,7 @@ export default function ForecastChart({
 
   /* ---------- fetch events once ---------- */
   useEffect(() => {
-    fetch(`${apiUrl}/events`)
+    fetch(`http://localhost:5000/api/events`)
       .then((r) => r.json())
       .then(setEvents)
       .catch(() => setEvents([]));
