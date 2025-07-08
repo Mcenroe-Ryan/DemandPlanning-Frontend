@@ -9,6 +9,11 @@ import {
   Menu,
   Popover,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
 } from "@mui/material";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
@@ -16,17 +21,15 @@ import DownloadIcon from "@mui/icons-material/Download";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import ShareIcon from "@mui/icons-material/Share";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
-import CheckIcon from "@mui/icons-material/Check";
 import LockIcon from "@mui/icons-material/Lock";
 import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
-// --- Helper function for consensus update API ---
 
-// const apiUrl = import.meta.env.VITE_API_URL;
+// --- Helper function for consensus update API ---
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 async function updateConsensusForecastAPI(payload) {
-  const response = await fetch(`${API_BASE_URL}/forecast/consensus`, {
+  const response = await fetch(`http://localhost:5000/api/forecast/consensus`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -93,35 +96,23 @@ function buildMonthLabelsBetween(startDate, endDate) {
   return months;
 }
 
-//Helper to get YYYY-MM-01 from "Apr 25" using explicit month mapping
 function getMonthDate(label) {
   const [mon, yr] = label.split(" ");
   const yearNum = 2000 + parseInt(yr, 10);
-
-  //Use explicit month mapping instead of unreliable Date.parse
   const monthIdx = MONTH_MAP[mon.toUpperCase()];
-
-  if (monthIdx === undefined) {
-    console.error(`Invalid month abbreviation: ${mon}`);
-    return null;
-  }
-
+  if (monthIdx === undefined) return null;
   return `${yearNum}-${(monthIdx + 1).toString().padStart(2, "0")}-01`;
 }
 
-// Helper to convert API date (month-end) back to month label consistently
 function dateToMonthLabel(dateStr) {
   if (!dateStr) return null;
-
   const date = new Date(dateStr);
-  // Always use the month/year from the date, regardless of whether it's month-start or month-end
   return date.toLocaleString("default", {
     month: "short",
     year: "2-digit",
   });
 }
 
-//Helper to format numbers by country ---
 function formatNumberByCountry(value, country) {
   if (
     value === null ||
@@ -156,22 +147,154 @@ function formatNumberByCountry(value, country) {
   return Number(value).toLocaleString();
 }
 
-//Helper to determine if a month is locked (<= current month) using explicit mapping
 function isMonthLocked(monthLabel) {
   const [mon, yr] = monthLabel.split(" ");
-
   const monthIdx = MONTH_MAP[mon.toUpperCase()];
-  if (monthIdx === undefined) {
-    console.error(`Invalid month abbreviation in isMonthLocked: ${mon}`);
-    return false;
-  }
-
+  if (monthIdx === undefined) return false;
   const yearNum = 2000 + parseInt(yr, 10);
   const now = new Date();
-
   return (
     yearNum < now.getFullYear() ||
     (yearNum === now.getFullYear() && monthIdx <= now.getMonth())
+  );
+}
+
+// --- Confirmation Dialog Component ---
+function ConfirmationDialog({
+  open,
+  onClose,
+  onConfirm,
+  title = "Confirm Approval",
+  message = "Are you sure you want to approve the consensus? Once approved, this action cannot be undone.",
+  editedDetails = null,
+}) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth={false}
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          minHeight: "auto",
+          width: 360,
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          pb: 1,
+          fontSize: 18,
+          fontWeight: 600,
+        }}
+      >
+        <Box
+          sx={{
+            width: 20,
+            height: 20,
+            borderRadius: "50%",
+            bgcolor: "#ff9800",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 14,
+            fontWeight: "bold",
+          }}
+        >
+          ⚠
+        </Box>
+        {title}
+      </DialogTitle>
+
+      <DialogContent sx={{ pb: 2 }}>
+        <DialogContentText sx={{ mb: 2, color: "text.primary", fontSize: 14 }}>
+          {message}
+        </DialogContentText>
+
+        {editedDetails && (
+          <Box
+            sx={{
+              bgcolor: "#f5f5f5",
+              p: 2,
+              borderRadius: 1,
+              border: "1px solid #e0e0e0",
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+              Edited Details
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                bgcolor: "white",
+                p: 1,
+                borderRadius: 1,
+                border: "1px solid #ddd",
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Months
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  {editedDetails.month}
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {editedDetails.value}
+                </Typography>
+                <IconButton
+                  size="small"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    bgcolor: "#f44336",
+                    color: "white",
+                    "&:hover": { bgcolor: "#d32f2f" },
+                  }}
+                  onClick={onClose}
+                >
+                  ✕
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          sx={{
+            borderColor: "#ccc",
+            color: "#666",
+            "&:hover": {
+              borderColor: "#999",
+              bgcolor: "#f5f5f5",
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          sx={{
+            bgcolor: "#4caf50",
+            "&:hover": { bgcolor: "#45a049" },
+          }}
+        >
+          Confirm Approval
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -248,6 +371,7 @@ export default function ForecastTable({
   setModelName,
   models,
   loadingModels,
+  avgMapeData, // <-- Accept as prop only!
 }) {
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
@@ -256,6 +380,8 @@ export default function ForecastTable({
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const [avgMape, setAvgMape] = useState(null);
 
   // For editing consensus cells
   const [editingCell, setEditingCell] = useState({ month: null, row: null });
@@ -268,56 +394,55 @@ export default function ForecastTable({
     anchor: null,
   });
 
-  // const months = useMemo(() => {
-  //   return buildMonthLabelsBetween(startDate, endDate);
-  // }, [startDate, endDate]);
-
-const months = useMemo(() => {
-  // Use selected range if both are valid non-empty strings
-  if (
-    typeof startDate === "string" &&
-    typeof endDate === "string" &&
-    startDate.length > 0 &&
-    endDate.length > 0
-  ) {
-    return buildMonthLabelsBetween(startDate, endDate);
-  }
-  // Default: 5 months historical + 5 months forecast
-  const today = new Date();
-  today.setDate(1);
-  const start = new Date(today);
-  start.setMonth(start.getMonth() - 5);
-  const end = new Date(today);
-  end.setMonth(end.getMonth() + 5);
-  return buildMonthLabelsBetween(
-    start.toISOString().slice(0, 10),
-    end.toISOString().slice(0, 10)
-  );
-}, [startDate, endDate]);
-
-
-
-  //futureMonthSet calculation using explicit month mapping
-  const futureMonthSet = useMemo(() => {
-  const today = new Date();
-  const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
-  const set = new Set();
-
-  months.forEach((label) => {
-    const [mon, yr] = label.split(" ");
-    const monthIdx = MONTH_MAP[mon.toUpperCase()];
-
-    if (monthIdx !== undefined) {
-      const yearNum = 2000 + parseInt(yr, 10);
-      const key = yearNum * 12 + monthIdx;
-      if (key > currentMonthKey) {
-        set.add(label);
-      }
-    }
+  // Add confirmation dialog state
+  const [confirmationDialog, setConfirmationDialog] = useState({
+    open: false,
+    month: null,
+    row: null,
+    value: null,
+    pendingPayload: null,
   });
-  return set;
-}, [months]);
 
+  const months = useMemo(() => {
+    if (
+      typeof startDate === "string" &&
+      typeof endDate === "string" &&
+      startDate.length > 0 &&
+      endDate.length > 0
+    ) {
+      return buildMonthLabelsBetween(startDate, endDate);
+    }
+    const today = new Date();
+    today.setDate(1);
+    const start = new Date(today);
+    start.setMonth(start.getMonth() - 5);
+    const end = new Date(today);
+    end.setMonth(end.getMonth() + 5);
+    return buildMonthLabelsBetween(
+      start.toISOString().slice(0, 10),
+      end.toISOString().slice(0, 10)
+    );
+  }, [startDate, endDate]);
+
+  const futureMonthSet = useMemo(() => {
+    const today = new Date();
+    const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
+    const set = new Set();
+
+    months.forEach((label) => {
+      const [mon, yr] = label.split(" ");
+      const monthIdx = MONTH_MAP[mon.toUpperCase()];
+
+      if (monthIdx !== undefined) {
+        const yearNum = 2000 + parseInt(yr, 10);
+        const key = yearNum * 12 + monthIdx;
+        if (key > currentMonthKey) {
+          set.add(label);
+        }
+      }
+    });
+    return set;
+  }, [months]);
 
   const keyMap = {
     Actual: "actual_units",
@@ -335,7 +460,7 @@ const months = useMemo(() => {
   //Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
-    fetch(`${API_BASE_URL}/forecast`, {
+    fetch(`http://localhost:5000/api/forecast`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -353,14 +478,26 @@ const months = useMemo(() => {
     })
       .then((res) => res.json())
       .then((raw) => {
-        console.log("Raw API response:", raw); // DEBUG: Log raw response
-
+        if (!raw || raw.length === 0) {
+          setData({});
+          setAvgMape(null);
+          return;
+        }
+        // Extract avgMape data from raw, adjust according to actual API response shape
+        if (raw.length) {
+          const mapeValues = raw
+            .map((item) => Number(item.avg_mape))
+            .filter((val) => !isNaN(val));
+          const avgMape = mapeValues.length
+            ? mapeValues.reduce((a, b) => a + b, 0) / mapeValues.length
+            : null;
+          setAvgMape(avgMape);
+        } else {
+          setAvgMape(null);
+        }
         const ds = {};
-
-        // Use consistent month label generation
         const months = buildMonthLabelsBetween(startDate, endDate);
 
-        // Initialize data structure with consistent month order
         months.forEach((m) => {
           ds[m] = {};
           [...CORE_ROWS, ...OPTIONAL_ROWS].forEach((row) => {
@@ -368,33 +505,17 @@ const months = useMemo(() => {
           });
         });
 
-        //Improved data mapping with debugging
         raw.forEach((item) => {
-          const dateStr =
-            item.month_name || item.item_date || item.forecast_month;
-          if (!dateStr) return;
-
-          // Use the new consistent date-to-label converter
-          const label = dateToMonthLabel(dateStr);
-          console.log(`Mapping API date '${dateStr}' to label '${label}'`); // DEBUG
-
-          if (!ds[label]) {
-            console.warn(`No column found for label '${label}'`); // DEBUG
-            return;
-          }
-
+          const label = dateToMonthLabel(item.month_name);
+          if (!ds[label]) return;
           Object.entries(keyMap).forEach(([rowLabel, jsonKey]) => {
             const val = item[jsonKey];
             if (val !== undefined && val !== null && val !== "NULL") {
               ds[label][rowLabel] = val === "" ? "-" : val;
-              if (rowLabel === "Consensus" && val !== "-") {
-                console.log(`Mapped consensus value ${val} to column ${label}`); // DEBUG
-              }
             }
           });
         });
 
-        console.log("Final data structure:", ds); // DEBUG: Log final structure
         setData(ds);
       })
       .catch((error) => {
@@ -407,17 +528,6 @@ const months = useMemo(() => {
   };
 
   const [actualLatestMonth, setActualLatestMonth] = useState(null);
-
-  useEffect(() => {
-    if (!data) return;
-    const months = Object.keys(data).sort((a, b) => {
-      const aDate = new Date(getMonthDate(a));
-      const bDate = new Date(getMonthDate(b));
-      return bDate - aDate;
-    });
-    const latestMonth = months[0] || null;
-    setActualLatestMonth(latestMonth);
-  }, [data]);
 
   useEffect(() => {
     fetchForecastData();
@@ -435,6 +545,17 @@ const months = useMemo(() => {
     modelName,
   ]);
 
+  useEffect(() => {
+    if (!data) return;
+    const months = Object.keys(data).sort((a, b) => {
+      const aDate = new Date(getMonthDate(a));
+      const bDate = new Date(getMonthDate(b));
+      return bDate - aDate;
+    });
+    const latestMonth = months[0] || null;
+    setActualLatestMonth(latestMonth);
+  }, [data]);
+
   const baseRows = [...CORE_ROWS, ...optionalRows];
   const allRows = showForecast
     ? baseRows
@@ -443,6 +564,53 @@ const months = useMemo(() => {
   // Add New menu handlers
   const handleAddRowsClick = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
+
+  // Handle confirmation dialog close
+  const handleConfirmationClose = () => {
+    setConfirmationDialog({
+      open: false,
+      month: null,
+      row: null,
+      value: null,
+      pendingPayload: null,
+    });
+    setEditingCell({ month: null, row: null });
+    setEditValue("");
+  };
+
+  // Handle confirmation dialog submit
+  const handleConfirmationSubmit = async () => {
+    const { pendingPayload, month, row } = confirmationDialog;
+    if (!pendingPayload) return;
+    setUpdatingCell({ month, row });
+    try {
+      await updateConsensusForecastAPI(pendingPayload);
+      setConfirmationDialog({
+        open: false,
+        month: null,
+        row: null,
+        value: null,
+        pendingPayload: null,
+      });
+      setEditingCell({ month: null, row: null });
+      setUpdatingCell({ month: null, row: null });
+      setEditValue("");
+      setTimeout(() => {
+        fetchForecastData();
+      }, 100);
+    } catch (err) {
+      alert("Failed to update consensus forecast");
+      setConfirmationDialog({
+        open: false,
+        month: null,
+        row: null,
+        value: null,
+        pendingPayload: null,
+      });
+      setEditingCell({ month: null, row: null });
+      setUpdatingCell({ month: null, row: null });
+    }
+  };
 
   return (
     <>
@@ -472,7 +640,7 @@ const months = useMemo(() => {
                   minWidth: 44,
                   height: 28,
                   px: 2,
-                  borderRadius: 999, 
+                  borderRadius: 999,
                   fontWeight: 600,
                   fontSize: 13,
                   lineHeight: 1.2,
@@ -727,13 +895,7 @@ const months = useMemo(() => {
                           disabled={isUpdating}
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={async () => {
-                            console.log(`Updating consensus for column: ${m}`);
                             const targetDate = getMonthDate(m);
-                            console.log(
-                              `getMonthDate('${m}') returns: ${targetDate}`
-                            );
-
-                            setUpdatingCell({ month: m, row: label });
                             const payload = {
                               country_name: Array.isArray(selectedCountry)
                                 ? selectedCountry
@@ -760,27 +922,16 @@ const months = useMemo(() => {
                               end_date: endDate,
                               consensus_forecast: editValue,
                               target_month: targetDate,
-                              model_name: modelName, 
+                              model_name: modelName,
                             };
 
-                            console.log("Sending payload:", payload);
-
-                            try {
-                              await updateConsensusForecastAPI(payload);
-                              setEditingCell({ month: null, row: null });
-                              setUpdatingCell({ month: null, row: null });
-
-                              // Add small delay to ensure backend update is complete
-                              setTimeout(() => {
-                                console.log("Refetching data after update...");
-                                fetchForecastData();
-                              }, 100);
-                            } catch (err) {
-                              console.error("Update failed:", err);
-                              alert("Failed to update consensus forecast");
-                              setEditingCell({ month: null, row: null });
-                              setUpdatingCell({ month: null, row: null });
-                            }
+                            setConfirmationDialog({
+                              open: true,
+                              month: m,
+                              row: label,
+                              value: editValue,
+                              pendingPayload: payload,
+                            });
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
@@ -815,6 +966,7 @@ const months = useMemo(() => {
         anchorEl={lockComment.anchor}
         onClose={() => setLockComment({ ...lockComment, open: false })}
       />
+
       {data && (
         <ForecastChart
           months={months}
@@ -823,8 +975,22 @@ const months = useMemo(() => {
           setModelName={setModelName}
           models={models}
           loadingModels={loadingModels}
+          avgMapeData={avgMape}
         />
       )}
+
+      {/* Add the Confirmation Dialog */}
+      <ConfirmationDialog
+        open={confirmationDialog.open}
+        onClose={handleConfirmationClose}
+        onConfirm={handleConfirmationSubmit}
+        title="Confirm Approval"
+        message="Are you sure you want to approve the consensus? Once approved, this action cannot be undone."
+        editedDetails={{
+          month: confirmationDialog.month,
+          value: confirmationDialog.value,
+        }}
+      />
     </>
   );
 }

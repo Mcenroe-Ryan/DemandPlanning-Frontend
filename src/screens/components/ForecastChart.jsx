@@ -29,7 +29,6 @@ import StarIcon from "@mui/icons-material/Star";
 // const apiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-
 /* ---------- reusable styled checkbox ---------- */
 const BlueSquare = styled("span")({
   width: 18,
@@ -381,7 +380,6 @@ function CustomLegend({ activeKeys, onToggle }) {
   );
 }
 
-
 export default function ForecastChart({
   months,
   data,
@@ -389,6 +387,7 @@ export default function ForecastChart({
   setModelName,
   models,
   loadingModels,
+  avgMapeData,
 }) {
   const [treeMenuOpen, setTreeMenuOpen] = useState(false);
   const chartRef = useRef();
@@ -446,7 +445,7 @@ export default function ForecastChart({
 
   /* ---------- fetch events once ---------- */
   useEffect(() => {
-    fetch(`${API_BASE_URL}/events`)
+    fetch(`http://localhost:5000/api/events`)
       .then((r) => r.json())
       .then(setEvents)
       .catch(() => setEvents([]));
@@ -525,24 +524,28 @@ export default function ForecastChart({
           data: seriesData.actual,
           color: "#ff4d4f",
           visible: !hiddenSeries[0],
+          marker: { enabled: false },
         },
         {
           name: "Baseline",
           data: seriesData.baseline,
           color: "#1890ff",
           visible: !hiddenSeries[1],
+          marker: { enabled: false },
         },
         {
           name: "ML",
           data: seriesData.ml,
           color: "#fadb14",
           visible: !hiddenSeries[2],
+          marker: { enabled: false },
         },
         {
           name: "Consensus",
           data: seriesData.consensus,
           color: "#52c41a",
           visible: !hiddenSeries[3],
+          marker: { enabled: false },
         },
         {
           name: "Baseline Forecast",
@@ -550,6 +553,7 @@ export default function ForecastChart({
           color: "rgba(24,144,255,0.6)",
           dashStyle: "Dash",
           visible: !hiddenSeries[4],
+          marker: { enabled: false },
         },
         {
           name: "ML Forecast",
@@ -557,6 +561,7 @@ export default function ForecastChart({
           color: "rgba(250,173,20,0.6)",
           dashStyle: "Dash",
           visible: !hiddenSeries[5],
+          marker: { enabled: false },
         },
         {
           name: "Consensus Forecast",
@@ -564,6 +569,7 @@ export default function ForecastChart({
           color: "rgba(82,196,26,0.6)",
           dashStyle: "Dash",
           visible: !hiddenSeries[6],
+          marker: { enabled: false },
         },
         {
           name: "Holidays",
@@ -572,6 +578,7 @@ export default function ForecastChart({
           showInLegend: true,
           enableMouseTracking: false,
           visible: overlays.holidays,
+          marker: { enabled: false },
         },
         {
           name: "Promotions",
@@ -580,6 +587,7 @@ export default function ForecastChart({
           showInLegend: true,
           enableMouseTracking: false,
           visible: overlays.promotions,
+          marker: { enabled: false },
         },
       ],
     }),
@@ -615,18 +623,8 @@ export default function ForecastChart({
   }, []);
 
   /* ---------- mape ---------- */
-  const mape = useMemo(() => {
-    const { actual, consensus } = seriesData;
-    let sum = 0,
-      cnt = 0;
-    actual.forEach((v, i) => {
-      if (v && consensus[i]) {
-        sum += Math.abs((v - consensus[i]) / v);
-        cnt += 1;
-      }
-    });
-    return cnt ? (100 * (sum / cnt)).toFixed(1) : "-";
-  }, [seriesData]);
+
+  const mape = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
 
   /* ---------- active legend keys ---------- */
   const activeKeys = LEGEND_CONFIG.filter((it) =>
@@ -660,7 +658,7 @@ export default function ForecastChart({
           <Typography variant="body2" fontWeight={700} color="#555">
             MAPE:&nbsp;
             <Box component="span" sx={{ color: "#22c55e" }}>
-              {mape}%
+              {mape}
             </Box>
           </Typography>
         </Box>

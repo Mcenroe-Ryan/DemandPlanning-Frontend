@@ -26,6 +26,8 @@ import {
   List,
   ListItem,
   CircularProgress,
+  Dialog,
+  Slide,
 } from "@mui/material";
 import {
   CheckBox,
@@ -38,7 +40,9 @@ import {
   Notifications as NotificationsIcon,
   Search as SearchIcon,
   Share,
+  SmartToy,
 } from "@mui/icons-material";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { format, addMonths, subMonths, parseISO } from "date-fns";
 import AddBox from "@mui/icons-material/AddBox";
 import ArrowUpward from "@mui/icons-material/ArrowUpward";
@@ -54,13 +58,14 @@ import ChatBot from "./components/chatbox";
 // const apiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options
     .filter((opt) => selectedIds.includes(opt[optionKey]))
     .map((opt) => opt[displayKey]);
 }
-// ... Listbox, DataRowsMenu, MultiSelectWithCheckboxes definitions unchanged ...
+
+// ... [All the existing component definitions remain unchanged: Listbox, DataRowsMenu, MultiSelectWithCheckboxes] ...
+
 // --- Listbox styled to match your screenshot ---
 const Listbox = () => {
   const listItems = [{ id: 1, label: "Product Name" }];
@@ -314,7 +319,8 @@ function MultiSelectWithCheckboxes({
                 sx={{ mr: 0.5, height: 20 }}
               />
             )}
-            <FilterAlt sx={{ width: 16, height: 16, color: "#757575" }} />
+            <KeyboardArrowDownIcon sx={{ width: 16, height: 16, color: "#757575" }} />
+            {/* <FilterAlt sx={{ width: 16, height: 16, color: "#757575" }} /> */}
           </Box>
         }
         disabled={disabled}
@@ -389,6 +395,10 @@ const pivotData = (data) => {
     isConsensus: metric.key === "consensus",
   }));
 };
+const SlideTransition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="left" ref={ref} {...props} />;
+});
+
 export const DemandProjectMonth = () => {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
@@ -420,6 +430,7 @@ export const DemandProjectMonth = () => {
     const walk = (x - startX.current) * 1.5; // Scroll speed
     scrollRef.current.scrollLeft = scrollLeft.current - walk;
   };
+
   // --- Sidebar state ---
   const [showActivities, setShowActivities] = useState(false);
 
@@ -476,8 +487,16 @@ export const DemandProjectMonth = () => {
   const handleMoreOpen = (event) => setMoreAnchorEl(event.currentTarget);
   const handleMoreClose = () => setMoreAnchorEl(null);
 
-  //chatbox
-  const [chatOpen, setChatOpen] = useState(false);
+  // Updated chatbox state management
+  const [isChatBotOpen, setIsChatBotOpen] = useState(false);
+
+  const handleOpenChatBot = () => {
+    setIsChatBotOpen(true);
+  };
+
+  const handleCloseChatBot = () => {
+    setIsChatBotOpen(false);
+  };
 
   //model selection
   // Add this useEffect to fetch models on component mount
@@ -485,7 +504,7 @@ export const DemandProjectMonth = () => {
     const fetchModels = async () => {
       setLoadingModels(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/models`);
+        const response = await fetch(`http://localhost:5000/api/models`);
         if (response.ok) {
           const modelsData = await response.json();
           setModels(modelsData);
@@ -515,10 +534,12 @@ export const DemandProjectMonth = () => {
     { label: "Analytics", count: null },
     { label: "Scenarios", count: null },
   ];
+
   const fetchCountries = () => {
     setLoadingCountries(true);
     axios
-      .get(`${API_BASE_URL}/getAllCountries`)
+      // .get(`${API_BASE_URL}/getAllCountries`)
+      .get(`http://localhost:5000/api/getAllCountries`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,
@@ -533,6 +554,7 @@ export const DemandProjectMonth = () => {
       )
       .finally(() => setLoadingCountries(false));
   };
+
   useEffect(() => {
     if (!selectedCountry.length) {
       setFiltersData((prev) => ({
@@ -552,7 +574,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingStates(true);
     axios
-      .post(`${API_BASE_URL}/states-by-country`, {
+      .post(`http://localhost:5000/api/states-by-country`, {
         countryIds: selectedCountry,
       })
       .then((res) => {
@@ -605,7 +627,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingCities(true);
     axios
-      .post(`${API_BASE_URL}/cities-by-states`, {
+      .post(`http://localhost:5000/api/cities-by-states`, {
         stateIds: selectedState,
       })
       .then((res) => {
@@ -654,7 +676,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingPlants(true);
     axios
-      .post(`${API_BASE_URL}/plants-by-cities`, {
+      .post(`http://localhost:5000/api/plants-by-cities`, {
         cityIds: selectedCities,
       })
       .then((res) => {
@@ -697,7 +719,7 @@ export const DemandProjectMonth = () => {
     setLoadingCategories(true);
 
     axios
-      .post(`${API_BASE_URL}/categories-by-plants`, {
+      .post(`http://localhost:5000/api/categories-by-plants`, {
         plantIds: selectedPlants,
       })
       .then((res) => {
@@ -719,7 +741,6 @@ export const DemandProjectMonth = () => {
         setSelectedSKUs([]);
       })
       .finally(() => setLoadingCategories(false));
-
   }, [selectedPlants]);
 
   // Fetch SKUs when categories change (selectedCategories is array of IDs)
@@ -734,7 +755,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingSkus(true);
     axios
-      .post(`${API_BASE_URL}/skus-by-categories`, {
+      .post(`http://localhost:5000/api/skus-by-categories`, {
         categoryIds: selectedCategories,
       })
       .then((res) => {
@@ -757,7 +778,7 @@ export const DemandProjectMonth = () => {
   useEffect(() => {
     setLoadingChannels(true);
     axios
-      .get(`${API_BASE_URL}/getAllChannels`)
+      .get(`http://localhost:5000/api/getAllChannels`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,
@@ -836,9 +857,6 @@ export const DemandProjectMonth = () => {
             <IconButton color="inherit">
               <SearchIcon sx={{ width: 20, height: 20 }} />
             </IconButton>
-            <IconButton color="inherit">
-              <NotificationsIcon sx={{ width: 20, height: 20 }} />
-            </IconButton>
             <Avatar
               src="https://c.animaapp.com/Jwk7dHU9/img/ellipse@2x.png"
               sx={{ width: 38, height: 36 }}
@@ -846,6 +864,7 @@ export const DemandProjectMonth = () => {
           </Stack>
         </Toolbar>
       </AppBar>
+
       {/* Action Nav Bar */}
       <Box
         ref={scrollRef}
@@ -860,22 +879,18 @@ export const DemandProjectMonth = () => {
           bgcolor: "#64748B",
           p: 1.25,
           gap: 2,
-          overflowX: "auto", // enable horizontal scroll
-          overflowY: "hidden", // disable vertical scroll
+          overflowX: "auto",
+          overflowY: "hidden",
           cursor: "grab",
           userSelect: "none",
           WebkitOverflowScrolling: "touch",
           "&.dragging": {
             cursor: "grabbing",
           },
-
-          // Hide scrollbar - Webkit (Chrome, Safari)
           "&::-webkit-scrollbar": {
             display: "none",
           },
-          // Hide scrollbar - Firefox
           scrollbarWidth: "none",
-          // Hide scrollbar - Edge/IE (legacy support)
           msOverflowStyle: "none",
         }}
       >
@@ -891,9 +906,11 @@ export const DemandProjectMonth = () => {
           />
         </IconButton>
         <Divider orientation="vertical" flexItem sx={{ bgcolor: "grey.500" }} />
+
         <IconButton size="small">
-          <Edit sx={{ width: 20, height: 20 }} />
+          <Edit sx={{ width: 20, height: 20, color: "white" }} />
         </IconButton>
+
         <Box display="flex" alignItems="center" gap={2}>
           {/* Chat Icon with Dot */}
           <Box
@@ -903,7 +920,9 @@ export const DemandProjectMonth = () => {
             onClick={handleOpenActivities}
             sx={{ cursor: "pointer" }}
           >
-            <ChatBubbleOutline sx={{ width: 20, height: 20 }} />
+            {/* <ChatBubbleOutline sx={{ width: 20, height: 20 }} /> */}
+            <ChatBubbleOutline sx={{ width: 20, height: 20, color: "white" }} />
+
             <Box
               component="img"
               src="https://c.animaapp.com/Jwk7dHU9/img/ellipse-309--stroke-.svg"
@@ -919,13 +938,25 @@ export const DemandProjectMonth = () => {
             />
           </Box>
 
-          {/* Filter Icon */}
-          <IconButton size="small" disableRipple sx={{ p: 0 }}>
-            <Box
-              component="img"
-              src="https://c.animaapp.com/Jwk7dHU9/img/union-1.svg"
-              alt="Filter"
-              sx={{ width: 20, height: 19 }}
+          {/* Updated ChatBot Icon - Replace filter icon with SmartToy */}
+          <IconButton
+            size="small"
+            disableRipple
+            sx={{ p: 0 }}
+            onClick={handleOpenChatBot}
+            aria-label="Open ChatBot"
+          >
+            <SmartToy
+              sx={{
+                width: 20,
+                height: 20,
+                color: "#ffffff",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  color: "#e3f2fd",
+                  transform: "scale(1.1)",
+                },
+              }}
             />
           </IconButton>
 
@@ -1056,6 +1087,7 @@ export const DemandProjectMonth = () => {
           </Menu>
         </Stack>
       </Box>
+
       {/* Tabs */}
       <Tabs
         value={activeTab}
@@ -1084,6 +1116,7 @@ export const DemandProjectMonth = () => {
           />
         ))}
       </Tabs>
+
       {/* Toolbar (LEFT: period/forecast, RIGHT: icons) */}
       {activeTab < 2 && (
         <Box
@@ -1101,6 +1134,7 @@ export const DemandProjectMonth = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}></Box>
         </Box>
       )}
+
       <Box sx={{ flexGrow: 1, overflow: "auto" }}>
         {activeTab === 1 ? (
           <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0 }}>
@@ -1130,7 +1164,6 @@ export const DemandProjectMonth = () => {
               setModelName={setModelName}
               models={models}
               loadingModels={loadingModels}
-              // actual_latest_month={actual_latest_month}
               selectedCountry={getSelectedNames(
                 selectedCountry,
                 filtersData.countries,
@@ -1173,6 +1206,7 @@ export const DemandProjectMonth = () => {
                 "channel_id",
                 "channel_name"
               )}
+              // avgMapeData={avgMapeData}
             />
           </>
         )}
@@ -1208,6 +1242,32 @@ export const DemandProjectMonth = () => {
           </Box>
         </Box>
       )}
+      <Dialog
+        open={isChatBotOpen}
+        onClose={handleCloseChatBot}
+        TransitionComponent={SlideTransition}
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            margin: 0,
+            maxWidth: "none",
+            maxHeight: "none",
+            borderRadius: "10px",
+            overflow: "hidden",
+            position: "fixed",
+            right: 0,
+            top: 0,
+            height: "100vh",
+          },
+        }}
+        sx={{
+          "& .MuiDialog-container": {
+            justifyContent: "flex-end",
+          },
+        }}
+      >
+        <ChatBot onClose={handleCloseChatBot} />
+      </Dialog>
     </Box>
   );
 };
