@@ -372,6 +372,10 @@ export default function ForecastTable({
   models,
   loadingModels,
   avgMapeData, // <-- Accept as prop only!
+  canEditConsensus,
+  setCanEditConsensus,
+  openConsensusPopup,
+  setOpenConsensusPopup,
 }) {
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
@@ -566,19 +570,59 @@ export default function ForecastTable({
   const handleMenuClose = () => setAnchorEl(null);
 
   // Handle confirmation dialog close
+  // const handleConfirmationClose = () => {
+  //   setConfirmationDialog({
+  //     open: false,
+  //     month: null,
+  //     row: null,
+  //     value: null,
+  //     pendingPayload: null,
+  //   });
+  //   setEditingCell({ month: null, row: null });
+  //   setEditValue("");
+  // };
   const handleConfirmationClose = () => {
     setConfirmationDialog({
-      open: false,
-      month: null,
-      row: null,
-      value: null,
-      pendingPayload: null,
+      /* ... */
     });
     setEditingCell({ month: null, row: null });
     setEditValue("");
+    setCanEditConsensus(false); // <-- Reset edit permission
   };
 
   // Handle confirmation dialog submit
+  // const handleConfirmationSubmit = async () => {
+  //   const { pendingPayload, month, row } = confirmationDialog;
+  //   if (!pendingPayload) return;
+  //   setUpdatingCell({ month, row });
+  //   try {
+  //     await updateConsensusForecastAPI(pendingPayload);
+  //     setConfirmationDialog({
+  //       open: false,
+  //       month: null,
+  //       row: null,
+  //       value: null,
+  //       pendingPayload: null,
+  //     });
+  //     setEditingCell({ month: null, row: null });
+  //     setUpdatingCell({ month: null, row: null });
+  //     setEditValue("");
+  //     setTimeout(() => {
+  //       fetchForecastData();
+  //     }, 100);
+  //   } catch (err) {
+  //     alert("Failed to update consensus forecast");
+  //     setConfirmationDialog({
+  //       open: false,
+  //       month: null,
+  //       row: null,
+  //       value: null,
+  //       pendingPayload: null,
+  //     });
+  //     setEditingCell({ month: null, row: null });
+  //     setUpdatingCell({ month: null, row: null });
+  //   }
+  // };
   const handleConfirmationSubmit = async () => {
     const { pendingPayload, month, row } = confirmationDialog;
     if (!pendingPayload) return;
@@ -609,6 +653,8 @@ export default function ForecastTable({
       });
       setEditingCell({ month: null, row: null });
       setUpdatingCell({ month: null, row: null });
+    } finally {
+      setCanEditConsensus(false); // Always reset edit permission
     }
   };
 
@@ -841,8 +887,39 @@ export default function ForecastTable({
                         minWidth: 90,
                         cursor: isConsensusRow ? "pointer" : "default",
                       }}
+                      // onClick={(e) => {
+                      //   if (
+                      //     isConsensusRow &&
+                      //     locked &&
+                      //     value &&
+                      //     value !== "-"
+                      //   ) {
+                      //     setLockComment({
+                      //       open: true,
+                      //       anchor: e.currentTarget,
+                      //     });
+                      //   }
+                      //   if (
+                      //     isConsensusRow &&
+                      //     !locked &&
+                      //     !isEditing &&
+                      //     !isUpdating
+                      //   ) {
+                      //     setEditingCell({ month: m, row: label });
+                      //     setEditValue(value === "-" ? "" : value);
+                      //   }
+                      // }}
                       onClick={(e) => {
                         if (
+                          isConsensusRow &&
+                          canEditConsensus &&
+                          !locked &&
+                          !isEditing &&
+                          !isUpdating
+                        ) {
+                          setEditingCell({ month: m, row: label });
+                          setEditValue(value === "-" ? "" : value);
+                        } else if (
                           isConsensusRow &&
                           locked &&
                           value &&
@@ -852,15 +929,6 @@ export default function ForecastTable({
                             open: true,
                             anchor: e.currentTarget,
                           });
-                        }
-                        if (
-                          isConsensusRow &&
-                          !locked &&
-                          !isEditing &&
-                          !isUpdating
-                        ) {
-                          setEditingCell({ month: m, row: label });
-                          setEditValue(value === "-" ? "" : value);
                         }
                       }}
                     >

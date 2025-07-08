@@ -121,7 +121,8 @@ function createPlotBands(events, months, overlays) {
       id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
       from: sIdx - 0.25,
       to: (eIdx === -1 ? sIdx : eIdx) + 0.25,
-      color: isHoliday ? "rgba(82,196,26,0.1)" : "rgba(250,173,20,0.1)",
+      // color: isHoliday ? "rgba(82,196,26,0.1)" : "rgba(250,173,20,0.1)",
+      color: isHoliday ? "#BBF7D0" : "#FED7AA",
     });
     return acc;
   }, []);

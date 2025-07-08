@@ -42,7 +42,7 @@ import {
   Share,
   SmartToy,
 } from "@mui/icons-material";
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { format, addMonths, subMonths, parseISO } from "date-fns";
 import AddBox from "@mui/icons-material/AddBox";
 import ArrowUpward from "@mui/icons-material/ArrowUpward";
@@ -319,7 +319,9 @@ function MultiSelectWithCheckboxes({
                 sx={{ mr: 0.5, height: 20 }}
               />
             )}
-            <KeyboardArrowDownIcon sx={{ width: 16, height: 16, color: "#757575" }} />
+            <KeyboardArrowDownIcon
+              sx={{ width: 16, height: 16, color: "#757575" }}
+            />
             {/* <FilterAlt sx={{ width: 16, height: 16, color: "#757575" }} /> */}
           </Box>
         }
@@ -476,6 +478,7 @@ export const DemandProjectMonth = () => {
   const [models, setModels] = useState([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelName, setModelName] = useState("XGBoost");
+  const [canEditConsensus, setCanEditConsensus] = useState(false);
 
   // For plus button menu
   const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
@@ -907,8 +910,29 @@ export const DemandProjectMonth = () => {
         </IconButton>
         <Divider orientation="vertical" flexItem sx={{ bgcolor: "grey.500" }} />
 
-        <IconButton size="small">
-          <Edit sx={{ width: 20, height: 20, color: "white" }} />
+        {/* <IconButton size="small" onClick={() => setCanEditConsensus(true)}>
+  <Edit sx={{ width: 20, height: 20, color: "white" }} />
+</IconButton> */}
+
+        <IconButton
+          size="small"
+          onClick={() => setCanEditConsensus(true)}
+          sx={{
+            backgroundColor: canEditConsensus ? "#BFDBFE" : "transparent", // Light blue when active
+            color: canEditConsensus ? "#1e293b" : "#fff", // Dark text on blue, white otherwise
+            border: canEditConsensus
+              ? "2px solid #60a5fa"
+              : "2px solid transparent", // Optional blue border
+            boxShadow: canEditConsensus ? "0 0 8px #93c5fd" : "none", // Subtle blue shadow
+            transition: "all 0.2s",
+            "&:hover": {
+              backgroundColor: canEditConsensus ? "#BFDBFE" : "#e3f2fd",
+              color: "#1e40af", // Stronger blue on hover
+            },
+          }}
+          aria-pressed={canEditConsensus}
+        >
+          <Edit sx={{ width: 20, height: 20 }} />
         </IconButton>
 
         <Box display="flex" alignItems="center" gap={2}>
@@ -1206,7 +1230,8 @@ export const DemandProjectMonth = () => {
                 "channel_id",
                 "channel_name"
               )}
-              // avgMapeData={avgMapeData}
+              canEditConsensus={canEditConsensus}
+              setCanEditConsensus={setCanEditConsensus}
             />
           </>
         )}
