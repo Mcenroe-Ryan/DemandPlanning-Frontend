@@ -83,7 +83,7 @@ export default function DateFilter({ onDateChange }) {
         size="small"
         sx={{
           height: 32,
-          width: 110,
+          minWidth: 110, // Increase width to fit full date
           px: 2,
           fontSize: "13px",
           bgcolor: "common.white",

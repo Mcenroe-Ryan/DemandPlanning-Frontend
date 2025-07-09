@@ -69,33 +69,33 @@ function BlueCheckbox(props) {
 
 /* ---------- legend config ---------- */
 const LEGEND_CONFIG = [
-  { key: "actual", label: "Actual", color: "#ff4d4f", seriesIndex: 0 },
-  { key: "baseline", label: "Baseline", color: "#1890ff", seriesIndex: 1 },
-  { key: "ml", label: "ML", color: "#fadb14", seriesIndex: 2 },
-  { key: "consensus", label: "Consensus", color: "#52c41a", seriesIndex: 3 },
+  { key: "actual", label: "Actual", color: "#EF4444", seriesIndex: 0 },
+  { key: "baseline", label: "Baseline", color: "#60A5FA", seriesIndex: 1 },
+  { key: "ml", label: "ML", color: "#EAB308", seriesIndex: 2 },
+  { key: "consensus", label: "Consensus", color: "#0E7490", seriesIndex: 3 },
   {
     key: "baseline_forecast",
     label: "Baseline Forecast",
-    color: "rgba(24,144,255,0.6)",
+    color: "#60A5FA",
     dash: "Dash",
     seriesIndex: 4,
   },
   {
     key: "ml_forecast",
     label: "ML Forecast",
-    color: "rgba(250,173,20,0.6)",
+    color: "#EAB308",
     dash: "Dash",
     seriesIndex: 5,
   },
   {
     key: "consensus_forecast",
     label: "Consensus Forecast",
-    color: "rgba(82,196,26,0.6)",
+    color: "#0E7490",
     dash: "Dash",
     seriesIndex: 6,
   },
-  { key: "holidays", label: "Holidays", color: "#BBF7D0", isOverlay: true },
-  { key: "promotions", label: "Promotions", color: "#FED7AA", isOverlay: true },
+  { key: "holidays", label: "Holidays", color: "#22C55E", isOverlay: true },
+  { key: "promotions", label: "Promotions", color: "#F97316", isOverlay: true },
 ];
 
 /* ---------- helper: plot bands from events ---------- */
@@ -523,35 +523,35 @@ export default function ForecastChart({
         {
           name: "Actual",
           data: seriesData.actual,
-          color: "#ff4d4f",
+          color: "#EF4444",
           visible: !hiddenSeries[0],
           marker: { enabled: false },
         },
         {
           name: "Baseline",
           data: seriesData.baseline,
-          color: "#1890ff",
+          color: "#60A5FA",
           visible: !hiddenSeries[1],
           marker: { enabled: false },
         },
         {
           name: "ML",
           data: seriesData.ml,
-          color: "#fadb14",
+          color: "#EAB308",
           visible: !hiddenSeries[2],
           marker: { enabled: false },
         },
         {
           name: "Consensus",
           data: seriesData.consensus,
-          color: "#52c41a",
+          color: "#0E7490",
           visible: !hiddenSeries[3],
           marker: { enabled: false },
         },
         {
           name: "Baseline Forecast",
           data: seriesData.baseline_forecast,
-          color: "rgba(24,144,255,0.6)",
+          color: "#60A5FA",
           dashStyle: "Dash",
           visible: !hiddenSeries[4],
           marker: { enabled: false },
@@ -559,7 +559,7 @@ export default function ForecastChart({
         {
           name: "ML Forecast",
           data: seriesData.ml_forecast,
-          color: "rgba(250,173,20,0.6)",
+          color: "#EAB308",
           dashStyle: "Dash",
           visible: !hiddenSeries[5],
           marker: { enabled: false },
@@ -567,7 +567,7 @@ export default function ForecastChart({
         {
           name: "Consensus Forecast",
           data: seriesData.consensus_forecast,
-          color: "rgba(82,196,26,0.6)",
+          color: "#0E7490",
           dashStyle: "Dash",
           visible: !hiddenSeries[6],
           marker: { enabled: false },
@@ -575,7 +575,7 @@ export default function ForecastChart({
         {
           name: "Holidays",
           data: [],
-          color: "#BBF7D0",
+          color: "#22C55E",
           showInLegend: true,
           enableMouseTracking: false,
           visible: overlays.holidays,

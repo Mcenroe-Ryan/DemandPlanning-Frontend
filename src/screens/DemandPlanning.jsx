@@ -1085,6 +1085,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search channel"
             loading={loadingChannels}
             width={110}
+            disabled={!selectedSKUs.length} 
           />
 
           {/* --- Three dots menu for filters --- */}
