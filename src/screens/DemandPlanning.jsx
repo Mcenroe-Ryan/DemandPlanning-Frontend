@@ -52,6 +52,7 @@ import ModelComparisonSection from "./components/RecommendedModelsSection";
 import ForecastTable from "./components/ForecastTable";
 import { AlertsSection } from "./components/AlertSection";
 import { ChartSection } from "./components/ChartSection";
+import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/chatbox";
 
@@ -1162,8 +1163,13 @@ export const DemandProjectMonth = () => {
       <Box sx={{ flexGrow: 1, overflow: "auto" }}>
         {activeTab === 1 ? (
           <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0 }}>
-            <AlertsSection />
-            <ChartSection />
+            <AlertProvider>
+              <div>
+                <AlertsSection />
+
+                <ChartSection />
+              </div>
+            </AlertProvider>
           </Box>
         ) : activeTab === 2 ? (
           <Box

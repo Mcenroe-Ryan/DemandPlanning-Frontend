@@ -569,18 +569,6 @@ export default function ForecastTable({
   const handleAddRowsClick = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
-  // Handle confirmation dialog close
-  // const handleConfirmationClose = () => {
-  //   setConfirmationDialog({
-  //     open: false,
-  //     month: null,
-  //     row: null,
-  //     value: null,
-  //     pendingPayload: null,
-  //   });
-  //   setEditingCell({ month: null, row: null });
-  //   setEditValue("");
-  // };
   const handleConfirmationClose = () => {
     setConfirmationDialog({
       /* ... */
@@ -590,39 +578,6 @@ export default function ForecastTable({
     setCanEditConsensus(false); // <-- Reset edit permission
   };
 
-  // Handle confirmation dialog submit
-  // const handleConfirmationSubmit = async () => {
-  //   const { pendingPayload, month, row } = confirmationDialog;
-  //   if (!pendingPayload) return;
-  //   setUpdatingCell({ month, row });
-  //   try {
-  //     await updateConsensusForecastAPI(pendingPayload);
-  //     setConfirmationDialog({
-  //       open: false,
-  //       month: null,
-  //       row: null,
-  //       value: null,
-  //       pendingPayload: null,
-  //     });
-  //     setEditingCell({ month: null, row: null });
-  //     setUpdatingCell({ month: null, row: null });
-  //     setEditValue("");
-  //     setTimeout(() => {
-  //       fetchForecastData();
-  //     }, 100);
-  //   } catch (err) {
-  //     alert("Failed to update consensus forecast");
-  //     setConfirmationDialog({
-  //       open: false,
-  //       month: null,
-  //       row: null,
-  //       value: null,
-  //       pendingPayload: null,
-  //     });
-  //     setEditingCell({ month: null, row: null });
-  //     setUpdatingCell({ month: null, row: null });
-  //   }
-  // };
   const handleConfirmationSubmit = async () => {
     const { pendingPayload, month, row } = confirmationDialog;
     if (!pendingPayload) return;
@@ -679,27 +634,31 @@ export default function ForecastTable({
             {periodOptions.map((label) => (
               <Button
                 key={label}
-                variant={period === label ? "contained" : "outlined"}
-                color={period === label ? "primary" : "inherit"}
+                variant="outlined"
                 onClick={() => setPeriod(label)}
                 sx={{
-                  minWidth: 44,
-                  height: 28,
-                  px: 2,
-                  borderRadius: 999,
+                  width: 44,
+                  height: 22,
+                  px: 0,
+                  minWidth: 0,
+                  minHeight: 0,
+                  borderRadius: "50px",
                   fontWeight: 600,
-                  fontSize: 13,
-                  lineHeight: 1.2,
+                  fontSize: "13px",
+                  lineHeight: "16px",
+                  color: period === label ? "#fff" : "#2563EB",
+                  backgroundColor: period === label ? "#2563EB" : "#fff",
+                  border: "1px solid #2563EB",
                   textTransform: "none",
-                  boxShadow: "none",
-                  "&.MuiButton-outlined": {
-                    borderColor: "#90a4ae",
+                  "&:hover": {
+                    backgroundColor: period === label ? "#1e4fc1" : "#f5faff",
                   },
                 }}
               >
                 {label}
               </Button>
             ))}
+
             <Checkbox
               icon={
                 <CheckBoxIcon
@@ -887,28 +846,6 @@ export default function ForecastTable({
                         minWidth: 90,
                         cursor: isConsensusRow ? "pointer" : "default",
                       }}
-                      // onClick={(e) => {
-                      //   if (
-                      //     isConsensusRow &&
-                      //     locked &&
-                      //     value &&
-                      //     value !== "-"
-                      //   ) {
-                      //     setLockComment({
-                      //       open: true,
-                      //       anchor: e.currentTarget,
-                      //     });
-                      //   }
-                      //   if (
-                      //     isConsensusRow &&
-                      //     !locked &&
-                      //     !isEditing &&
-                      //     !isUpdating
-                      //   ) {
-                      //     setEditingCell({ month: m, row: label });
-                      //     setEditValue(value === "-" ? "" : value);
-                      //   }
-                      // }}
                       onClick={(e) => {
                         if (
                           isConsensusRow &&

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
@@ -10,25 +10,70 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import FileDownloadOutlined from "@mui/icons-material/FileDownloadOutlined";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import ShareOutlined from "@mui/icons-material/ShareOutlined";
+import { useAlert } from "./AlertContext";
 
 export const AlertsSection = () => {
+  const { selectedAlertData, isLoading } = useAlert();
+
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState("month");
+  const [selectedModel, setSelectedModel] = useState("XGBoost");
+  const [chartData, setChartData] = useState(null);
+  const [chartKey, setChartKey] = useState(0);
+
+  // Styled time period toggle buttons
   const timePeriods = [
-    { label: "Y", value: "year" },
-    { label: "Q", value: "quarter" },
     { label: "M", value: "month" },
     { label: "W", value: "week" },
   ];
 
-  const historicalData = [
+  const transformForecastData = (forecastData) => {
+    if (!forecastData) return null;
+    const arr = Array.isArray(forecastData) ? forecastData : [forecastData];
+    if (arr.length === 0) return null;
+
+    const categories = arr.map((item) => {
+      const raw = item.month_name; // e.g., "2024-01" or "January 2024"
+      const date = new Date(raw.length === 7 ? `${raw}-01` : raw); // try parsing
+      return isNaN(date.getTime())
+        ? raw
+        : date.toLocaleDateString("en-US", {
+            month: "short", // Jan
+            year: "2-digit", // 24
+          });
+    });
+
+    const actualUnits = arr.map((item) => parseFloat(item.actual_units) || 0);
+    const mlForecast = arr.map((item) => parseFloat(item.ml_forecast) || 0);
+
+    return { categories, actualUnits, mlForecast };
+  };
+
+  useEffect(() => {
+    if (selectedAlertData && selectedAlertData.forecastData) {
+      const transformed = transformForecastData(selectedAlertData.forecastData);
+      setChartData(transformed);
+      setChartKey((prev) => prev + 1);
+    } else {
+      setChartData(null);
+    }
+  }, [selectedAlertData]);
+
+  const handleTimePeriodChange = (event, newValue) => {
+    if (newValue !== null) setSelectedTimePeriod(newValue);
+  };
+  const handleModelChange = (event) => setSelectedModel(event.target.value);
+
+  const defaultHistoricalData = [
     400, 190, 350, 100, 180, 120, 110, 140, 200, 260, 310, 400,
   ];
-  const forecastData = [150, 200, 250, 180, 120, 160];
-
-  const categories = [
+  const defaultForecastData = [150, 200, 250, 180, 120, 160];
+  const defaultCategories = [
     "Feb 2024",
     "Mar 2024",
     "Apr 2024",
@@ -49,85 +94,140 @@ export const AlertsSection = () => {
     "Jul 2025",
   ];
 
-  const chartOptions = {
-    title: { text: undefined },
-    chart: {
-      type: "line",
-      height: 500,
-      backgroundColor: "#fafcff",
-      spacing: [10, 10, 10, 10],
-    },
-    xAxis: {
-      categories,
-      tickmarkPlacement: "on", // Ensures lines start/end at first/last point
-      labels: {
-        align: "center",
-        rotation: 0,
-        style: {
-          fontSize: "12px",
-          color: "#b0b8c1",
-          fontWeight: 500,
+  const redColor = "#e53935";
+
+  const getChartOptions = () => {
+    const hasData =
+      chartData && chartData.categories && chartData.categories.length > 0;
+    if (!hasData) {
+      return {
+        title: { text: undefined },
+        chart: {
+          type: "line",
+          height: 500,
+          backgroundColor: "#fafcff",
+          spacing: [10, 10, 10, 10],
+        },
+        xAxis: {
+          categories: defaultCategories,
+          tickmarkPlacement: "on",
+          labels: {
+            align: "center",
+            style: { fontSize: "12px", color: "#b0b8c1" },
+          },
+          lineColor: "#e0e7ef",
+          tickColor: "#e0e7ef",
+          gridLineWidth: 1,
+          gridLineColor: "#e0e7ef",
+        },
+        yAxis: {
+          title: { text: null },
+          gridLineWidth: 1,
+          gridLineColor: "#e0e7ef",
+          min: 0,
+          max: 500,
+          tickInterval: 100,
+          labels: { style: { color: "#b0b8c1" } },
+        },
+        tooltip: { shared: true, valueSuffix: " units" },
+        plotOptions: { series: { marker: { enabled: false }, lineWidth: 2 } },
+        series: [
+          {
+            name: "Historical",
+            data: defaultHistoricalData.concat(
+              Array(defaultForecastData.length).fill(null)
+            ),
+            color: redColor,
+            dashStyle: "Solid",
+          },
+          {
+            name: "Forecast",
+            data: Array(defaultHistoricalData.length)
+              .fill(null)
+              .concat(defaultForecastData),
+            color: redColor,
+            dashStyle: "Dash",
+          },
+        ],
+        credits: { enabled: false },
+        legend: { enabled: false },
+      };
+    }
+    const { categories, actualUnits, mlForecast } = chartData;
+    const maxVal = Math.max(...actualUnits, ...mlForecast);
+    const yMax = Math.ceil((maxVal * 1.2) / 100) * 100;
+    return {
+      title: { text: undefined },
+      chart: {
+        type: "line",
+        height: 500,
+        backgroundColor: "#fafcff",
+        spacing: [10, 10, 10, 10],
+      },
+      xAxis: {
+        categories,
+        tickmarkPlacement: "on",
+        labels: {
+          align: "center",
+          style: { fontSize: "12px", color: "#b0b8c1" },
+        },
+        lineColor: "#e0e7ef",
+        tickColor: "#e0e7ef",
+        gridLineWidth: 1,
+        gridLineColor: "#e0e7ef",
+      },
+      yAxis: {
+        title: { text: null },
+        gridLineWidth: 1,
+        gridLineColor: "#e0e7ef",
+        min: 0,
+        max: yMax || 500,
+        tickInterval: Math.ceil((yMax || 500) / 5 / 100) * 100,
+        labels: { style: { color: "#b0b8c1" } },
+      },
+      tooltip: {
+        shared: true,
+        valueSuffix: " units",
+        formatter: function () {
+          let txt = `<b>${this.x}</b><br/>`;
+          this.points.forEach((p) => {
+            txt += `<span style="color:${p.color}">${
+              p.series.name
+            }</span>: <b>${p.y.toLocaleString()}</b> units<br/>`;
+          });
+          return txt;
         },
       },
-      lineColor: "#e0e7ef",
-      tickColor: "#e0e7ef",
-      gridLineWidth: 1,
-      gridLineColor: "#e0e7ef",
-      gridZIndex: 1,
-      // Do NOT set min, max, startOnTick, endOnTick for categories!
-    },
-    yAxis: {
-      title: { text: null },
-      gridLineWidth: 1,
-      gridLineColor: "#e0e7ef",
-      min: 0,
-      max: 500,
-      tickInterval: 100,
-      labels: {
-        style: { color: "#b0b8c1", fontWeight: 500 },
-      },
-    },
-    tooltip: {
-      shared: true,
-      valueSuffix: " units",
-    },
-    plotOptions: {
-      series: {
-        marker: { enabled: false },
-        lineWidth: 2,
-        states: {
-          hover: { enabled: true, lineWidth: 3 },
+      plotOptions: {
+        series: {
+          marker: { enabled: false },
+          lineWidth: 2,
         },
-        // This makes sure the line does not extend past first/last point
-        // (Default behavior with tickmarkPlacement: 'on')
       },
-    },
-    series: [
-      {
-        name: "Historical",
-        data: historicalData.concat(Array(forecastData.length).fill(null)),
-        color: "#e53935",
-        lineWidth: 2,
-        dashStyle: "Solid",
-      },
-      {
-        name: "Forecast",
-        data: Array(historicalData.length).fill(null).concat(forecastData),
-        color: "#e53935",
-        lineWidth: 2,
-        dashStyle: "Dash",
-      },
-    ],
-    credits: { enabled: false },
-    legend: { enabled: false },
+      series: [
+        {
+          name: "Actual Units",
+          data: actualUnits,
+          color: redColor,
+          dashStyle: "Solid",
+        },
+        {
+          name: "ML Forecast",
+          data: mlForecast,
+          color: redColor,
+          dashStyle: "Dash",
+        },
+      ],
+      credits: { enabled: false },
+      legend: { enabled: false },
+    };
   };
 
+  const hasChartArea = !isLoading;
+
   return (
-    <Paper
-      elevation={0}
-      sx={{ width: "100%", border: 1, borderColor: "grey.300" }}
-    >
-      {/* Controls Bar */}
+    <Paper>
+      {/* Controls */}
       <Box
         sx={{
           display: "flex",
@@ -140,54 +240,51 @@ export const AlertsSection = () => {
           borderColor: "grey.300",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <ToggleButtonGroup value="month" exclusive aria-label="time period">
-            {timePeriods.map((period) => (
-              <ToggleButton
-                key={period.value}
-                value={period.value}
-                sx={{
-                  width: 38,
-                  height: 24,
-                  border: 1,
-                  borderColor: "primary.600",
-                  borderRadius: "50px",
-                  p: 0,
-                  "&.Mui-selected": {
-                    bgcolor: "primary.600",
-                    color: "white",
-                    "&:hover": {
-                      bgcolor: "primary.700",
-                    },
-                  },
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  fontWeight={600}
-                  color={period.value === "month" ? "white" : "text.secondary"}
-                >
-                  {period.label}
-                </Typography>
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Box>
-        {/* Right Controls */}
-        <Box
+        <ToggleButtonGroup
+          value={selectedTimePeriod}
+          exclusive
+          onChange={handleTimePeriodChange}
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            width: 260,
-            justifyContent: "flex-end",
+            "& .MuiToggleButton-root": {
+              width: 44,
+              height: 22,
+              border: "1px solid #2563EB",
+              borderRadius: "50px",
+              p: 0,
+              fontWeight: 600,
+              fontSize: "13px",
+              lineHeight: "16px",
+              minHeight: 0,
+              minWidth: 0,
+              color: "#2563EB",
+              backgroundColor: "white",
+              "&.Mui-selected": {
+                backgroundColor: "#2563EB",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "#1e4fc1",
+                },
+              },
+              "&:not(:last-of-type)": {
+                marginRight: 1,
+              },
+            },
           }}
         >
+          {timePeriods.map((period) => (
+            <ToggleButton key={period.value} value={period.value}>
+              {period.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Select
-            value="XGBoost"
+            value={selectedModel}
+            onChange={handleModelChange}
             size="small"
             displayEmpty
-            renderValue={() => "Model - XGBoost"}
+            renderValue={() => `Model - ${selectedModel}`}
             sx={{
               minWidth: 150,
               height: 32,
@@ -211,10 +308,38 @@ export const AlertsSection = () => {
           </Button>
         </Box>
       </Box>
-      {/* Highcharts Area */}
-      <Box sx={{ px: 2, py: 2 }}>
-        <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-      </Box>
+      {/* Info / Error */}
+      {selectedAlertData && selectedAlertData.error && (
+        <Alert severity="error" sx={{ m: 2 }}>
+          {selectedAlertData.error}
+        </Alert>
+      )}
+      {/* Loading */}
+      {isLoading && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: 500,
+          }}
+        >
+          <CircularProgress size={24} />
+          <Typography sx={{ ml: 2 }}>Loading forecast data...</Typography>
+        </Box>
+      )}
+      {/* Chart */}
+      {hasChartArea && (
+        <Box sx={{ px: 2, py: 2 }}>
+          <HighchartsReact
+            key={chartKey}
+            highcharts={Highcharts}
+            options={getChartOptions()}
+            allowChartUpdate
+            updateArgs={[true, true, true]}
+          />
+        </Box>
+      )}
     </Paper>
   );
 };
