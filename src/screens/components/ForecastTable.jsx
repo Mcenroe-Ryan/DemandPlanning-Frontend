@@ -515,7 +515,7 @@ export default function ForecastTable({
           Object.entries(keyMap).forEach(([rowLabel, jsonKey]) => {
             const val = item[jsonKey];
             if (val !== undefined && val !== null && val !== "NULL") {
-              ds[label][rowLabel] = val === "" ? "-" : val;
+              ds[label][rowLabel] = val === "" || val === 0 ? "-" : val;
             }
           });
         });
