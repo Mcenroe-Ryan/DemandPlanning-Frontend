@@ -993,7 +993,7 @@ export const DemandProjectMonth = () => {
           />
         </Box>
 
-        <Stack direction="row" spacing={0.625}>
+        <Stack direction="row" spacing={1}>
           <DateFilter onDateChange={(range) => setDateRange(range)} />
           <MultiSelectWithCheckboxes
             label="Country"
