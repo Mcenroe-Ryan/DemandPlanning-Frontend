@@ -29,7 +29,7 @@ import ForecastChart from "./ForecastChart";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 async function updateConsensusForecastAPI(payload) {
-  const response = await fetch(`http://localhost:5000/api/forecast/consensus`, {
+  const response = await fetch(`${API_BASE_URL}/forecast/consensus`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -427,6 +427,18 @@ export default function ForecastTable({
       end.toISOString().slice(0, 10)
     );
   }, [startDate, endDate]);
+  const firstFutureMonth = useMemo(() => {
+    const today = new Date();
+    const currentKey = today.getFullYear() * 12 + today.getMonth();
+    const sortedMonths = months.filter((label) => {
+      const [mon, yr] = label.split(" ");
+      const monthIdx = MONTH_MAP[mon.toUpperCase()];
+      const yearNum = 2000 + parseInt(yr, 10);
+      const key = yearNum * 12 + monthIdx;
+      return key > currentKey;
+    });
+    return sortedMonths[0] || null;
+  }, [months]);
 
   const futureMonthSet = useMemo(() => {
     const today = new Date();
@@ -464,7 +476,7 @@ export default function ForecastTable({
   //Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
-    fetch(`http://localhost:5000/api/forecast`, {
+    fetch(`${API_BASE_URL}/forecast`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -831,6 +843,13 @@ export default function ForecastTable({
                   const isUpdating =
                     updatingCell.month === m && updatingCell.row === label;
                   const locked = isConsensusRow && isMonthLocked(m);
+
+                  const isAllowedMonth = m === firstFutureMonth;
+                  const displayValue =
+                    value === undefined || value === null
+                      ? "-"
+                      : formatNumberByCountry(value, selectedCountry);
+
                   return (
                     <td
                       key={m}
@@ -852,7 +871,8 @@ export default function ForecastTable({
                           canEditConsensus &&
                           !locked &&
                           !isEditing &&
-                          !isUpdating
+                          !isUpdating &&
+                          isAllowedMonth
                         ) {
                           setEditingCell({ month: m, row: label });
                           setEditValue(value === "-" ? "" : value);
@@ -869,89 +889,89 @@ export default function ForecastTable({
                         }
                       }}
                     >
-                      {isConsensusRow && locked ? (
-                        <span
-                          style={{
-                            color: "#aaa",
-                            display: "flex",
-                            alignItems: "center",
-                            textAlign: "right",
-                            justifyContent: "end",
-                            gap: 4,
-                          }}
-                        >
-                          <LockIcon style={{ fontSize: 14 }} />
-                          {value === undefined || value === null
-                            ? "-"
-                            : formatNumberByCountry(value, selectedCountry)}
-                        </span>
-                      ) : isConsensusRow && isEditing ? (
-                        <input
-                          type="number"
-                          value={editValue}
-                          style={{
-                            width: "70px",
-                            fontSize: 14,
-                            padding: "2px 4px",
-                            border: "1px solid #aaa",
-                            borderRadius: 4,
-                          }}
-                          autoFocus
-                          disabled={isUpdating}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={async () => {
-                            const targetDate = getMonthDate(m);
-                            const payload = {
-                              country_name: Array.isArray(selectedCountry)
-                                ? selectedCountry
-                                : [selectedCountry],
-                              state_name: Array.isArray(selectedState)
-                                ? selectedState
-                                : [selectedState],
-                              city_name: Array.isArray(selectedCities)
-                                ? selectedCities
-                                : [selectedCities],
-                              plant_name: Array.isArray(selectedPlants)
-                                ? selectedPlants
-                                : [selectedPlants],
-                              category_name: Array.isArray(selectedCategories)
-                                ? selectedCategories
-                                : [selectedCategories],
-                              sku_code: Array.isArray(selectedSKUs)
-                                ? selectedSKUs
-                                : [selectedSKUs],
-                              channel_name: Array.isArray(selectedChannels)
-                                ? selectedChannels
-                                : [selectedChannels],
-                              start_date: startDate,
-                              end_date: endDate,
-                              consensus_forecast: editValue,
-                              target_month: targetDate,
-                              model_name: modelName,
-                            };
+                      {isConsensusRow ? (
+                        locked ? (
+                          <span
+                            style={{
+                              color: "#aaa",
+                              display: "flex",
+                              alignItems: "center",
+                              textAlign: "right",
+                              justifyContent: "end",
+                              gap: 4,
+                            }}
+                          >
+                            <LockIcon style={{ fontSize: 14 }} />
+                            {displayValue}
+                          </span>
+                        ) : isEditing && isAllowedMonth ? (
+                          <input
+                            type="number"
+                            value={editValue}
+                            style={{
+                              width: "70px",
+                              fontSize: 14,
+                              padding: "2px 4px",
+                              border: "1px solid #aaa",
+                              borderRadius: 4,
+                            }}
+                            autoFocus
+                            disabled={isUpdating}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={async () => {
+                              const targetDate = getMonthDate(m);
+                              const payload = {
+                                country_name: Array.isArray(selectedCountry)
+                                  ? selectedCountry
+                                  : [selectedCountry],
+                                state_name: Array.isArray(selectedState)
+                                  ? selectedState
+                                  : [selectedState],
+                                city_name: Array.isArray(selectedCities)
+                                  ? selectedCities
+                                  : [selectedCities],
+                                plant_name: Array.isArray(selectedPlants)
+                                  ? selectedPlants
+                                  : [selectedPlants],
+                                category_name: Array.isArray(selectedCategories)
+                                  ? selectedCategories
+                                  : [selectedCategories],
+                                sku_code: Array.isArray(selectedSKUs)
+                                  ? selectedSKUs
+                                  : [selectedSKUs],
+                                channel_name: Array.isArray(selectedChannels)
+                                  ? selectedChannels
+                                  : [selectedChannels],
+                                start_date: startDate,
+                                end_date: endDate,
+                                consensus_forecast: editValue,
+                                target_month: targetDate,
+                                model_name: modelName,
+                              };
 
-                            setConfirmationDialog({
-                              open: true,
-                              month: m,
-                              row: label,
-                              value: editValue,
-                              pendingPayload: payload,
-                            });
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.target.blur();
-                            } else if (e.key === "Escape") {
-                              setEditingCell({ month: null, row: null });
-                            }
-                          }}
-                        />
-                      ) : isConsensusRow ? (
-                        <span style={{ color: "#1976d2", fontWeight: 500 }}>
-                          {value === undefined || value === null
-                            ? "-"
-                            : formatNumberByCountry(value, selectedCountry)}
-                        </span>
+                              setConfirmationDialog({
+                                open: true,
+                                month: m,
+                                row: label,
+                                value: editValue,
+                                pendingPayload: payload,
+                              });
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.target.blur();
+                              } else if (e.key === "Escape") {
+                                setEditingCell({ month: null, row: null });
+                              }
+                            }}
+                          />
+                        ) : isAllowedMonth ? (
+                          <span style={{ color: "#1976d2", fontWeight: 500 }}>
+                            {displayValue}
+                          </span>
+                        ) : (
+                          "-"
+                        )
                       ) : value === undefined || value === null ? (
                         "-"
                       ) : (

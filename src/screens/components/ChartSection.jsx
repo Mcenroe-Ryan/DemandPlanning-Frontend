@@ -1,21 +1,140 @@
-import ErrorIcon from "@mui/icons-material/Error";
-import InfoIcon from "@mui/icons-material/Info";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import WarningIcon from "@mui/icons-material/Warning";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
+  Button,
   Checkbox,
-  Divider,
-  Paper,
-  Stack,
-  Typography,
   CircularProgress,
+  Divider,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+  Alert,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
-import { useAlert } from "./AlertContext"; // Import the context
+import {
+  Error as ErrorIcon,
+  Info as InfoIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  Warning as WarningIcon,
+  FileDownloadOutlined,
+  ShareOutlined,
+} from "@mui/icons-material";
+import { useAlert } from "./AlertContext";
+import Highcharts from "highcharts";
 
+// const apiUrl = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+
+// Chart rendering component
+const ForecastChart = ({ data, selectedAlert }) => {
+  const chartRef = useRef(null);
+
+  if (!data || data.length === 0) return <p>No forecast data to display.</p>;
+
+  const actualData = [];
+  const forecastData = [];
+  data.forEach((item) => {
+    const timestamp = new Date(item.filtered_date).getTime();
+    if (item.actual_units !== null)
+      actualData.push([timestamp, item.actual_units]);
+    if (item.ml_forecast !== null)
+      forecastData.push([timestamp, item.ml_forecast]);
+  });
+
+  const plotBands = selectedAlert
+    ? [
+        {
+          from: new Date(selectedAlert.error_start_date).getTime(),
+          to: new Date(selectedAlert.error_end_date).getTime(),
+          color:
+            selectedAlert.error_type === "error"
+              ? "rgba(255, 68, 68, 0.3)"
+              : "rgba(255, 165, 0, 0.3)",
+        },
+      ]
+    : [];
+
+  const chartOptions = {
+    chart: {
+      type: "line",
+      height: 565.51,
+      width: 1858.38,
+      spacingTop: 8,
+      spacingRight: 8,
+      spacingBottom: 8,
+      spacingLeft: 0,
+    },
+    title: { text: null },
+    xAxis: {
+      type: "datetime",
+      gridLineWidth: 1,
+      gridLineColor: "#f0f0f0",
+      plotBands,
+      labels: { style: { fontSize: "11px" } },
+    },
+    yAxis: {
+      gridLineWidth: 1,
+      gridLineColor: "#f0f0f0",
+      title: { text: null },
+      labels: { style: { fontSize: "11px" } },
+    },
+    tooltip: {
+      shared: true,
+      backgroundColor: "#fff",
+      borderColor: "#ccc",
+      borderRadius: 5,
+      style: { fontSize: "11px" },
+    },
+    legend: {
+      enabled: true,
+      verticalAlign: "top",
+      y: 0,
+      itemStyle: { fontSize: "11px" },
+      symbolHeight: 8,
+    },
+    plotOptions: {
+      line: {
+        marker: { enabled: true, radius: 2 },
+        lineWidth: 2,
+      },
+    },
+    series: [
+      {
+        name: "Actual Units",
+        data: actualData,
+        color: "#EF4444",
+        marker: { fillColor: "#EF4444", lineColor: "#fff", lineWidth: 1 },
+        connectNulls: false,
+      },
+      {
+        name: "ML Forecast",
+        data: forecastData,
+        color: "#EF4444",
+        dashStyle: "ShortDash",
+        marker: { fillColor: "#EF4444", lineColor: "#fff", lineWidth: 1 },
+        connectNulls: false,
+      },
+    ],
+    credits: { enabled: false },
+  };
+
+  useEffect(() => {
+    if (chartRef.current) {
+      const chart = Highcharts.chart(chartRef.current, chartOptions);
+      return () => chart.destroy();
+    }
+  }, [data, selectedAlert]);
+
+  return <div ref={chartRef} style={{ width: "100%", height: "565.51px" }} />;
+};
+
+// Main Component
 export const ChartSection = () => {
-  const { selectAlert, setLoading } = useAlert(); // Use context instead of props
+  const { selectAlert } = useAlert();
 
   const [alertsData, setAlertsData] = useState([]);
   const [rawAlertsData, setRawAlertsData] = useState([]);
@@ -23,197 +142,309 @@ export const ChartSection = () => {
   const [error, setError] = useState(null);
   const [checkedItems, setCheckedItems] = useState({});
   const [selectedAlertId, setSelectedAlertId] = useState(null);
+  const [forecastData, setForecastData] = useState([]);
 
-  // Function to format date
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const month = date.toLocaleDateString("en-US", { month: "short" });
-    const year = date.getFullYear();
-    const time = date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState("month");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [models, setModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState(null);
+
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const now = () => new Date();
+  const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, 1);
+  const iso = (d) => d.toISOString().split("T")[0];
+  const inside = (d, a, b) => d >= a && d <= b;
+
+  const handleTimePeriodChange = (event, newValue) => {
+    if (newValue !== null) setSelectedTimePeriod(newValue);
+  };
+
+  const handleModelChange = (event) => setSelectedModel(event.target.value);
+
+  const fmtViewDate = (dStr) =>
+    new Date(dStr).toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     });
-    return `${day} ${month}, ${year} ${time}`;
+
+  const trimForecast = (arr) => {
+    if (!Array.isArray(arr)) return [];
+    const current = now();
+    const actualStart = addMonths(current, -6);
+    const forecastEnd = addMonths(current, 6);
+    const forecastStart = addMonths(current, -3);
+
+    return arr
+      .map((row) => {
+        const d = new Date(
+          row.month_name.length === 7 ? `${row.month_name}-01` : row.month_name
+        );
+        return {
+          ...row,
+          filtered_date: d,
+          actual_units:
+            inside(d, actualStart, current) && +row.actual_units > 0
+              ? +row.actual_units
+              : null,
+          ml_forecast:
+            inside(d, forecastStart, forecastEnd) && +row.ml_forecast > 0
+              ? +row.ml_forecast
+              : null,
+        };
+      })
+      .filter((r) => r.actual_units !== null || r.ml_forecast !== null);
   };
 
-  // Function to transform API data to component format
-  const transformAlertData = (apiData) => {
-    return apiData.map((alert) => ({
-      id: alert.id,
-      date: formatDate(alert.error_start_date),
-      message: `${alert.city_name} (${alert.plant_name}) - ${alert.category_name} (${alert.sku_code}) - ${alert.error_label}`,
-      checked: false,
-      type: alert.error_type,
-      style: "normal",
-      rawData: alert,
-    }));
-  };
+  const toAlertRow = (alert) => ({
+    id: alert.id,
+    date: fmtViewDate(alert.error_start_date),
+    message: `${alert.city_name} (${alert.plant_name}) - ${alert.category_name} (${alert.sku_code}) - ${alert.error_label}`,
+    type: alert.error_type,
+    rawData: alert,
+  });
 
-  // Fetch alerts from API
-  useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        setLoadingState(true);
-        const response = await fetch("http://localhost:5000/api/getAllAlerts");
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setRawAlertsData(data);
-        const transformedData = transformAlertData(data);
-        setAlertsData(transformedData);
-
-        const initialCheckedState = transformedData.reduce((acc, alert) => {
-          acc[alert.id] = alert.checked;
-          return acc;
-        }, {});
-        setCheckedItems(initialCheckedState);
-      } catch (err) {
-        setError(err.message);
-        console.error("Error fetching alerts:", err);
-      } finally {
-        setLoadingState(false);
-      }
-    };
-
-    fetchAlerts();
-  }, []);
-
-  const handleCheckboxChange = (id) => {
-    setCheckedItems((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
-  // Handle alert row click/selection - UPDATED TO USE CONTEXT
-  const handleAlertClick = async (alert) => {
-    setSelectedAlertId(alert.id);
-    setLoading(true); // Set loading in context
-
+  const fetchForecastData = async (alert) => {
     const filters = {
-      model_name: "XGBoost",
-      startDate: alert.rawData.error_start_date,
-      endDate: alert.rawData.error_end_date,
-      country: alert.rawData.country_name,
-      state: alert.rawData.state_name,
-      cities: alert.rawData.city_name,
-      plants: alert.rawData.plant_name,
-      categories: alert.rawData.category_name,
-      skus: alert.rawData.sku_code,
-      channels: alert.rawData.channel_name,
+      model_name: selectedModel || "XGBoost",
+      startDate: iso(addMonths(now(), -6)),
+      endDate: iso(addMonths(now(), 6)),
+      country: alert.country_name,
+      state: alert.state_name,
+      cities: alert.city_name,
+      plants: alert.plant_name,
+      categories: alert.category_name,
+      skus: alert.sku_code,
+      channels: alert.channel_name,
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/forecastAlerts", {
+      const res = await fetch(`${API_BASE_URL}/forecastAlerts`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(filters),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const forecastData = await response.json();
-      // Update context with both alert and forecast data
-      selectAlert({
-        selectedAlert: alert.rawData,
-        forecastData: forecastData,
-      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const raw = await res.json();
+      const cleaned = trimForecast(raw);
+      setForecastData(cleaned);
+      selectAlert({ selectedAlert: alert, forecastData: cleaned });
     } catch (err) {
-      console.error("❌ Error fetching forecast data:", err);
+      setForecastData([]);
       selectAlert({
-        selectedAlert: alert.rawData,
+        selectedAlert: alert,
         forecastData: null,
         error: err.message,
       });
-    } finally {
-      setLoading(false); // Remove loading in context
     }
   };
 
-  if (loading) {
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingState(true);
+        const res = await fetch(`${API_BASE_URL}/getAllAlerts`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const alerts = await res.json();
+        setRawAlertsData(alerts);
+        const rows = alerts.map(toAlertRow);
+        setAlertsData(rows);
+        setCheckedItems(Object.fromEntries(rows.map((r) => [r.id, false])));
+        if (alerts.length) {
+          const oldest = alerts.reduce((o, c) =>
+            new Date(c.error_start_date) < new Date(o.error_start_date) ? c : o
+          );
+          setSelectedAlertId(oldest.id);
+          setCheckedItems({ [oldest.id]: true });
+          await fetchForecastData(oldest);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoadingState(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    setModelsLoading(true);
+    fetch(`${API_BASE_URL}/models`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch models");
+        return res.json();
+      })
+      .then((data) => {
+        setModels(data);
+        if (data.length > 0) setSelectedModel(data[0].model_name);
+        setModelsLoading(false);
+      })
+      .catch((err) => {
+        setModelsError(err.message);
+        setModelsLoading(false);
+      });
+  }, []);
+
+  const setSingleCheck = (id) =>
+    setCheckedItems(
+      Object.fromEntries(Object.keys(checkedItems).map((k) => [k, k === id]))
+    );
+
+  const onAlertSelect = async (row) => {
+    setSelectedAlertId(row.id);
+    setSingleCheck(row.id);
+    setErrorMessage(row.message);
+    await fetchForecastData(row.rawData);
+  };
+
+  if (loading)
     return (
-      <Paper
-        elevation={0}
-        sx={{
-          width: "100%",
-          border: 1,
-          borderColor: "grey.300",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          p: 4,
-        }}
-      >
-        <CircularProgress size={24} />
-        <Typography variant="body2" sx={{ ml: 2 }}>
-          Loading alerts...
-        </Typography>
+      <Paper elevation={0} sx={styles.centerPaper}>
+        <CircularProgress size={20} />
+        <Typography sx={{ ml: 1 }}>Loading alerts…</Typography>
       </Paper>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <Paper
         elevation={0}
-        sx={{
-          width: "100%",
-          border: 1,
-          borderColor: "error.main",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          p: 4,
-        }}
+        sx={{ ...styles.centerPaper, borderColor: "error.main" }}
       >
         <ErrorIcon color="error" sx={{ mr: 1 }} />
-        <Typography variant="body2" color="error">
-          Error loading alerts: {error}
-        </Typography>
+        <Typography color="error">Error: {error}</Typography>
       </Paper>
     );
-  }
+
+  const selectedAlert = rawAlertsData.find((a) => a.id === selectedAlertId);
 
   return (
     <Paper
       elevation={0}
-      sx={{
-        width: "100%",
-        border: 1,
-        borderColor: "grey.300",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      sx={{ width: "100%", border: 1, borderColor: "grey.300" }}
     >
-      {/* Header */}
+      {/* Controls */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          px: 1.25,
-          py: 0.5,
+          px: 1.5,
+          pt: 1.5,
+          pb: 0.5,
           borderBottom: 1,
           borderColor: "grey.300",
+          minHeight: 40,
         }}
       >
+        <ToggleButtonGroup
+          value={selectedTimePeriod}
+          exclusive
+          onChange={handleTimePeriodChange}
+          sx={{
+            "& .MuiToggleButton-root": {
+              width: 36,
+              height: 20,
+              border: "1px solid #2563EB",
+              borderRadius: "50px",
+              p: 0,
+              fontWeight: 600,
+              fontSize: "12px",
+              lineHeight: "14px",
+              color: "#2563EB",
+              backgroundColor: "white",
+              "&.Mui-selected": {
+                backgroundColor: "#2563EB",
+                color: "white",
+              },
+              "&:not(:last-of-type)": {
+                marginRight: 0.5,
+              },
+            },
+          }}
+        >
+          <ToggleButton value="month">M</ToggleButton>
+          <ToggleButton value="week">W</ToggleButton>
+        </ToggleButtonGroup>
+
+        {/* Error Message between M/W and Models */}
+        {errorMessage && (
+          <Alert
+            severity="error"
+            onClose={() => setErrorMessage("")}
+            sx={{
+              mx: 2,
+              py: 0,
+              fontSize: 12,
+              minHeight: 28,
+              "& .MuiAlert-message": {
+                fontSize: 12,
+              },
+              "& .MuiAlert-icon": {
+                fontSize: 16,
+              },
+            }}
+          >
+            {errorMessage}
+          </Alert>
+        )}
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {modelsLoading ? (
+            <CircularProgress size={18} />
+          ) : modelsError ? (
+            <Typography color="error" sx={{ fontSize: 12 }}>
+              {modelsError}
+            </Typography>
+          ) : (
+            <Select
+              value={selectedModel}
+              onChange={handleModelChange}
+              size="small"
+              displayEmpty
+              renderValue={() =>
+                selectedModel ? `Model - ${selectedModel}` : "Select Model"
+              }
+              sx={{
+                minWidth: 110,
+                height: 28,
+                fontSize: 13,
+                "& .MuiSelect-select": {
+                  py: 0.25,
+                  px: 1,
+                },
+              }}
+              IconComponent={KeyboardArrowDownIcon}
+            >
+              {models.map((model) => (
+                <MenuItem key={model.model_id} value={model.model_name}>
+                  {model.model_name}
+                </MenuItem>
+              ))}
+            </Select>
+          )}
+          <Button size="small" sx={{ minWidth: 0, p: 0 }}>
+            <ShareOutlined fontSize="small" />
+          </Button>
+          <Button size="small" sx={{ minWidth: 0, p: 0 }}>
+            <FileDownloadOutlined fontSize="small" />
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Chart */}
+      <Box sx={{ p: 2, pb: 0 }}>
+        <ForecastChart data={forecastData} selectedAlert={selectedAlert} />
+      </Box>
+
+      {/* Header */}
+      <Box sx={styles.header}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <InfoIcon sx={{ width: 13, height: 13 }} />
           <Typography
             variant="subtitle2"
-            sx={{
-              fontWeight: 600,
-              color: "text.secondary",
-            }}
+            sx={{ fontWeight: 600, color: "text.secondary", fontSize: 14 }}
           >
             Alerts &amp; Errors ({alertsData.length})
           </Typography>
@@ -221,136 +452,155 @@ export const ChartSection = () => {
         <KeyboardArrowDownIcon sx={{ width: 16, height: 16 }} />
       </Box>
 
-      {/* Alerts Container */}
-      <Box
-        sx={{
-          bgcolor: "grey.100",
-          p: 1.25,
-          display: "flex",
-          gap: 1.5,
-          borderLeft: 1,
-          borderRight: 1,
-          borderBottom: 1,
-          borderColor: "grey.300",
-          boxShadow: "inset 2px 1px 4px rgba(0,0,0,0.2)",
-          minHeight: alertsData.length === 0 ? 60 : "auto",
-        }}
-      >
+      {/* Alert List */}
+      <Box sx={styles.alertList}>
         {alertsData.length === 0 ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              width: "100%",
-            }}
-          >
+          <Box sx={styles.noAlerts}>
             <Typography variant="caption" color="text.secondary">
               No alerts found
             </Typography>
           </Box>
         ) : (
           <Stack spacing={0} sx={{ width: "100%" }}>
-            {alertsData.map((alert) => (
+            {alertsData.map((row) => (
               <Box
-                key={alert.id}
+                key={row.id}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  cursor: "pointer",
-                  backgroundColor:
-                    selectedAlertId === alert.id
-                      ? "rgba(25, 118, 210, 0.08)"
+                  ...styles.row,
+                  bgcolor:
+                    selectedAlertId === row.id
+                      ? "rgba(25,118,210,0.08)"
                       : "transparent",
                   "&:hover": {
                     bgcolor:
-                      selectedAlertId === alert.id
-                        ? "rgba(25, 118, 210, 0.12)"
+                      selectedAlertId === row.id
+                        ? "rgba(25,118,210,0.12)"
                         : "grey.200",
                   },
-                  borderRadius: 1,
-                  p: 0.5,
-                  transition: "background-color 0.2s ease",
                 }}
-                onClick={() => handleAlertClick(alert)}
+                onClick={() => onAlertSelect(row)}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                <Checkbox
+                  checked={checkedItems[row.id] || false}
+                  size="small"
+                  sx={{ p: 0, width: 16, height: 16, ml: 0.5, mr: 1 }}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setCheckedItems((prev) => ({
+                      ...prev,
+                      [row.id]: checked,
+                    }));
                   }}
-                >
-                  <Box sx={{ p: 1 }}>
-                    <Checkbox
-                      checked={checkedItems[alert.id] || false}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleCheckboxChange(alert.id);
-                      }}
-                      size="small"
-                      sx={{
-                        p: 0,
-                        width: 16,
-                        height: 16,
-                      }}
-                    />
-                  </Box>
-                </Box>
+                  onClick={(e) => e.stopPropagation()}
+                />
 
                 <Typography
                   variant="caption"
                   sx={{
-                    fontWeight: 600,
-                    color: "text.secondary",
-                    minWidth: 140,
+                    ...styles.dateCol,
+                    textDecoration: checkedItems[row.id]
+                      ? "line-through"
+                      : "none",
                   }}
                 >
-                  {alert.date}
+                  {row.date}
                 </Typography>
-
-                <Box
+                {row.type === "error" ? (
+                  <ErrorIcon
+                    sx={{
+                      width: 13,
+                      height: 13,
+                      color: "error.main",
+                      mx: 0.5,
+                      filter: checkedItems[row.id] ? "grayscale(100%)" : "none",
+                    }}
+                  />
+                ) : (
+                  <WarningIcon
+                    sx={{
+                      width: 13,
+                      height: 13,
+                      color: "warning.main",
+                      mx: 0.5,
+                      filter: checkedItems[row.id] ? "grayscale(100%)" : "none",
+                    }}
+                  />
+                )}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 1.25,
-                    py: 0.5,
+                    textDecoration: checkedItems[row.id]
+                      ? "line-through"
+                      : "none",
                   }}
                 >
-                  {alert.type === "error" ? (
-                    <ErrorIcon
-                      sx={{ width: 13, height: 13, color: "error.main" }}
-                    />
-                  ) : (
-                    <WarningIcon
-                      sx={{ width: 13, height: 13, color: "warning.main" }}
-                    />
-                  )}
-
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      textDecoration:
-                        alert.style === "underline"
-                          ? "underline"
-                          : alert.style === "lineThrough"
-                          ? "line-through"
-                          : "none",
-                    }}
-                  >
-                    {alert.message}
-                  </Typography>
-                </Box>
+                  {row.message}
+                </Typography>
               </Box>
             ))}
           </Stack>
         )}
-
-        <Divider orientation="vertical" sx={{ width: 2.5, height: 144 }} />
+        <Divider orientation="vertical" sx={{ width: 2, height: "100%" }} />
       </Box>
     </Paper>
   );
+};
+
+const styles = {
+  centerPaper: {
+    width: "100%",
+    border: 1,
+    borderColor: "grey.300",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    p: 2,
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    px: 1.5,
+    py: 0.5,
+    borderBottom: 1,
+    borderColor: "grey.300",
+    minHeight: 36,
+  },
+  alertList: {
+    bgcolor: "grey.100",
+    display: "flex",
+    gap: 1,
+    borderLeft: 1,
+    borderRight: 1,
+    borderBottom: 1,
+    borderColor: "grey.300",
+    boxShadow: "inset 2px 1px 4px rgba(0,0,0,0.2)",
+    flexDirection: "horizontal",
+    width: "100%",
+    height: "160px",
+    p: "6px",
+  },
+  noAlerts: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: "112px",
+  },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    p: 0.5,
+    borderRadius: 1,
+    cursor: "pointer",
+    transition: "background-color 0.2s ease",
+    minHeight: "36px",
+  },
+  dateCol: {
+    fontWeight: 600,
+    color: "text.secondary",
+    minWidth: 110,
+    mr: 0.5,
+  },
 };

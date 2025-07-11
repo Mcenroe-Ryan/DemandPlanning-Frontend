@@ -1,6 +1,9 @@
+// React and Highcharts dependencies
 import React, { useState, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+
+// MUI components for UI elements
 import {
   Box,
   Button,
@@ -13,38 +16,71 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
+
+// Icons
 import FileDownloadOutlined from "@mui/icons-material/FileDownloadOutlined";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import ShareOutlined from "@mui/icons-material/ShareOutlined";
+
+// Custom alert context for global state
 import { useAlert } from "./AlertContext";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+// Main component
 export const AlertsSection = () => {
+  // Pull alert-related state from context
   const { selectedAlertData, isLoading } = useAlert();
 
+  // UI State
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("month");
-  const [selectedModel, setSelectedModel] = useState("XGBoost");
-  const [chartData, setChartData] = useState(null);
-  const [chartKey, setChartKey] = useState(0);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [hcOptions, setHcOptions] = useState(null);
 
-  // Styled time period toggle buttons
+  // Model dropdown state
+  const [models, setModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState(null);
+
+  // Fetch models list from backend on mount
+  useEffect(() => {
+    setModelsLoading(true);
+    fetch(`${API_BASE_URL}/models`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch models");
+        return res.json();
+      })
+      .then((data) => {
+        setModels(data);
+        if (data.length > 0) setSelectedModel(data[0].model_name);
+        setModelsLoading(false);
+      })
+      .catch((err) => {
+        setModelsError(err.message);
+        setModelsLoading(false);
+      });
+  }, []);
+
+  // Toggle button values
   const timePeriods = [
     { label: "M", value: "month" },
     { label: "W", value: "week" },
   ];
 
+  // Transforms forecast data into chart-friendly format
   const transformForecastData = (forecastData) => {
     if (!forecastData) return null;
     const arr = Array.isArray(forecastData) ? forecastData : [forecastData];
     if (arr.length === 0) return null;
 
     const categories = arr.map((item) => {
-      const raw = item.month_name; // e.g., "2024-01" or "January 2024"
-      const date = new Date(raw.length === 7 ? `${raw}-01` : raw); // try parsing
+      const raw = item.month_name;
+      const date = new Date(raw.length === 7 ? `${raw}-01` : raw);
       return isNaN(date.getTime())
         ? raw
         : date.toLocaleDateString("en-US", {
-            month: "short", // Jan
-            year: "2-digit", // 24
+            month: "short",
+            year: "2-digit",
           });
     });
 
@@ -54,110 +90,127 @@ export const AlertsSection = () => {
     return { categories, actualUnits, mlForecast };
   };
 
+  // Fallback chart config when no data available
+  const getDefaultOptions = () => ({
+    title: { text: null },
+    chart: {
+      type: "line",
+      height: 500,
+      backgroundColor: "#fafcff",
+      spacing: [10, 10, 10, 10],
+    },
+    xAxis: {
+      categories: ["Feb 2024"],
+      tickmarkPlacement: "on",
+      labels: {
+        align: "center",
+        style: { fontSize: "12px", color: "#b0b8c1" },
+      },
+      lineColor: "#e0e7ef",
+      tickColor: "#e0e7ef",
+      gridLineWidth: 1,
+      gridLineColor: "#e0e7ef",
+    },
+    yAxis: {
+      title: { text: null },
+      gridLineWidth: 1,
+      gridLineColor: "#e0e7ef",
+      min: 0,
+      max: 500,
+      tickInterval: 100,
+      labels: { style: { color: "#b0b8c1" } },
+    },
+    tooltip: { shared: true, valueSuffix: " units" },
+    plotOptions: {
+      series: {
+        marker: { enabled: false },
+        lineWidth: 2,
+      },
+    },
+    series: [
+      {
+        name: "Historical",
+        data: [400].concat(Array(1).fill(null)),
+        color: "#e53935",
+        dashStyle: "Solid",
+      },
+      {
+        name: "Forecast",
+        data: Array(1).fill(null).concat([160]),
+        color: "#e53935",
+        dashStyle: "Dash",
+      },
+    ],
+    credits: { enabled: false },
+    legend: { enabled: false },
+  });
+
+  // Update Highcharts options whenever alert data changes
   useEffect(() => {
-    if (selectedAlertData && selectedAlertData.forecastData) {
-      const transformed = transformForecastData(selectedAlertData.forecastData);
-      setChartData(transformed);
-      setChartKey((prev) => prev + 1);
-    } else {
-      setChartData(null);
+    if (!selectedAlertData || !selectedAlertData.forecastData) {
+      setHcOptions(getDefaultOptions());
+      return;
     }
-  }, [selectedAlertData]);
 
-  const handleTimePeriodChange = (event, newValue) => {
-    if (newValue !== null) setSelectedTimePeriod(newValue);
-  };
-  const handleModelChange = (event) => setSelectedModel(event.target.value);
+    const { forecastData, selectedAlert } = selectedAlertData;
+    const transformedData = transformForecastData(forecastData);
 
-  const defaultHistoricalData = [
-    400, 190, 350, 100, 180, 120, 110, 140, 200, 260, 310, 400,
-  ];
-  const defaultForecastData = [150, 200, 250, 180, 120, 160];
-  const defaultCategories = [
-    "Feb 2024",
-    "Mar 2024",
-    "Apr 2024",
-    "May 2024",
-    "Jun 2024",
-    "Jul 2024",
-    "Aug 2024",
-    "Sep 2024",
-    "Oct 2024",
-    "Nov 2024",
-    "Dec 2024",
-    "Jan 2025",
-    "Feb 2025",
-    "Mar 2025",
-    "Apr 2025",
-    "May 2025",
-    "Jun 2025",
-    "Jul 2025",
-  ];
-
-  const redColor = "#e53935";
-
-  const getChartOptions = () => {
-    const hasData =
-      chartData && chartData.categories && chartData.categories.length > 0;
-    if (!hasData) {
-      return {
-        title: { text: undefined },
-        chart: {
-          type: "line",
-          height: 500,
-          backgroundColor: "#fafcff",
-          spacing: [10, 10, 10, 10],
-        },
-        xAxis: {
-          categories: defaultCategories,
-          tickmarkPlacement: "on",
-          labels: {
-            align: "center",
-            style: { fontSize: "12px", color: "#b0b8c1" },
-          },
-          lineColor: "#e0e7ef",
-          tickColor: "#e0e7ef",
-          gridLineWidth: 1,
-          gridLineColor: "#e0e7ef",
-        },
-        yAxis: {
-          title: { text: null },
-          gridLineWidth: 1,
-          gridLineColor: "#e0e7ef",
-          min: 0,
-          max: 500,
-          tickInterval: 100,
-          labels: { style: { color: "#b0b8c1" } },
-        },
-        tooltip: { shared: true, valueSuffix: " units" },
-        plotOptions: { series: { marker: { enabled: false }, lineWidth: 2 } },
-        series: [
-          {
-            name: "Historical",
-            data: defaultHistoricalData.concat(
-              Array(defaultForecastData.length).fill(null)
-            ),
-            color: redColor,
-            dashStyle: "Solid",
-          },
-          {
-            name: "Forecast",
-            data: Array(defaultHistoricalData.length)
-              .fill(null)
-              .concat(defaultForecastData),
-            color: redColor,
-            dashStyle: "Dash",
-          },
-        ],
-        credits: { enabled: false },
-        legend: { enabled: false },
-      };
+    if (!transformedData) {
+      setHcOptions(getDefaultOptions());
+      return;
     }
-    const { categories, actualUnits, mlForecast } = chartData;
+
+    // Create plot band for alert period
+    const plotBands = selectedAlert
+      ? [
+          {
+            from: transformedData.categories.findIndex((cat) => {
+              const alertStartMonth = new Date(
+                selectedAlert.error_start_date
+              ).toLocaleDateString("en-US", {
+                month: "short",
+                year: "2-digit",
+              });
+              return cat === alertStartMonth;
+            }),
+            to:
+              transformedData.categories.findIndex((cat) => {
+                const alertEndMonth = new Date(
+                  selectedAlert.error_end_date
+                ).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "2-digit",
+                });
+                return cat === alertEndMonth;
+              }) + 1,
+            color:
+              selectedAlert.error_type === "error"
+                ? "rgba(255, 68, 68, 0.3)"
+                : "rgba(255, 165, 0, 0.3)",
+            label: {
+              text: selectedAlert.error_label,
+              style: {
+                color:
+                  selectedAlert.error_type === "error" ? "#ff0000" : "#ff8800",
+                fontWeight: "bold",
+              },
+            },
+          },
+        ]
+      : [];
+
+    // Filter invalid band (date not found)
+    const validPlotBands = plotBands.filter(
+      (band) => band.from !== -1 && band.to !== 0
+    );
+
+    const { categories, actualUnits, mlForecast } = transformedData;
     const maxVal = Math.max(...actualUnits, ...mlForecast);
-    const yMax = Math.ceil((maxVal * 1.2) / 100) * 100;
-    return {
-      title: { text: undefined },
+    const yMax = Math.ceil((maxVal * 1.2) / 100) * 100 || 500;
+
+    // Final chart config
+    const newOptions = {
+      title: { text: null },
       chart: {
         type: "line",
         height: 500,
@@ -175,27 +228,28 @@ export const AlertsSection = () => {
         tickColor: "#e0e7ef",
         gridLineWidth: 1,
         gridLineColor: "#e0e7ef",
+        plotBands: validPlotBands,
       },
       yAxis: {
         title: { text: null },
         gridLineWidth: 1,
         gridLineColor: "#e0e7ef",
         min: 0,
-        max: yMax || 500,
-        tickInterval: Math.ceil((yMax || 500) / 5 / 100) * 100,
+        max: yMax,
+        tickInterval: Math.ceil(yMax / 5 / 100) * 100,
         labels: { style: { color: "#b0b8c1" } },
       },
       tooltip: {
         shared: true,
         valueSuffix: " units",
         formatter: function () {
-          let txt = `<b>${this.x}</b><br/>`;
-          this.points.forEach((p) => {
-            txt += `<span style="color:${p.color}">${
-              p.series.name
-            }</span>: <b>${p.y.toLocaleString()}</b> units<br/>`;
-          });
-          return txt;
+          return this.points.reduce(
+            (result, point) =>
+              `${result}<span style="color:${point.color}">${
+                point.series.name
+              }</span>: <b>${point.y.toLocaleString()}</b> units<br/>`,
+            `<b>${this.x}</b><br/>`
+          );
         },
       },
       plotOptions: {
@@ -208,26 +262,34 @@ export const AlertsSection = () => {
         {
           name: "Actual Units",
           data: actualUnits,
-          color: redColor,
+          color: "#e53935",
           dashStyle: "Solid",
         },
         {
           name: "ML Forecast",
           data: mlForecast,
-          color: redColor,
+          color: "#e53935",
           dashStyle: "Dash",
         },
       ],
       credits: { enabled: false },
       legend: { enabled: false },
     };
+
+    setHcOptions(newOptions);
+  }, [selectedAlertData]);
+
+  // Handlers for toggle and dropdown
+  const handleTimePeriodChange = (event, newValue) => {
+    if (newValue !== null) setSelectedTimePeriod(newValue);
   };
+  const handleModelChange = (event) => setSelectedModel(event.target.value);
 
   const hasChartArea = !isLoading;
 
   return (
     <Paper>
-      {/* Controls */}
+      {/* Filter & Action Controls */}
       <Box
         sx={{
           display: "flex",
@@ -240,6 +302,7 @@ export const AlertsSection = () => {
           borderColor: "grey.300",
         }}
       >
+        {/* Time toggle */}
         <ToggleButtonGroup
           value={selectedTimePeriod}
           exclusive
@@ -278,28 +341,42 @@ export const AlertsSection = () => {
           ))}
         </ToggleButtonGroup>
 
+        {/* Model select + icons */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Select
-            value={selectedModel}
-            onChange={handleModelChange}
-            size="small"
-            displayEmpty
-            renderValue={() => `Model - ${selectedModel}`}
-            sx={{
-              minWidth: 150,
-              height: 32,
-              fontSize: 14,
-              "& .MuiSelect-select": {
-                py: 0.5,
-                px: 1.5,
-              },
-            }}
-            IconComponent={KeyboardArrowDown}
-          >
-            <MenuItem value="XGBoost">XGBoost</MenuItem>
-            <MenuItem value="RandomForest">Random Forest</MenuItem>
-            <MenuItem value="LSTM">LSTM</MenuItem>
-          </Select>
+          {modelsLoading ? (
+            <CircularProgress size={20} />
+          ) : modelsError ? (
+            <Alert severity="error" sx={{ m: 0 }}>
+              {modelsError}
+            </Alert>
+          ) : (
+            <Select
+              value={selectedModel}
+              onChange={handleModelChange}
+              size="small"
+              displayEmpty
+              renderValue={() =>
+                selectedModel ? `Model - ${selectedModel}` : "Select Model"
+              }
+              sx={{
+                minWidth: 150,
+                height: 32,
+                fontSize: 14,
+                "& .MuiSelect-select": {
+                  py: 0.5,
+                  px: 1.5,
+                },
+              }}
+              IconComponent={KeyboardArrowDown}
+            >
+              {models.map((model) => (
+                <MenuItem key={model.model_id} value={model.model_name}>
+                  {model.model_name}
+                </MenuItem>
+              ))}
+            </Select>
+          )}
+          {/* Share / Download Buttons */}
           <Button size="small" sx={{ minWidth: 0, p: 0 }}>
             <ShareOutlined fontSize="small" />
           </Button>
@@ -308,13 +385,15 @@ export const AlertsSection = () => {
           </Button>
         </Box>
       </Box>
-      {/* Info / Error */}
+
+      {/* Error Message */}
       {selectedAlertData && selectedAlertData.error && (
         <Alert severity="error" sx={{ m: 2 }}>
           {selectedAlertData.error}
         </Alert>
       )}
-      {/* Loading */}
+
+      {/* Loading spinner */}
       {isLoading && (
         <Box
           sx={{
@@ -328,15 +407,15 @@ export const AlertsSection = () => {
           <Typography sx={{ ml: 2 }}>Loading forecast data...</Typography>
         </Box>
       )}
-      {/* Chart */}
-      {hasChartArea && (
+
+      {/* Render chart if data is ready */}
+      {hasChartArea && hcOptions && (
         <Box sx={{ px: 2, py: 2 }}>
           <HighchartsReact
-            key={chartKey}
             highcharts={Highcharts}
-            options={getChartOptions()}
-            allowChartUpdate
-            updateArgs={[true, true, true]}
+            options={hcOptions}
+            allowChartUpdate={true}
+            updateArgs={[true]}
           />
         </Box>
       )}

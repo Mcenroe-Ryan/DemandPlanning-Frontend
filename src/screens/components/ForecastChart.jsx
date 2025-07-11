@@ -29,6 +29,23 @@ import StarIcon from "@mui/icons-material/Star";
 // const apiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+/* ---------- MAPE color coding function ---------- */
+const getMapeColor = (mapeValue) => {
+  const value = Number(mapeValue);
+
+  if (isNaN(value)) return "#6B7280"; // Gray for invalid/no data
+
+  if (value >= 0 && value <= 20) {
+    return "#22C55E"; // Green - Good
+  } else if (value > 20 && value <= 40) {
+    return "#F97316"; // Orange - Reasonable/Acceptable
+  } else if (value > 40) {
+    return "#EF4444"; // Red - Poor
+  } else {
+    return "#6B7280"; // Gray for edge cases
+  }
+};
+
 /* ---------- reusable styled checkbox ---------- */
 const BlueSquare = styled("span")({
   width: 18,
@@ -94,8 +111,8 @@ const LEGEND_CONFIG = [
     dash: "Dash",
     seriesIndex: 6,
   },
-  { key: "holidays", label: "Holidays", color: "#22C55E", isOverlay: true },
-  { key: "promotions", label: "Promotions", color: "#F97316", isOverlay: true },
+  { key: "holidays", label: "Holidays", color: "#DCFCE7", isOverlay: true },
+  { key: "promotions", label: "Promotions", color: "#FFEDD5", isOverlay: true },
 ];
 
 /* ---------- helper: plot bands from events ---------- */
@@ -121,7 +138,6 @@ function createPlotBands(events, months, overlays) {
       id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
       from: sIdx - 0.25,
       to: (eIdx === -1 ? sIdx : eIdx) + 0.25,
-      // color: isHoliday ? "rgba(82,196,26,0.1)" : "rgba(250,173,20,0.1)",
       color: isHoliday ? "#BBF7D0" : "#FED7AA",
     });
     return acc;
@@ -392,7 +408,7 @@ export default function ForecastChart({
 }) {
   const [treeMenuOpen, setTreeMenuOpen] = useState(false);
   const chartRef = useRef();
-  const gridIconRef = useRef(); // ✅ NEW: Reference to grid icon button
+  const gridIconRef = useRef();
   const [overlays, setOverlays] = useState({
     holidays: true,
     promotions: true,
@@ -446,7 +462,7 @@ export default function ForecastChart({
 
   /* ---------- fetch events once ---------- */
   useEffect(() => {
-    fetch(`http://localhost:5000/api/events`)
+    fetch(`${API_BASE_URL}/events`)
       .then((r) => r.json())
       .then(setEvents)
       .catch(() => setEvents([]));
@@ -456,6 +472,19 @@ export default function ForecastChart({
   const todayIdx = months.indexOf(
     new Date().toLocaleString("default", { month: "short", year: "2-digit" })
   );
+
+  /* ---------- helper: Only first future value after todayIdx is shown, rest are null ---------- */
+  function onlyFirstFutureValue(arr, todayIdx) {
+    let found = false;
+    return arr.map((v, i) => {
+      if (i > todayIdx && v != null && !found) {
+        found = true;
+        return v;
+      }
+      return null;
+    });
+  }
+
   const join = (hist, fc) => {
     const out = [...fc];
     for (let i = 1; i < out.length; i++) {
@@ -467,7 +496,7 @@ export default function ForecastChart({
     return out;
   };
 
-  /* ---------- series data ---------- */
+  /* ---------- series data (Consensus joined to first forecast) ---------- */
   const seriesData = useMemo(() => {
     const get = (row) =>
       months.map((m) => {
@@ -490,7 +519,11 @@ export default function ForecastChart({
       ml: histCut(mlFull),
       ml_forecast: join(histCut(mlFull), fcCut(mlFull)),
       consensus: histCut(consFull),
-      consensus_forecast: join(histCut(consFull), fcCut(consFull)),
+      // join last hist Consensus with first future Consensus-Forecast
+      consensus_forecast: join(
+        histCut(consFull),
+        onlyFirstFutureValue(consFull, todayIdx)
+      ),
     };
   }, [months, data, todayIdx]);
 
@@ -575,7 +608,7 @@ export default function ForecastChart({
         {
           name: "Holidays",
           data: [],
-          color: "#22C55E",
+          color: "rgba(220,252,231,0.2)", // 20% opaque, 80% transparent
           showInLegend: true,
           enableMouseTracking: false,
           visible: overlays.holidays,
@@ -584,7 +617,7 @@ export default function ForecastChart({
         {
           name: "Promotions",
           data: [],
-          color: "#FED7AA",
+          color: "rgba(255,237,213,0.2)", // 20% opaque, 80% transparent
           showInLegend: true,
           enableMouseTracking: false,
           visible: overlays.promotions,
@@ -623,9 +656,9 @@ export default function ForecastChart({
     setHiddenSeries(init);
   }, []);
 
-  /* ---------- mape ---------- */
-
+  /* ---------- SIMPLIFIED: mape with color coding only ---------- */
   const mape = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
+  const mapeColor = getMapeColor(mape);
 
   /* ---------- active legend keys ---------- */
   const activeKeys = LEGEND_CONFIG.filter((it) =>
@@ -656,9 +689,10 @@ export default function ForecastChart({
           <Typography variant="body2" fontWeight={700}>
             Demand Forecast
           </Typography>
+          {/* SIMPLIFIED: Only color-coded MAPE percentage without labels */}
           <Typography variant="body2" fontWeight={700} color="#555">
             MAPE:&nbsp;
-            <Box component="span" sx={{ color: "#22c55e" }}>
+            <Box component="span" sx={{ color: mapeColor, fontWeight: 700 }}>
               {mape}
             </Box>
           </Typography>

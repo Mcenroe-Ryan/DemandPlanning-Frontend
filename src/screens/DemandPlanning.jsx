@@ -481,6 +481,8 @@ export const DemandProjectMonth = () => {
   const [modelName, setModelName] = useState("XGBoost");
   const [canEditConsensus, setCanEditConsensus] = useState(false);
 
+  const [isFilterDisabled, setIsFilterDisabled] = useState(false);
+
   // For plus button menu
   const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
   const [selectedDataRows, setSelectedDataRows] = useState([]);
@@ -508,7 +510,7 @@ export const DemandProjectMonth = () => {
     const fetchModels = async () => {
       setLoadingModels(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/models`);
+        const response = await fetch(`${API_BASE_URL}/models`);
         if (response.ok) {
           const modelsData = await response.json();
           setModels(modelsData);
@@ -542,8 +544,8 @@ export const DemandProjectMonth = () => {
   const fetchCountries = () => {
     setLoadingCountries(true);
     axios
-      // .get(`${API_BASE_URL}/getAllCountries`)
-      .get(`http://localhost:5000/api/getAllCountries`)
+      .get(`${API_BASE_URL}/getAllCountries`)
+      // .get(`http://localhost:5000/api/getAllCountries`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,
@@ -578,7 +580,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingStates(true);
     axios
-      .post(`http://localhost:5000/api/states-by-country`, {
+      .post(`${API_BASE_URL}/states-by-country`, {
         countryIds: selectedCountry,
       })
       .then((res) => {
@@ -631,7 +633,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingCities(true);
     axios
-      .post(`http://localhost:5000/api/cities-by-states`, {
+      .post(`${API_BASE_URL}/cities-by-states`, {
         stateIds: selectedState,
       })
       .then((res) => {
@@ -680,7 +682,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingPlants(true);
     axios
-      .post(`http://localhost:5000/api/plants-by-cities`, {
+      .post(`${API_BASE_URL}/plants-by-cities`, {
         cityIds: selectedCities,
       })
       .then((res) => {
@@ -723,7 +725,7 @@ export const DemandProjectMonth = () => {
     setLoadingCategories(true);
 
     axios
-      .post(`http://localhost:5000/api/categories-by-plants`, {
+      .post(`${API_BASE_URL}/categories-by-plants`, {
         plantIds: selectedPlants,
       })
       .then((res) => {
@@ -759,7 +761,7 @@ export const DemandProjectMonth = () => {
     }
     setLoadingSkus(true);
     axios
-      .post(`http://localhost:5000/api/skus-by-categories`, {
+      .post(`${API_BASE_URL}/skus-by-categories`, {
         categoryIds: selectedCategories,
       })
       .then((res) => {
@@ -782,7 +784,7 @@ export const DemandProjectMonth = () => {
   useEffect(() => {
     setLoadingChannels(true);
     axios
-      .get(`http://localhost:5000/api/getAllChannels`)
+      .get(`${API_BASE_URL}/getAllChannels`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,
@@ -910,10 +912,6 @@ export const DemandProjectMonth = () => {
           />
         </IconButton>
         <Divider orientation="vertical" flexItem sx={{ bgcolor: "grey.500" }} />
-
-        {/* <IconButton size="small" onClick={() => setCanEditConsensus(true)}>
-  <Edit sx={{ width: 20, height: 20, color: "white" }} />
-</IconButton> */}
 
         <IconButton
           size="small"
@@ -1085,7 +1083,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search channel"
             loading={loadingChannels}
             width={110}
-            disabled={!selectedSKUs.length} 
+            disabled={!selectedSKUs.length}
           />
 
           {/* --- Three dots menu for filters --- */}
@@ -1166,7 +1164,7 @@ export const DemandProjectMonth = () => {
           <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0 }}>
             <AlertProvider>
               <div>
-                <AlertsSection />
+                {/* <AlertsSection /> */}
 
                 <ChartSection />
               </div>
