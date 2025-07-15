@@ -25,7 +25,6 @@ import {
 import { useAlert } from "./AlertContext";
 import Highcharts from "highcharts";
 
-// const apiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 
@@ -62,7 +61,6 @@ const ForecastChart = ({ data, selectedAlert }) => {
     chart: {
       type: "line",
       height: 565.51,
-      width: 1858.38,
       spacingTop: 8,
       spacingRight: 8,
       spacingBottom: 8,
@@ -120,16 +118,42 @@ const ForecastChart = ({ data, selectedAlert }) => {
       },
     ],
     credits: { enabled: false },
+    responsive: {
+      rules: [
+        {
+          condition: {
+            maxWidth: 600,
+          },
+          chartOptions: {
+            legend: {
+              layout: "horizontal",
+              align: "center",
+              verticalAlign: "bottom",
+            },
+          },
+        },
+      ],
+    },
   };
 
   useEffect(() => {
     if (chartRef.current) {
       const chart = Highcharts.chart(chartRef.current, chartOptions);
-      return () => chart.destroy();
+      const resizeListener = () => chart.reflow();
+      window.addEventListener("resize", resizeListener);
+      return () => {
+        chart.destroy();
+        window.removeEventListener("resize", resizeListener);
+      };
     }
   }, [data, selectedAlert]);
 
-  return <div ref={chartRef} style={{ width: "100%", height: "565.51px" }} />;
+  return (
+    <div
+      ref={chartRef}
+      style={{ width: "100%", height: "565.51px", overflowX: "auto" }}
+    />
+  );
 };
 
 // Main Component

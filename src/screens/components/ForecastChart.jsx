@@ -26,8 +26,9 @@ import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
 
-// const apiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+
 
 /* ---------- MAPE color coding function ---------- */
 const getMapeColor = (mapeValue) => {
@@ -115,33 +116,110 @@ const LEGEND_CONFIG = [
   { key: "promotions", label: "Promotions", color: "#FFEDD5", isOverlay: true },
 ];
 
-/* ---------- helper: plot bands from events ---------- */
+/* ---------- ENHANCED helper: plot bands from events with proper date handling ---------- */
 function createPlotBands(events, months, overlays) {
   return events.reduce((acc, ev) => {
-    const sIdx = months.indexOf(
+    const startDate = new Date(ev.start_date);
+    const endDate = new Date(ev.end_date);
+    
+    // Find which months the event spans
+    const startMonthLabel = startDate.toLocaleString("default", {
+      month: "short",
+      year: "2-digit",
+    });
+    const endMonthLabel = endDate.toLocaleString("default", {
+      month: "short",
+      year: "2-digit",
+    });
+    
+    const sIdx = months.indexOf(startMonthLabel);
+    const eIdx = months.indexOf(endMonthLabel);
+    
+    if (sIdx === -1) return acc;
+    
+    const isHoliday = ev.event_type === "Holiday";
+    const show = isHoliday ? overlays.holidays : overlays.promotions;
+    if (!show) return acc;
+    
+    // Calculate precise positioning within months
+    const calculateMonthPosition = (date, monthIndex) => {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      // Position within the month (0 = start, 1 = end)
+      const positionInMonth = (day - 1) / daysInMonth;
+      
+      // Convert to chart coordinates (-0.5 to +0.5 for each month)
+      return monthIndex + positionInMonth - 0.5;
+    };
+    
+    let fromPos, toPos;
+    
+    if (sIdx === eIdx || eIdx === -1) {
+      // Event within same month or end month not visible
+      fromPos = calculateMonthPosition(startDate, sIdx);
+      toPos = eIdx === -1 ? sIdx + 0.5 : calculateMonthPosition(endDate, sIdx);
+    } else {
+      // Event spans multiple months
+      fromPos = calculateMonthPosition(startDate, sIdx);
+      toPos = calculateMonthPosition(endDate, eIdx);
+    }
+    
+    // Ensure minimum width for very short events
+    const minWidth = 0.05;
+    if (toPos - fromPos < minWidth) {
+      const center = (fromPos + toPos) / 2;
+      fromPos = center - minWidth / 2;
+      toPos = center + minWidth / 2;
+    }
+    
+    acc.push({
+      id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
+      from: fromPos,
+      to: toPos,
+      color: isHoliday ? "#BBF7D0" : "#FED7AA",
+    });
+    
+    return acc;
+  }, []);
+}
+
+function createEventPoints(events, months, overlays) {
+  const holidayData = [];
+  const promoData = [];
+
+  events.forEach((ev) => {
+    const idx = months.indexOf(
       new Date(ev.start_date).toLocaleString("default", {
         month: "short",
         year: "2-digit",
       })
     );
-    const eIdx = months.indexOf(
-      new Date(ev.end_date).toLocaleString("default", {
-        month: "short",
-        year: "2-digit",
-      })
-    );
-    if (sIdx === -1) return acc;
+
+    if (idx === -1) return;
+
     const isHoliday = ev.event_type === "Holiday";
     const show = isHoliday ? overlays.holidays : overlays.promotions;
-    if (!show) return acc;
-    acc.push({
-      id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
-      from: sIdx - 0.25,
-      to: (eIdx === -1 ? sIdx : eIdx) + 0.25,
-      color: isHoliday ? "#BBF7D0" : "#FED7AA",
-    });
-    return acc;
-  }, []);
+    if (!show) return;
+
+    const point = {
+      x: idx,
+      y: 1.1,
+      custom: {
+        name: ev.event_name,
+        type: ev.event_type,
+        country: ev.country_name,
+        date: new Date(ev.start_date).toDateString(),
+      },
+    };
+
+    if (isHoliday) holidayData.push(point);
+    else promoData.push(point);
+  });
+
+  return { holidayData, promoData };
 }
 
 /* ---------- tree-menu items ---------- */
@@ -373,7 +451,7 @@ function CustomLegend({ activeKeys, onToggle }) {
             opacity: activeKeys.includes(key) ? 1 : 0.5,
             borderRadius: 1,
             border: "1px solid",
-            borderColor: color,
+            borderColor: "#CBD5E1",
             px: 1,
             userSelect: "none",
             "&:hover": { opacity: 0.8 },
@@ -527,6 +605,12 @@ export default function ForecastChart({
     };
   }, [months, data, todayIdx]);
 
+  const { holidayData, promoData } = createEventPoints(
+    events,
+    months,
+    overlays
+  );
+
   /* ---------- highcharts options ---------- */
   const options = useMemo(
     () => ({
@@ -540,18 +624,58 @@ export default function ForecastChart({
         categories: months,
         gridLineWidth: 1,
         gridLineColor: "#e0e0e0",
-        labels: { style: { color: "#555" } },
+        labels: {
+          rotation: 0,
+          style: {
+            fontFamily: "Poppins",
+            fontWeight: 600,
+            fontSize: "12px",
+            lineHeight: "100%",
+            letterSpacing: "0.4px",
+            color: "#64748B",
+          },
+          overflow: "justify",
+          crop: false,
+        },
         plotBands: createPlotBands(events, months, overlays),
       },
+
       yAxis: {
-        title: { text: "Units" },
+        title: {
+          text: "Units (in thousands)",
+          style: {
+            fontFamily: "Poppins",
+            fontWeight: 600,
+            fontSize: "12px",
+            color: "#64748B",
+            letterSpacing: "0.4px",
+            lineHeight: "100%",
+          },
+        },
+        labels: {
+          align: "center",
+          style: {
+            fontFamily: "Poppins",
+            fontWeight: 600,
+            fontSize: "12px",
+            lineHeight: "100%",
+            letterSpacing: "0.4px",
+            color: "#64748B",
+          },
+          formatter: function () {
+            if (this.value === 0) return "0";
+            return this.value / 1000;
+          },
+        },
         gridLineDashStyle: "ShortDash",
         gridLineColor: "#e0e0e0",
-        min: 1,
+        min: null,
       },
+
       tooltip: { shared: true },
       legend: { enabled: false },
       credits: { enabled: false },
+
       series: [
         {
           name: "Actual",
@@ -607,21 +731,33 @@ export default function ForecastChart({
         },
         {
           name: "Holidays",
-          data: [],
-          color: "rgba(220,252,231,0.2)", // 20% opaque, 80% transparent
-          showInLegend: true,
-          enableMouseTracking: false,
+          type: "scatter",
+          data: holidayData,
           visible: overlays.holidays,
-          marker: { enabled: false },
+          showInLegend: false,
+          marker: { enabled: false, radius: 0.1 },
+          tooltip: {
+            pointFormatter: function () {
+              return `<b>Holiday:</b> ${this.custom.name}<br/>
+                <b>Date:</b> ${this.custom.date}<br/>
+                <b>Country:</b> ${this.custom.country}`;
+            },
+          },
         },
         {
           name: "Promotions",
-          data: [],
-          color: "rgba(255,237,213,0.2)", // 20% opaque, 80% transparent
-          showInLegend: true,
-          enableMouseTracking: false,
+          type: "scatter",
+          data: promoData,
           visible: overlays.promotions,
-          marker: { enabled: false },
+          showInLegend: false,
+          marker: { enabled: false, radius: 0.1 },
+          tooltip: {
+            pointFormatter: function () {
+              return `<b>Promotion:</b> ${this.custom.name}<br/>
+                <b>Date:</b> ${this.custom.date}<br/>
+                <b>Country:</b> ${this.custom.country}`;
+            },
+          },
         },
       ],
     }),
@@ -689,7 +825,6 @@ export default function ForecastChart({
           <Typography variant="body2" fontWeight={700}>
             Demand Forecast
           </Typography>
-          {/* SIMPLIFIED: Only color-coded MAPE percentage without labels */}
           <Typography variant="body2" fontWeight={700} color="#555">
             MAPE:&nbsp;
             <Box component="span" sx={{ color: mapeColor, fontWeight: 700 }}>

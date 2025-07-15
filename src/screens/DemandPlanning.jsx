@@ -54,9 +54,8 @@ import { AlertsSection } from "./components/AlertSection";
 import { ChartSection } from "./components/ChartSection";
 import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
-import ChatBot from "./components/chatbox";
+import ChatBot from "./components/Chatbox";
 
-// const apiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
@@ -64,8 +63,6 @@ function getSelectedNames(selectedIds, options, optionKey, displayKey) {
     .filter((opt) => selectedIds.includes(opt[optionKey]))
     .map((opt) => opt[displayKey]);
 }
-
-// ... [All the existing component definitions remain unchanged: Listbox, DataRowsMenu, MultiSelectWithCheckboxes] ...
 
 // --- Listbox styled to match your screenshot ---
 const Listbox = () => {
@@ -228,12 +225,12 @@ function DataRowsMenu({ anchorEl, open, onClose, selected, setSelected }) {
   );
 }
 
-// --- UPDATED MultiSelectWithCheckboxes - Now Generic! ---
+// --- UPDATED MultiSelectWithCheckboxes with Right-Justified Icons ---
 function MultiSelectWithCheckboxes({
   label,
   options = [],
   optionKey,
-  displayKey, // NEW: What field to display (e.g., "city_name", "plant_name")
+  displayKey,
   selected,
   setSelected,
   width = 155,
@@ -248,7 +245,6 @@ function MultiSelectWithCheckboxes({
 
   const safeOptions = Array.isArray(options) ? options : [];
 
-  // Generic filtering - uses displayKey if provided, otherwise falls back to optionKey
   const filteredOptions = safeOptions.filter((option) => {
     if (!search) return true;
     const searchField = displayKey ? option[displayKey] : option[optionKey];
@@ -283,7 +279,6 @@ function MultiSelectWithCheckboxes({
     );
   };
 
-  // Generic button label - uses displayKey if provided, otherwise optionKey
   const getButtonLabel = () => {
     if (selected.length === 0) return label;
     if (selected.length === 1) {
@@ -300,35 +295,45 @@ function MultiSelectWithCheckboxes({
         size="small"
         onClick={handleOpen}
         sx={{
-          minWidth: 120, // Ensures consistency
-          flexShrink: 0, // Prevent shrinking on overflow
+          minWidth: 120,
+          flexShrink: 0,
           whiteSpace: "nowrap",
           bgcolor: "common.white",
-          justifyContent: "flex-start",
           borderColor: "#bdbdbd",
           textTransform: "none",
           px: 1.5,
           transition: "all 0.2s ease",
+          // **KEY CHANGE: Add flexbox properties for right-justified icon**
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          // **Override Material-UI's default endIcon positioning**
+          "& .MuiButton-endIcon": {
+            marginLeft: 0,
+            marginRight: 0,
+          },
         }}
-        endIcon={
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            {selected.length > 0 && (
-              <Chip
-                label={selected.length}
-                size="small"
-                color="primary"
-                sx={{ mr: 0.5, height: 20 }}
-              />
-            )}
-            <KeyboardArrowDownIcon
-              sx={{ width: 16, height: 16, color: "#757575" }}
-            />
-            {/* <FilterAlt sx={{ width: 16, height: 16, color: "#757575" }} /> */}
-          </Box>
-        }
         disabled={disabled}
       >
-        {getButtonLabel()}
+        {/* **Button content structure with text on left** */}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          {getButtonLabel()}
+        </Box>
+
+        {/* **Icon container on right** */}
+        <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
+          {selected.length > 0 && (
+            <Chip
+              label={selected.length}
+              size="small"
+              color="primary"
+              sx={{ mr: 0.5, height: 20 }}
+            />
+          )}
+          <KeyboardArrowDownIcon
+            sx={{ width: 16, height: 16, color: "#757575" }}
+          />
+        </Box>
       </Button>
 
       <Menu
@@ -398,6 +403,7 @@ const pivotData = (data) => {
     isConsensus: metric.key === "consensus",
   }));
 };
+
 const SlideTransition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="left" ref={ref} {...props} />;
 });
@@ -430,7 +436,7 @@ export const DemandProjectMonth = () => {
     if (!isDown.current) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5; // Scroll speed
+    const walk = (x - startX.current) * 1.5;
     scrollRef.current.scrollLeft = scrollLeft.current - walk;
   };
 
@@ -504,7 +510,6 @@ export const DemandProjectMonth = () => {
     setIsChatBotOpen(false);
   };
 
-  //model selection
   // Add this useEffect to fetch models on component mount
   useEffect(() => {
     const fetchModels = async () => {
@@ -514,7 +519,6 @@ export const DemandProjectMonth = () => {
         if (response.ok) {
           const modelsData = await response.json();
           setModels(modelsData);
-
           // Set default model (first one or XGBoost if available)
           if (modelsData.length > 0) {
             const defaultModel =
@@ -545,7 +549,6 @@ export const DemandProjectMonth = () => {
     setLoadingCountries(true);
     axios
       .get(`${API_BASE_URL}/getAllCountries`)
-      // .get(`http://localhost:5000/api/getAllCountries`)
       .then((res) => {
         setFiltersData((prev) => ({
           ...prev,
@@ -665,7 +668,6 @@ export const DemandProjectMonth = () => {
       .finally(() => setLoadingCities(false));
   }, [selectedState]);
 
-  // ... cascading effect hooks for plants, categories, skus, channels unchanged ...
   // Fetch plants when cities change (selectedCities is array of IDs)
   useEffect(() => {
     if (!selectedCities.length) {
@@ -780,6 +782,11 @@ export const DemandProjectMonth = () => {
       })
       .finally(() => setLoadingSkus(false));
   }, [selectedCategories]);
+
+  // Auto reset Channel selection when SKUs change
+  useEffect(() => {
+    setSelectedChannels([]);
+  }, [selectedSKUs]);
 
   useEffect(() => {
     setLoadingChannels(true);
@@ -917,16 +924,16 @@ export const DemandProjectMonth = () => {
           size="small"
           onClick={() => setCanEditConsensus(true)}
           sx={{
-            backgroundColor: canEditConsensus ? "#BFDBFE" : "transparent", // Light blue when active
-            color: canEditConsensus ? "#1e293b" : "#fff", // Dark text on blue, white otherwise
+            backgroundColor: canEditConsensus ? "#BFDBFE" : "transparent",
+            color: canEditConsensus ? "#1e293b" : "#fff",
             border: canEditConsensus
               ? "2px solid #60a5fa"
-              : "2px solid transparent", // Optional blue border
-            boxShadow: canEditConsensus ? "0 0 8px #93c5fd" : "none", // Subtle blue shadow
+              : "2px solid transparent",
+            boxShadow: canEditConsensus ? "0 0 8px #93c5fd" : "none",
             transition: "all 0.2s",
             "&:hover": {
               backgroundColor: canEditConsensus ? "#BFDBFE" : "#e3f2fd",
-              color: "#1e40af", // Stronger blue on hover
+              color: "#1e40af",
             },
           }}
           aria-pressed={canEditConsensus}
@@ -943,9 +950,7 @@ export const DemandProjectMonth = () => {
             onClick={handleOpenActivities}
             sx={{ cursor: "pointer" }}
           >
-            {/* <ChatBubbleOutline sx={{ width: 20, height: 20 }} /> */}
             <ChatBubbleOutline sx={{ width: 20, height: 20, color: "white" }} />
-
             <Box
               component="img"
               src="https://c.animaapp.com/Jwk7dHU9/img/ellipse-309--stroke-.svg"
@@ -1076,8 +1081,8 @@ export const DemandProjectMonth = () => {
           <MultiSelectWithCheckboxes
             label="Channel"
             options={filtersData.channels}
-            optionKey="channel_id" // Value sent to backend (ID)
-            displayKey="channel_name" // Value shown to user (Name)
+            optionKey="channel_id"
+            displayKey="channel_name"
             selected={selectedChannels}
             setSelected={setSelectedChannels}
             searchPlaceholder="Search channel"
@@ -1164,8 +1169,6 @@ export const DemandProjectMonth = () => {
           <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0 }}>
             <AlertProvider>
               <div>
-                {/* <AlertsSection /> */}
-
                 <ChartSection />
               </div>
             </AlertProvider>
