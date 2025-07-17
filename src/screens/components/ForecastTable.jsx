@@ -27,8 +27,8 @@ import LockIcon from "@mui/icons-material/Lock";
 import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
+// const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `http://localhost:5000/api`;
 
 async function updateConsensusForecastAPI(payload) {
   const response = await fetch(`${API_BASE_URL}/forecast/consensus`, {
@@ -399,6 +399,7 @@ export default function ForecastTable({
   setCanEditConsensus,
   openConsensusPopup,
   setOpenConsensusPopup,
+  highlightTrigger, // ✅ IMPORTANT: Add this prop
 }) {
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
@@ -438,6 +439,9 @@ export default function ForecastTable({
     open: false,
     message: "",
   });
+
+  // ✅ NEW: Add state for highlighting editable cells
+  const [highlightEditableCells, setHighlightEditableCells] = useState(false);
 
   const months = useMemo(() => {
     if (
@@ -493,7 +497,7 @@ export default function ForecastTable({
     return set;
   }, [months]);
 
-  // **NEW: Add filtered months based on showForecast checkbox**
+  // Add filtered months based on showForecast checkbox
   const visibleMonths = useMemo(() => {
     if (showForecast) {
       return months; // Show all months when forecast is enabled
@@ -557,6 +561,32 @@ export default function ForecastTable({
     }
     setErrorSnackbar({ open: false, message: "" });
   };
+
+  // ✅ NEW: Add useEffect to handle highlight trigger
+  useEffect(() => {
+    if (highlightTrigger && canEditConsensus) {
+      // Validate SKU selection before highlighting
+      if (validateSingleSKUSelection()) {
+        setHighlightEditableCells(true);
+        
+        // Auto-hide highlight after 5 seconds
+        const timer = setTimeout(() => {
+          setHighlightEditableCells(false);
+        }, 5000);
+        
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setHighlightEditableCells(false);
+    }
+  }, [highlightTrigger, canEditConsensus]);
+
+  // ✅ NEW: Reset highlight when canEditConsensus becomes false
+  useEffect(() => {
+    if (!canEditConsensus) {
+      setHighlightEditableCells(false);
+    }
+  }, [canEditConsensus]);
 
   // Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
@@ -665,7 +695,7 @@ export default function ForecastTable({
     }
   }, [data, months]);
 
-  // **UPDATED: Keep all rows, don't filter based on showForecast**
+  // Keep all rows, don't filter based on showForecast
   const baseRows = [...CORE_ROWS, ...optionalRows];
   const allRows = baseRows; // Show all rows regardless of showForecast
 
@@ -860,6 +890,7 @@ export default function ForecastTable({
       <Box
         sx={{
           p: 3,
+          pt: 0,
           bgcolor: "common.white",
           padding: 0,
           borderRadius: 0,
@@ -897,7 +928,6 @@ export default function ForecastTable({
                   minWidth: 240,
                 }}
               ></th>
-              {/* **UPDATED: Use visibleMonths instead of months** */}
               {visibleMonths.map((m) => (
                 <th
                   key={m}
@@ -944,7 +974,6 @@ export default function ForecastTable({
                 >
                   {label}
                 </td>
-                {/* **UPDATED: Use visibleMonths instead of months** */}
                 {visibleMonths.map((m) => {
                   const value = data?.[m]?.[label];
                   const isConsensusRow = label === "Consensus";
@@ -954,7 +983,13 @@ export default function ForecastTable({
                     updatingCell.month === m && updatingCell.row === label;
                   const locked = isConsensusRow && isMonthLocked(m);
 
-                  const isAllowedMonth = m === firstFutureMonth;
+const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonthDate(firstFutureMonth)).getTime();
+                  
+                  // ✅ NEW: Add highlighting logic for editable cells
+                  const isEditableCell = isConsensusRow && isAllowedMonth && !locked;
+     const shouldHighlight = canEditConsensus && isEditableCell;
+
+
                   const displayValue =
                     value === undefined || value === null
                       ? "-"
@@ -966,11 +1001,15 @@ export default function ForecastTable({
                       style={{
                         background: isEditing
                           ? "#ffffff"
+                          : shouldHighlight
+                          ? "#efeddaff" // ✅ Bright yellow for highlighted editable cell
                           : futureMonthSet.has(m)
                           ? "#e9f0f7"
                           : undefined,
                         boxShadow: isEditing
                           ? "0 0 0 2px #2563EB, 0 2px 8px rgba(37, 99, 235, 0.15)"
+                          : shouldHighlight
+                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(255, 152, 0, 0.5)" // ✅ Orange border for highlighted cell
                           : undefined,
                         padding: "8px 12px",
                         borderBottom: "1px solid #e0e7ef",
@@ -980,8 +1019,8 @@ export default function ForecastTable({
                         minWidth: 90,
                         cursor: isConsensusRow ? "pointer" : "default",
                         position: "relative",
-                        zIndex: isEditing ? 10 : "auto",
-                        transition: "all 0.2s ease-in-out",
+                        zIndex: isEditing ? 10 : shouldHighlight ? 5 : "auto", // ✅ Higher z-index for highlighted cells
+                        transition: "all 0.3s ease-in-out", // ✅ Smooth transition for highlighting
                       }}
                       onClick={(e) => {
                         if (
@@ -996,6 +1035,7 @@ export default function ForecastTable({
                           if (validateSingleSKUSelection()) {
                             setEditingCell({ month: m, row: label });
                             setEditValue(value === "-" ? "" : value);
+                            setHighlightEditableCells(false); // ✅ Hide highlight when editing starts
                           }
                         } else if (
                           isConsensusRow &&
@@ -1013,6 +1053,38 @@ export default function ForecastTable({
                       {/* Red triangle indicator for consensus cells */}
                       {label === "Consensus" && value !== "-" && (
                         <RedTriangleIcon visible={true} />
+                      )}
+
+                      {/* ✅ NEW: Visual indicator for highlighted editable cells */}
+                      {shouldHighlight && (
+                        <>
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              top: 4,
+                              left: 4,
+                              width: 12,
+                              height: 12,
+                              backgroundColor: "#ff9800",
+                              borderRadius: "50%",
+                              animation: "pulse 1s infinite",
+                              "@keyframes pulse": {
+                                "0%": { 
+                                  opacity: 1,
+                                  transform: "scale(1)"
+                                },
+                                "50%": { 
+                                  opacity: 0.5,
+                                  transform: "scale(1.3)"
+                                },
+                                "100%": { 
+                                  opacity: 1,
+                                  transform: "scale(1)"
+                                },
+                              },
+                            }}
+                          />
+                        </>
                       )}
 
                       {isConsensusRow ? (
@@ -1138,7 +1210,7 @@ export default function ForecastTable({
 
       {data && (
         <ForecastChart
-          months={visibleMonths} // **UPDATED: Pass visibleMonths to chart**
+          months={visibleMonths}
           data={data}
           modelName={modelName}
           setModelName={setModelName}

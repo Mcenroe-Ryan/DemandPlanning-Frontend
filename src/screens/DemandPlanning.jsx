@@ -56,7 +56,8 @@ import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/Chatbox";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `http://localhost:5000/api`;
 
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options
@@ -488,6 +489,7 @@ export const DemandProjectMonth = () => {
   const [canEditConsensus, setCanEditConsensus] = useState(false);
 
   const [isFilterDisabled, setIsFilterDisabled] = useState(false);
+  
 
   // For plus button menu
   const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
@@ -501,6 +503,14 @@ export const DemandProjectMonth = () => {
 
   // Updated chatbox state management
   const [isChatBotOpen, setIsChatBotOpen] = useState(false);
+
+  // const [canEditConsensus, setCanEditConsensus] = useState(false);
+const [highlightTrigger, setHighlightTrigger] = useState(0);
+
+const handleEnableEditConsensus = () => {
+  setCanEditConsensus(true);
+setHighlightTrigger(Date.now()); // as you already do
+};
 
   const handleOpenChatBot = () => {
     setIsChatBotOpen(true);
@@ -1154,7 +1164,7 @@ export const DemandProjectMonth = () => {
             alignItems: "center",
             justifyContent: "space-between",
             px: 2.5,
-            py: 0.5,
+            py: 0,
             bgcolor: "common.white",
             borderBottom: 1,
             borderColor: "grey.200",
@@ -1240,6 +1250,7 @@ export const DemandProjectMonth = () => {
               )}
               canEditConsensus={canEditConsensus}
               setCanEditConsensus={setCanEditConsensus}
+  highlightTrigger={highlightTrigger}
             />
           </>
         )}

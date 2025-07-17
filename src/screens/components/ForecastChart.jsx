@@ -26,7 +26,8 @@ import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `http://localhost:5000/api`;
 
 
 
@@ -495,48 +496,54 @@ export default function ForecastChart({
   const [events, setEvents] = useState([]);
 
   /* ---------- dynamic tree-data (now INSIDE component) ---------- */
-  const treeData = useMemo(
-    () => [
-      {
-        id: 1,
-        title: "Model",
-        disabled: loadingModels,
-        type: "radio",
-        items: models.map((m) => ({
-          id: m.model_id,
-          label: m.model_name,
-          value: m.model_name,
-          starred: m.model_name === "XGBoost",
-        })),
-      },
-      {
-        id: 2,
-        title: "External Factors",
-        disabled: true,
-        type: "checkbox",
-        items: [
-          { id: 21, label: "All", checked: false },
-          { id: 22, label: "CPI", checked: true, starred: true },
-          { id: 23, label: "Interest Rate", checked: false },
-          { id: 24, label: "GDP", checked: true, starred: true },
-          { id: 25, label: "Unemployment Rate", checked: true, starred: true },
-          { id: 26, label: "Average Disposable Income", checked: false },
-        ],
-      },
-      {
-        id: 3,
-        title: "Events",
-        disabled: true,
-        type: "checkbox",
-        items: [
-          { id: 31, label: "All", checked: true, starred: true },
-          { id: 32, label: "Holidays", checked: true },
-          { id: 33, label: "Marketing & Promotion", checked: true },
-        ],
-      },
-    ],
-    [models, loadingModels]
-  );
+const treeData = useMemo(() => {
+  const sortedModels = [...models].sort((a, b) => {
+    // Move XGBoost to the top if present
+    if (a.model_name === "XGBoost") return -1;
+    if (b.model_name === "XGBoost") return 1;
+    return a.model_name.localeCompare(b.model_name); // optional: alphabetical
+  });
+
+  return [
+    {
+      id: 1,
+      title: "Model",
+      disabled: loadingModels,
+      type: "radio",
+      items: sortedModels.map((m) => ({
+        id: m.model_id,
+        label: m.model_name,
+        value: m.model_name,
+        starred: m.model_name === "XGBoost",
+      })),
+    },
+    {
+      id: 2,
+      title: "External Factors",
+      disabled: true,
+      type: "checkbox",
+      items: [
+        { id: 21, label: "All", checked: false },
+        { id: 22, label: "CPI", checked: true, starred: true },
+        { id: 23, label: "Interest Rate", checked: false },
+        { id: 24, label: "GDP", checked: true, starred: true },
+        { id: 25, label: "Unemployment Rate", checked: true, starred: true },
+        { id: 26, label: "Average Disposable Income", checked: false },
+      ],
+    },
+    {
+      id: 3,
+      title: "Events",
+      disabled: true,
+      type: "checkbox",
+      items: [
+        { id: 31, label: "All", checked: true, starred: true },
+        { id: 32, label: "Holidays", checked: true },
+        { id: 33, label: "Marketing & Promotion", checked: true },
+      ],
+    },
+  ];
+}, [models, loadingModels]);
 
   /* ---------- fetch events once ---------- */
   useEffect(() => {
