@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
@@ -29,8 +29,6 @@ import StarIcon from "@mui/icons-material/Star";
 // const API_BASE_URL = import.meta.env.VITE_API_URL;
 const API_BASE_URL = `http://localhost:5000/api`;
 
-
-
 /* ---------- MAPE color coding function ---------- */
 const getMapeColor = (mapeValue) => {
   const value = Number(mapeValue);
@@ -46,6 +44,25 @@ const getMapeColor = (mapeValue) => {
   } else {
     return "#6B7280"; // Gray for edge cases
   }
+};
+
+/* ---------- CONSISTENT LABEL STYLING ---------- */
+const AXIS_LABEL_STYLE = {
+  fontFamily: "Poppins",
+  fontWeight: 600,
+  fontSize: "12px",
+  lineHeight: "100%",
+  letterSpacing: "0.4px",
+  color: "#64748B",
+};
+
+const AXIS_TITLE_STYLE = {
+  fontFamily: "Poppins",
+  fontWeight: 600,
+  fontSize: "12px",
+  lineHeight: "100%",
+  letterSpacing: "0.4px",
+  color: "#64748B",
 };
 
 /* ---------- reusable styled checkbox ---------- */
@@ -116,112 +133,6 @@ const LEGEND_CONFIG = [
   { key: "holidays", label: "Holidays", color: "#DCFCE7", isOverlay: true },
   { key: "promotions", label: "Promotions", color: "#FFEDD5", isOverlay: true },
 ];
-
-/* ---------- ENHANCED helper: plot bands from events with proper date handling ---------- */
-function createPlotBands(events, months, overlays) {
-  return events.reduce((acc, ev) => {
-    const startDate = new Date(ev.start_date);
-    const endDate = new Date(ev.end_date);
-    
-    // Find which months the event spans
-    const startMonthLabel = startDate.toLocaleString("default", {
-      month: "short",
-      year: "2-digit",
-    });
-    const endMonthLabel = endDate.toLocaleString("default", {
-      month: "short",
-      year: "2-digit",
-    });
-    
-    const sIdx = months.indexOf(startMonthLabel);
-    const eIdx = months.indexOf(endMonthLabel);
-    
-    if (sIdx === -1) return acc;
-    
-    const isHoliday = ev.event_type === "Holiday";
-    const show = isHoliday ? overlays.holidays : overlays.promotions;
-    if (!show) return acc;
-    
-    // Calculate precise positioning within months
-    const calculateMonthPosition = (date, monthIndex) => {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const day = date.getDate();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
-      // Position within the month (0 = start, 1 = end)
-      const positionInMonth = (day - 1) / daysInMonth;
-      
-      // Convert to chart coordinates (-0.5 to +0.5 for each month)
-      return monthIndex + positionInMonth - 0.5;
-    };
-    
-    let fromPos, toPos;
-    
-    if (sIdx === eIdx || eIdx === -1) {
-      // Event within same month or end month not visible
-      fromPos = calculateMonthPosition(startDate, sIdx);
-      toPos = eIdx === -1 ? sIdx + 0.5 : calculateMonthPosition(endDate, sIdx);
-    } else {
-      // Event spans multiple months
-      fromPos = calculateMonthPosition(startDate, sIdx);
-      toPos = calculateMonthPosition(endDate, eIdx);
-    }
-    
-    // Ensure minimum width for very short events
-    const minWidth = 0.05;
-    if (toPos - fromPos < minWidth) {
-      const center = (fromPos + toPos) / 2;
-      fromPos = center - minWidth / 2;
-      toPos = center + minWidth / 2;
-    }
-    
-    acc.push({
-      id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
-      from: fromPos,
-      to: toPos,
-      color: isHoliday ? "#BBF7D0" : "#FED7AA",
-    });
-    
-    return acc;
-  }, []);
-}
-
-function createEventPoints(events, months, overlays) {
-  const holidayData = [];
-  const promoData = [];
-
-  events.forEach((ev) => {
-    const idx = months.indexOf(
-      new Date(ev.start_date).toLocaleString("default", {
-        month: "short",
-        year: "2-digit",
-      })
-    );
-
-    if (idx === -1) return;
-
-    const isHoliday = ev.event_type === "Holiday";
-    const show = isHoliday ? overlays.holidays : overlays.promotions;
-    if (!show) return;
-
-    const point = {
-      x: idx,
-      y: 1.1,
-      custom: {
-        name: ev.event_name,
-        type: ev.event_type,
-        country: ev.country_name,
-        date: new Date(ev.start_date).toDateString(),
-      },
-    };
-
-    if (isHoliday) holidayData.push(point);
-    else promoData.push(point);
-  });
-
-  return { holidayData, promoData };
-}
 
 /* ---------- tree-menu items ---------- */
 function TreeMenuItem({ item, disabled }) {
@@ -496,54 +407,54 @@ export default function ForecastChart({
   const [events, setEvents] = useState([]);
 
   /* ---------- dynamic tree-data (now INSIDE component) ---------- */
-const treeData = useMemo(() => {
-  const sortedModels = [...models].sort((a, b) => {
-    // Move XGBoost to the top if present
-    if (a.model_name === "XGBoost") return -1;
-    if (b.model_name === "XGBoost") return 1;
-    return a.model_name.localeCompare(b.model_name); // optional: alphabetical
-  });
+  const treeData = useMemo(() => {
+    const sortedModels = [...models].sort((a, b) => {
+      // Move XGBoost to the top if present
+      if (a.model_name === "XGBoost") return -1;
+      if (b.model_name === "XGBoost") return 1;
+      return a.model_name.localeCompare(b.model_name); // optional: alphabetical
+    });
 
-  return [
-    {
-      id: 1,
-      title: "Model",
-      disabled: loadingModels,
-      type: "radio",
-      items: sortedModels.map((m) => ({
-        id: m.model_id,
-        label: m.model_name,
-        value: m.model_name,
-        starred: m.model_name === "XGBoost",
-      })),
-    },
-    {
-      id: 2,
-      title: "External Factors",
-      disabled: true,
-      type: "checkbox",
-      items: [
-        { id: 21, label: "All", checked: false },
-        { id: 22, label: "CPI", checked: true, starred: true },
-        { id: 23, label: "Interest Rate", checked: false },
-        { id: 24, label: "GDP", checked: true, starred: true },
-        { id: 25, label: "Unemployment Rate", checked: true, starred: true },
-        { id: 26, label: "Average Disposable Income", checked: false },
-      ],
-    },
-    {
-      id: 3,
-      title: "Events",
-      disabled: true,
-      type: "checkbox",
-      items: [
-        { id: 31, label: "All", checked: true, starred: true },
-        { id: 32, label: "Holidays", checked: true },
-        { id: 33, label: "Marketing & Promotion", checked: true },
-      ],
-    },
-  ];
-}, [models, loadingModels]);
+    return [
+      {
+        id: 1,
+        title: "Model",
+        disabled: loadingModels,
+        type: "radio",
+        items: sortedModels.map((m) => ({
+          id: m.model_id,
+          label: m.model_name,
+          value: m.model_name,
+          starred: m.model_name === "XGBoost",
+        })),
+      },
+      {
+        id: 2,
+        title: "External Factors",
+        disabled: true,
+        type: "checkbox",
+        items: [
+          { id: 21, label: "All", checked: false },
+          { id: 22, label: "CPI", checked: true, starred: true },
+          { id: 23, label: "Interest Rate", checked: false },
+          { id: 24, label: "GDP", checked: true, starred: true },
+          { id: 25, label: "Unemployment Rate", checked: true, starred: true },
+          { id: 26, label: "Average Disposable Income", checked: false },
+        ],
+      },
+      {
+        id: 3,
+        title: "Events",
+        disabled: true,
+        type: "checkbox",
+        items: [
+          { id: 31, label: "All", checked: true, starred: true },
+          { id: 32, label: "Holidays", checked: true },
+          { id: 33, label: "Marketing & Promotion", checked: true },
+        ],
+      },
+    ];
+  }, [models, loadingModels]);
 
   /* ---------- fetch events once ---------- */
   useEffect(() => {
@@ -551,6 +462,142 @@ const treeData = useMemo(() => {
       .then((r) => r.json())
       .then(setEvents)
       .catch(() => setEvents([]));
+  }, []);
+
+  /* ---------- ENHANCED helper: plot bands with hover tooltips ---------- */
+  const createPlotBands = useCallback((events, months, overlays) => {
+    return events.reduce((acc, ev) => {
+      const startDate = new Date(ev.start_date);
+      const endDate = new Date(ev.end_date);
+      
+      // Find which months the event spans
+      const startMonthLabel = startDate.toLocaleString("default", {
+        month: "short",
+        year: "2-digit",
+      });
+      const endMonthLabel = endDate.toLocaleString("default", {
+        month: "short",
+        year: "2-digit",
+      });
+      
+      const sIdx = months.indexOf(startMonthLabel);
+      const eIdx = months.indexOf(endMonthLabel);
+      
+      if (sIdx === -1) return acc;
+      
+      const isHoliday = ev.event_type === "Holiday";
+      const show = isHoliday ? overlays.holidays : overlays.promotions;
+      if (!show) return acc;
+      
+      // Calculate precise positioning within months
+      const calculateMonthPosition = (date, monthIndex) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // Position within the month (0 = start, 1 = end)
+        const positionInMonth = (day - 1) / daysInMonth;
+        
+        // Convert to chart coordinates (-0.5 to +0.5 for each month)
+        return monthIndex + positionInMonth - 0.5;
+      };
+      
+      let fromPos, toPos;
+      
+      if (sIdx === eIdx || eIdx === -1) {
+        // Event within same month or end month not visible
+        fromPos = calculateMonthPosition(startDate, sIdx);
+        toPos = eIdx === -1 ? sIdx + 0.5 : calculateMonthPosition(endDate, sIdx);
+      } else {
+        // Event spans multiple months
+        fromPos = calculateMonthPosition(startDate, sIdx);
+        toPos = calculateMonthPosition(endDate, eIdx);
+      }
+      
+      // Ensure minimum width for very short events
+      const minWidth = 0.05;
+      if (toPos - fromPos < minWidth) {
+        const center = (fromPos + toPos) / 2;
+        fromPos = center - minWidth / 2;
+        toPos = center + minWidth / 2;
+      }
+      
+      // **FIXED: Add event handlers for hover tooltips with matching styles**
+      const plotBandConfig = {
+        id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
+        from: fromPos,
+        to: toPos,
+        color: isHoliday ? "#DCFCE7" : "#FFEDD5",
+        events: {
+          mouseover: function(e) {
+            const chart = chartRef.current?.chart;
+            if (!chart) return;
+            
+            // Destroy existing tooltip
+            if (chart.customTooltip) {
+              chart.customTooltip.destroy();
+            }
+            
+            // Create tooltip content
+            const tooltipText = `
+              <div style="padding: 8px; line-height: 1.4; font-family: Inter, sans-serif; font-size: 12px;">
+                <b>${isHoliday ? 'Holiday' : 'Promotion'}:</b> ${ev.event_name}<br/>
+                <b>Date:</b> ${startDate.toDateString()}<br/>
+                <b>Country:</b> ${ev.country_name}
+              </div>
+            `;
+            
+            // Calculate position - more robust positioning
+            const containerRect = chart.container.getBoundingClientRect();
+            const mouseX = (e.pageX || e.clientX) - containerRect.left;
+            const mouseY = (e.pageY || e.clientY) - containerRect.top;
+            
+            // Ensure tooltip stays within chart bounds
+            const tooltipWidth = 200;
+            const tooltipHeight = 80;
+            const finalX = Math.min(mouseX + 10, chart.plotWidth - tooltipWidth + chart.plotLeft);
+            const finalY = Math.max(mouseY - tooltipHeight, chart.plotTop + 10);
+            
+            // Create tooltip with Highcharts-matching styling
+            chart.customTooltip = chart.renderer.label(
+              tooltipText,
+              finalX,
+              finalY,
+              'round',
+              null,
+              null,
+              true // useHTML
+            )
+            .attr({
+              fill: 'rgba(247, 247, 247, 0.95)',      // Match Highcharts default background
+              stroke: 'rgba(51, 51, 51, 0.3)',        // Match Highcharts default border
+              'stroke-width': 1,
+              r: 3,                                    // Match Highcharts default border radius
+              padding: 8,                              // Match Highcharts default padding
+              zIndex: 999
+            })
+            .css({
+              fontSize: '12px',
+              fontFamily: 'Inter, sans-serif',         // Match chart font family
+              color: '#333',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)' // Match Highcharts shadow
+            })
+            .add();
+          },
+          mouseout: function() {
+            const chart = chartRef.current?.chart;
+            if (chart && chart.customTooltip) {
+              chart.customTooltip.destroy();
+              chart.customTooltip = null;
+            }
+          }
+        }
+      };
+      
+      acc.push(plotBandConfig);
+      return acc;
+    }, []);
   }, []);
 
   /* ---------- split hist/forecast for stepped joins ---------- */
@@ -612,13 +659,7 @@ const treeData = useMemo(() => {
     };
   }, [months, data, todayIdx]);
 
-  const { holidayData, promoData } = createEventPoints(
-    events,
-    months,
-    overlays
-  );
-
-  /* ---------- highcharts options ---------- */
+  /* ---------- highcharts options with CONSISTENT label styling ---------- */
   const options = useMemo(
     () => ({
       chart: {
@@ -631,16 +672,13 @@ const treeData = useMemo(() => {
         categories: months,
         gridLineWidth: 1,
         gridLineColor: "#e0e0e0",
+        title: {
+          text: "", // Empty title to maintain consistency
+          style: AXIS_TITLE_STYLE,
+        },
         labels: {
           rotation: 0,
-          style: {
-            fontFamily: "Poppins",
-            fontWeight: 600,
-            fontSize: "12px",
-            lineHeight: "100%",
-            letterSpacing: "0.4px",
-            color: "#64748B",
-          },
+          style: AXIS_LABEL_STYLE,
           overflow: "justify",
           crop: false,
         },
@@ -650,25 +688,11 @@ const treeData = useMemo(() => {
       yAxis: {
         title: {
           text: "Units (in thousands)",
-          style: {
-            fontFamily: "Poppins",
-            fontWeight: 600,
-            fontSize: "12px",
-            color: "#64748B",
-            letterSpacing: "0.4px",
-            lineHeight: "100%",
-          },
+          style: AXIS_TITLE_STYLE,
         },
         labels: {
           align: "center",
-          style: {
-            fontFamily: "Poppins",
-            fontWeight: 600,
-            fontSize: "12px",
-            lineHeight: "100%",
-            letterSpacing: "0.4px",
-            color: "#64748B",
-          },
+          style: AXIS_LABEL_STYLE,
           formatter: function () {
             if (this.value === 0) return "0";
             return this.value / 1000;
@@ -736,39 +760,9 @@ const treeData = useMemo(() => {
           visible: !hiddenSeries[6],
           marker: { enabled: false },
         },
-        {
-          name: "Holidays",
-          type: "scatter",
-          data: holidayData,
-          visible: overlays.holidays,
-          showInLegend: false,
-          marker: { enabled: false, radius: 0.1 },
-          tooltip: {
-            pointFormatter: function () {
-              return `<b>Holiday:</b> ${this.custom.name}<br/>
-                <b>Date:</b> ${this.custom.date}<br/>
-                <b>Country:</b> ${this.custom.country}`;
-            },
-          },
-        },
-        {
-          name: "Promotions",
-          type: "scatter",
-          data: promoData,
-          visible: overlays.promotions,
-          showInLegend: false,
-          marker: { enabled: false, radius: 0.1 },
-          tooltip: {
-            pointFormatter: function () {
-              return `<b>Promotion:</b> ${this.custom.name}<br/>
-                <b>Date:</b> ${this.custom.date}<br/>
-                <b>Country:</b> ${this.custom.country}`;
-            },
-          },
-        },
       ],
     }),
-    [months, seriesData, events, overlays, hiddenSeries]
+    [months, seriesData, events, overlays, hiddenSeries, createPlotBands]
   );
 
   /* ---------- legend click handler ---------- */
@@ -778,10 +772,14 @@ const treeData = useMemo(() => {
 
     if (item.isOverlay) {
       setOverlays((prev) => {
-        const vis = !prev[item.key];
-        chart.series[item.key === "holidays" ? 7 : 8].setVisible(vis, false);
-        chart.redraw();
-        return { ...prev, [item.key]: vis };
+        const newOverlays = { ...prev, [item.key]: !prev[item.key] };
+        // Trigger chart update by updating the plot bands
+        setTimeout(() => {
+          chart.xAxis[0].update({
+            plotBands: createPlotBands(events, months, newOverlays),
+          });
+        }, 0);
+        return newOverlays;
       });
     } else {
       const s = chart.series[item.seriesIndex];
@@ -797,6 +795,16 @@ const treeData = useMemo(() => {
     const init = {};
     chart.series.forEach((s, i) => (init[i] = !s.visible));
     setHiddenSeries(init);
+  }, []);
+
+  /* ---------- cleanup tooltips on unmount ---------- */
+  useEffect(() => {
+    return () => {
+      const chart = chartRef.current?.chart;
+      if (chart && chart.customTooltip) {
+        chart.customTooltip.destroy();
+      }
+    };
   }, []);
 
   /* ---------- SIMPLIFIED: mape with color coding only ---------- */

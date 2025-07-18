@@ -932,7 +932,8 @@ setHighlightTrigger(Date.now()); // as you already do
 
         <IconButton
           size="small"
-          onClick={() => setCanEditConsensus(true)}
+          // onClick={() => setCanEditConsensus(true)}
+          onClick={() => setCanEditConsensus((prev) => !prev)}
           sx={{
             backgroundColor: canEditConsensus ? "#BFDBFE" : "transparent",
             color: canEditConsensus ? "#1e293b" : "#fff",

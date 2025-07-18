@@ -30,6 +30,17 @@ import ForecastChart from "./ForecastChart";
 // const API_BASE_URL = import.meta.env.VITE_API_URL;
 const API_BASE_URL = `http://localhost:5000/api`;
 
+// ✅ Z-INDEX LAYERS for proper stacking
+const Z_INDEX_LAYERS = {
+  TABLE_CELL: 1,
+  STICKY_COLUMN: 3,
+  STICKY_HEADER: 4,
+  STICKY_HEADER_COLUMN: 5,
+  CELL_INDICATORS: 6,
+  HIGHLIGHTED_CELL: 7,
+  EDITING_CELL: 10
+};
+
 async function updateConsensusForecastAPI(payload) {
   const response = await fetch(`${API_BASE_URL}/forecast/consensus`, {
     method: "PUT",
@@ -161,7 +172,7 @@ function isMonthLocked(monthLabel) {
   );
 }
 
-// --- Red Triangle Icon Component ---
+// ✅ UPDATED Red Triangle Icon Component with proper z-index
 const RedTriangleIcon = ({ visible = true }) => {
   if (!visible) return null;
 
@@ -175,7 +186,7 @@ const RedTriangleIcon = ({ visible = true }) => {
         height: 0,
         borderLeft: "8px solid transparent",
         borderTop: "8px solid #f44336",
-        zIndex: 1,
+        zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // ✅ Proper z-index
         pointerEvents: "none",
       }}
     />
@@ -380,6 +391,14 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
   );
 }
 
+// ✅ HELPER FUNCTION: Get appropriate z-index based on cell state
+const getCellZIndex = (isSticky, isHighlighted, isEditing) => {
+  if (isEditing) return Z_INDEX_LAYERS.EDITING_CELL;
+  if (isHighlighted) return Z_INDEX_LAYERS.HIGHLIGHTED_CELL;
+  if (isSticky) return Z_INDEX_LAYERS.STICKY_COLUMN;
+  return Z_INDEX_LAYERS.TABLE_CELL;
+};
+
 export default function ForecastTable({
   selectedCountry,
   selectedState,
@@ -399,7 +418,7 @@ export default function ForecastTable({
   setCanEditConsensus,
   openConsensusPopup,
   setOpenConsensusPopup,
-  highlightTrigger, // ✅ IMPORTANT: Add this prop
+  highlightTrigger,
 }) {
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
@@ -440,7 +459,7 @@ export default function ForecastTable({
     message: "",
   });
 
-  // ✅ NEW: Add state for highlighting editable cells
+  // ✅ Keep the highlightEditableCells state for future use
   const [highlightEditableCells, setHighlightEditableCells] = useState(false);
 
   const months = useMemo(() => {
@@ -562,7 +581,7 @@ export default function ForecastTable({
     setErrorSnackbar({ open: false, message: "" });
   };
 
-  // ✅ NEW: Add useEffect to handle highlight trigger
+  // ✅ Keep the useEffect for future highlight trigger functionality
   useEffect(() => {
     if (highlightTrigger && canEditConsensus) {
       // Validate SKU selection before highlighting
@@ -581,7 +600,7 @@ export default function ForecastTable({
     }
   }, [highlightTrigger, canEditConsensus]);
 
-  // ✅ NEW: Reset highlight when canEditConsensus becomes false
+  // ✅ Reset highlight when canEditConsensus becomes false
   useEffect(() => {
     if (!canEditConsensus) {
       setHighlightEditableCells(false);
@@ -886,7 +905,7 @@ export default function ForecastTable({
         </Stack>
       </Box>
 
-      {/* Table */}
+      {/* ✅ UPDATED Table with proper z-index implementation and RESTORED highlighting */}
       <Box
         sx={{
           p: 3,
@@ -917,7 +936,7 @@ export default function ForecastTable({
                   position: "sticky",
                   left: 0,
                   background: "#DEE2E6",
-                  zIndex: 2,
+                  zIndex: Z_INDEX_LAYERS.STICKY_HEADER_COLUMN, // ✅ Proper z-index for sticky header
                   fontWeight: 700,
                   fontSize: 14,
                   textAlign: "left",
@@ -933,6 +952,7 @@ export default function ForecastTable({
                   key={m}
                   style={{
                     background: "#DEE2E6",
+                    zIndex: Z_INDEX_LAYERS.STICKY_HEADER, // ✅ Proper z-index for headers
                     fontWeight: 700,
                     fontSize: 14,
                     textAlign: "right",
@@ -961,7 +981,7 @@ export default function ForecastTable({
                     position: "sticky",
                     left: 0,
                     background: "#F1F5F9",
-                    zIndex: 1,
+                    zIndex: Z_INDEX_LAYERS.STICKY_COLUMN, // ✅ Proper z-index for sticky column
                     fontWeight: label === "Consensus" ? 700 : 500,
                     fontSize: 14,
                     textAlign: "left",
@@ -983,12 +1003,11 @@ export default function ForecastTable({
                     updatingCell.month === m && updatingCell.row === label;
                   const locked = isConsensusRow && isMonthLocked(m);
 
-const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonthDate(firstFutureMonth)).getTime();
+                  const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonthDate(firstFutureMonth)).getTime();
                   
-                  // ✅ NEW: Add highlighting logic for editable cells
+                  // ✅ RESTORED: Original highlighting logic without extra condition
                   const isEditableCell = isConsensusRow && isAllowedMonth && !locked;
-     const shouldHighlight = canEditConsensus && isEditableCell;
-
+                  const shouldHighlight = canEditConsensus && isEditableCell;
 
                   const displayValue =
                     value === undefined || value === null
@@ -1002,14 +1021,14 @@ const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonth
                         background: isEditing
                           ? "#ffffff"
                           : shouldHighlight
-                          ? "#efeddaff" // ✅ Bright yellow for highlighted editable cell
+                          ? "#efeddaff" // ✅ Restored original highlighting color
                           : futureMonthSet.has(m)
                           ? "#e9f0f7"
                           : undefined,
                         boxShadow: isEditing
                           ? "0 0 0 2px #2563EB, 0 2px 8px rgba(37, 99, 235, 0.15)"
                           : shouldHighlight
-                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(255, 152, 0, 0.5)" // ✅ Orange border for highlighted cell
+                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)" // ✅ Restored original highlighting box-shadow
                           : undefined,
                         padding: "8px 12px",
                         borderBottom: "1px solid #e0e7ef",
@@ -1019,7 +1038,7 @@ const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonth
                         minWidth: 90,
                         cursor: isConsensusRow ? "pointer" : "default",
                         position: "relative",
-                        zIndex: isEditing ? 10 : shouldHighlight ? 5 : "auto", // ✅ Higher z-index for highlighted cells
+                        zIndex: getCellZIndex(false, shouldHighlight, isEditing), // ✅ Dynamic z-index
                         transition: "all 0.3s ease-in-out", // ✅ Smooth transition for highlighting
                       }}
                       onClick={(e) => {
@@ -1050,12 +1069,12 @@ const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonth
                         }
                       }}
                     >
-                      {/* Red triangle indicator for consensus cells */}
+                      {/* ✅ Red triangle indicator for consensus cells with proper z-index */}
                       {label === "Consensus" && value !== "-" && (
                         <RedTriangleIcon visible={true} />
                       )}
 
-                      {/* ✅ NEW: Visual indicator for highlighted editable cells */}
+                      {/* ✅ RESTORED: Visual indicator for highlighted editable cells */}
                       {shouldHighlight && (
                         <>
                           <Box
@@ -1067,6 +1086,7 @@ const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonth
                               height: 12,
                               backgroundColor: "#ff9800",
                               borderRadius: "50%",
+                              zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // ✅ Proper z-index
                               animation: "pulse 1s infinite",
                               "@keyframes pulse": {
                                 "0%": { 
@@ -1114,6 +1134,7 @@ const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonth
                               borderRadius: 4,
                               background: "#fff",
                               outline: "none",
+                              zIndex: Z_INDEX_LAYERS.EDITING_CELL, // ✅ Highest z-index for editing
                             }}
                             autoFocus
                             disabled={isUpdating}
