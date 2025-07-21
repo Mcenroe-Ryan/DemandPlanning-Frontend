@@ -26,24 +26,17 @@ import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
 
-// const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL = `http://localhost:5000/api`;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = `http://localhost:5000/api`;
 
 /* ---------- MAPE color coding function ---------- */
 const getMapeColor = (mapeValue) => {
   const value = Number(mapeValue);
-
-  if (isNaN(value)) return "#6B7280"; // Gray for invalid/no data
-
-  if (value >= 0 && value <= 20) {
-    return "#22C55E"; // Green - Good
-  } else if (value > 20 && value <= 40) {
-    return "#F97316"; // Orange - Reasonable/Acceptable
-  } else if (value > 40) {
-    return "#EF4444"; // Red - Poor
-  } else {
-    return "#6B7280"; // Gray for edge cases
-  }
+  if (isNaN(value)) return "#6B7280";
+  if (value >= 0 && value <= 20) return "#22C55E";
+  if (value > 20 && value <= 40) return "#F97316";
+  if (value > 40) return "#EF4444";
+  return "#6B7280";
 };
 
 /* ---------- CONSISTENT LABEL STYLING ---------- */
@@ -355,7 +348,13 @@ function CustomLegend({ activeKeys, onToggle }) {
       {LEGEND_CONFIG.map(({ key, label, color }) => (
         <Box
           key={key}
-          onClick={() => onToggle(key)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof onToggle === 'function') {
+              onToggle(key);
+            }
+          }}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -395,6 +394,7 @@ export default function ForecastChart({
   models,
   loadingModels,
   avgMapeData,
+  countryName, // <- ADD THIS PROP
 }) {
   const [treeMenuOpen, setTreeMenuOpen] = useState(false);
   const chartRef = useRef();
@@ -409,10 +409,9 @@ export default function ForecastChart({
   /* ---------- dynamic tree-data (now INSIDE component) ---------- */
   const treeData = useMemo(() => {
     const sortedModels = [...models].sort((a, b) => {
-      // Move XGBoost to the top if present
       if (a.model_name === "XGBoost") return -1;
       if (b.model_name === "XGBoost") return 1;
-      return a.model_name.localeCompare(b.model_name); // optional: alphabetical
+      return a.model_name.localeCompare(b.model_name);
     });
 
     return [
@@ -464,13 +463,27 @@ export default function ForecastChart({
       .catch(() => setEvents([]));
   }, []);
 
+  /* ---------- country-filtered events ---------- */
+  const filteredEvents = useMemo(() => {
+    if (!events.length) return [];
+    if (!countryName) return events; // show all if none selected
+
+    const countries = Array.isArray(countryName) ? countryName : [countryName];
+    return events.filter(
+      (ev) =>
+        ev.country_name &&
+        countries.some((c) =>
+          ev.country_name.toLowerCase().includes(c.toLowerCase())
+        )
+    );
+  }, [events, countryName]);
+
   /* ---------- ENHANCED helper: plot bands with hover tooltips ---------- */
   const createPlotBands = useCallback((events, months, overlays) => {
     return events.reduce((acc, ev) => {
       const startDate = new Date(ev.start_date);
       const endDate = new Date(ev.end_date);
       
-      // Find which months the event spans
       const startMonthLabel = startDate.toLocaleString("default", {
         month: "short",
         year: "2-digit",
@@ -489,33 +502,25 @@ export default function ForecastChart({
       const show = isHoliday ? overlays.holidays : overlays.promotions;
       if (!show) return acc;
       
-      // Calculate precise positioning within months
       const calculateMonthPosition = (date, monthIndex) => {
         const year = date.getFullYear();
         const month = date.getMonth();
         const day = date.getDate();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        // Position within the month (0 = start, 1 = end)
         const positionInMonth = (day - 1) / daysInMonth;
-        
-        // Convert to chart coordinates (-0.5 to +0.5 for each month)
         return monthIndex + positionInMonth - 0.5;
       };
       
       let fromPos, toPos;
       
       if (sIdx === eIdx || eIdx === -1) {
-        // Event within same month or end month not visible
         fromPos = calculateMonthPosition(startDate, sIdx);
         toPos = eIdx === -1 ? sIdx + 0.5 : calculateMonthPosition(endDate, sIdx);
       } else {
-        // Event spans multiple months
         fromPos = calculateMonthPosition(startDate, sIdx);
         toPos = calculateMonthPosition(endDate, eIdx);
       }
       
-      // Ensure minimum width for very short events
       const minWidth = 0.05;
       if (toPos - fromPos < minWidth) {
         const center = (fromPos + toPos) / 2;
@@ -523,7 +528,7 @@ export default function ForecastChart({
         toPos = center + minWidth / 2;
       }
       
-      // **FIXED: Add event handlers for hover tooltips with matching styles**
+      // **ADD: Event handlers for hover tooltips**
       const plotBandConfig = {
         id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
         from: fromPos,
@@ -534,32 +539,28 @@ export default function ForecastChart({
             const chart = chartRef.current?.chart;
             if (!chart) return;
             
-            // Destroy existing tooltip
             if (chart.customTooltip) {
               chart.customTooltip.destroy();
             }
             
-            // Create tooltip content
             const tooltipText = `
               <div style="padding: 8px; line-height: 1.4; font-family: Inter, sans-serif; font-size: 12px;">
                 <b>${isHoliday ? 'Holiday' : 'Promotion'}:</b> ${ev.event_name}<br/>
-                <b>Date:</b> ${startDate.toDateString()}<br/>
-                <b>Country:</b> ${ev.country_name}
+                <b>Start:</b> ${startDate.toLocaleDateString()}<br/>
+                <b>End:</b> ${endDate.toLocaleDateString()}<br/>
+                <b>Country:</b> ${ev.country_name || 'N/A'}
               </div>
             `;
             
-            // Calculate position - more robust positioning
             const containerRect = chart.container.getBoundingClientRect();
             const mouseX = (e.pageX || e.clientX) - containerRect.left;
             const mouseY = (e.pageY || e.clientY) - containerRect.top;
             
-            // Ensure tooltip stays within chart bounds
             const tooltipWidth = 200;
-            const tooltipHeight = 80;
+            const tooltipHeight = 100;
             const finalX = Math.min(mouseX + 10, chart.plotWidth - tooltipWidth + chart.plotLeft);
             const finalY = Math.max(mouseY - tooltipHeight, chart.plotTop + 10);
             
-            // Create tooltip with Highcharts-matching styling
             chart.customTooltip = chart.renderer.label(
               tooltipText,
               finalX,
@@ -567,21 +568,21 @@ export default function ForecastChart({
               'round',
               null,
               null,
-              true // useHTML
+              true
             )
             .attr({
-              fill: 'rgba(247, 247, 247, 0.95)',      // Match Highcharts default background
-              stroke: 'rgba(51, 51, 51, 0.3)',        // Match Highcharts default border
+              fill: 'rgba(247, 247, 247, 0.95)',
+              stroke: 'rgba(51, 51, 51, 0.3)',
               'stroke-width': 1,
-              r: 3,                                    // Match Highcharts default border radius
-              padding: 8,                              // Match Highcharts default padding
+              r: 3,
+              padding: 8,
               zIndex: 999
             })
             .css({
               fontSize: '12px',
-              fontFamily: 'Inter, sans-serif',         // Match chart font family
+              fontFamily: 'Inter, sans-serif',
               color: '#333',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)' // Match Highcharts shadow
+              boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)'
             })
             .add();
           },
@@ -605,7 +606,6 @@ export default function ForecastChart({
     new Date().toLocaleString("default", { month: "short", year: "2-digit" })
   );
 
-  /* ---------- helper: Only first future value after todayIdx is shown, rest are null ---------- */
   function onlyFirstFutureValue(arr, todayIdx) {
     let found = false;
     return arr.map((v, i) => {
@@ -651,7 +651,6 @@ export default function ForecastChart({
       ml: histCut(mlFull),
       ml_forecast: join(histCut(mlFull), fcCut(mlFull)),
       consensus: histCut(consFull),
-      // join last hist Consensus with first future Consensus-Forecast
       consensus_forecast: join(
         histCut(consFull),
         onlyFirstFutureValue(consFull, todayIdx)
@@ -673,7 +672,7 @@ export default function ForecastChart({
         gridLineWidth: 1,
         gridLineColor: "#e0e0e0",
         title: {
-          text: "", // Empty title to maintain consistency
+          text: "",
           style: AXIS_TITLE_STYLE,
         },
         labels: {
@@ -682,9 +681,9 @@ export default function ForecastChart({
           overflow: "justify",
           crop: false,
         },
-        plotBands: createPlotBands(events, months, overlays),
+        // **USE FILTERED EVENTS HERE**
+        plotBands: createPlotBands(filteredEvents, months, overlays),
       },
-
       yAxis: {
         title: {
           text: "Units (in thousands)",
@@ -702,11 +701,9 @@ export default function ForecastChart({
         gridLineColor: "#e0e0e0",
         min: null,
       },
-
       tooltip: { shared: true },
       legend: { enabled: false },
       credits: { enabled: false },
-
       series: [
         {
           name: "Actual",
@@ -762,21 +759,21 @@ export default function ForecastChart({
         },
       ],
     }),
-    [months, seriesData, events, overlays, hiddenSeries, createPlotBands]
+    [months, seriesData, filteredEvents, overlays, hiddenSeries, createPlotBands]
   );
 
   /* ---------- legend click handler ---------- */
-  const handleLegendClick = (item) => {
+  const handleLegendClick = useCallback((item) => {
     const chart = chartRef.current?.chart;
     if (!chart) return;
 
     if (item.isOverlay) {
       setOverlays((prev) => {
         const newOverlays = { ...prev, [item.key]: !prev[item.key] };
-        // Trigger chart update by updating the plot bands
         setTimeout(() => {
           chart.xAxis[0].update({
-            plotBands: createPlotBands(events, months, newOverlays),
+            // **USING FILTERED EVENTS HERE**
+            plotBands: createPlotBands(filteredEvents, months, newOverlays),
           });
         }, 0);
         return newOverlays;
@@ -786,7 +783,7 @@ export default function ForecastChart({
       s.visible ? s.hide() : s.show();
       setHiddenSeries((prev) => ({ ...prev, [item.seriesIndex]: !s.visible }));
     }
-  };
+  }, [createPlotBands, filteredEvents, months]);
 
   /* ---------- sync hidden series state on first render ---------- */
   useEffect(() => {
@@ -807,7 +804,7 @@ export default function ForecastChart({
     };
   }, []);
 
-  /* ---------- SIMPLIFIED: mape with color coding only ---------- */
+  /* ---------- mape with color coding only ---------- */
   const mape = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
   const mapeColor = getMapeColor(mape);
 

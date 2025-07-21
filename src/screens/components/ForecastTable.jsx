@@ -26,9 +26,10 @@ import SwapVertIcon from "@mui/icons-material/SwapVert";
 import LockIcon from "@mui/icons-material/Lock";
 import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 
-// const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL = `http://localhost:5000/api`;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = `http://localhost:5000/api`;
 
 // ✅ Z-INDEX LAYERS for proper stacking
 const Z_INDEX_LAYERS = {
@@ -38,7 +39,7 @@ const Z_INDEX_LAYERS = {
   STICKY_HEADER_COLUMN: 5,
   CELL_INDICATORS: 6,
   HIGHLIGHTED_CELL: 7,
-  EDITING_CELL: 10
+  EDITING_CELL: 10,
 };
 
 async function updateConsensusForecastAPI(payload) {
@@ -524,11 +525,11 @@ export default function ForecastTable({
       // Show only past and current months when forecast is disabled
       const today = new Date();
       const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
-      
+
       return months.filter((label) => {
         const [mon, yr] = label.split(" ");
         const monthIdx = MONTH_MAP[mon.toUpperCase()];
-        
+
         if (monthIdx !== undefined) {
           const yearNum = 2000 + parseInt(yr, 10);
           const key = yearNum * 12 + monthIdx;
@@ -561,21 +562,22 @@ export default function ForecastTable({
       });
       return false;
     }
-    
+
     if (selectedSKUs.length > 1) {
       setErrorSnackbar({
         open: true,
-        message: "Consensus editing is only allowed for single SKU selection. Please select only one SKU.",
+        message:
+          "Consensus editing is only allowed for single SKU selection. Please select only one SKU.",
       });
       return false;
     }
-    
+
     return true;
   };
 
   // Handle error snackbar close
   const handleErrorSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
     setErrorSnackbar({ open: false, message: "" });
@@ -587,12 +589,12 @@ export default function ForecastTable({
       // Validate SKU selection before highlighting
       if (validateSingleSKUSelection()) {
         setHighlightEditableCells(true);
-        
+
         // Auto-hide highlight after 5 seconds
         const timer = setTimeout(() => {
           setHighlightEditableCells(false);
         }, 5000);
-        
+
         return () => clearTimeout(timer);
       }
     } else {
@@ -830,7 +832,7 @@ export default function ForecastTable({
             >
               <Checkbox
                 icon={
-                  <CheckBoxIcon
+                  <CheckBoxOutlineBlankIcon
                     sx={{ width: 16, height: 16, color: "text.secondary" }}
                   />
                 }
@@ -1003,10 +1005,13 @@ export default function ForecastTable({
                     updatingCell.month === m && updatingCell.row === label;
                   const locked = isConsensusRow && isMonthLocked(m);
 
-                  const isAllowedMonth = new Date(getMonthDate(m)).getTime() === new Date(getMonthDate(firstFutureMonth)).getTime();
-                  
+                  const isAllowedMonth =
+                    new Date(getMonthDate(m)).getTime() ===
+                    new Date(getMonthDate(firstFutureMonth)).getTime();
+
                   // ✅ RESTORED: Original highlighting logic without extra condition
-                  const isEditableCell = isConsensusRow && isAllowedMonth && !locked;
+                  const isEditableCell =
+                    isConsensusRow && isAllowedMonth && !locked;
                   const shouldHighlight = canEditConsensus && isEditableCell;
 
                   const displayValue =
@@ -1038,7 +1043,11 @@ export default function ForecastTable({
                         minWidth: 90,
                         cursor: isConsensusRow ? "pointer" : "default",
                         position: "relative",
-                        zIndex: getCellZIndex(false, shouldHighlight, isEditing), // ✅ Dynamic z-index
+                        zIndex: getCellZIndex(
+                          false,
+                          shouldHighlight,
+                          isEditing
+                        ), // ✅ Dynamic z-index
                         transition: "all 0.3s ease-in-out", // ✅ Smooth transition for highlighting
                       }}
                       onClick={(e) => {
@@ -1089,17 +1098,17 @@ export default function ForecastTable({
                               zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // ✅ Proper z-index
                               animation: "pulse 1s infinite",
                               "@keyframes pulse": {
-                                "0%": { 
+                                "0%": {
                                   opacity: 1,
-                                  transform: "scale(1)"
+                                  transform: "scale(1)",
                                 },
-                                "50%": { 
+                                "50%": {
                                   opacity: 0.5,
-                                  transform: "scale(1.3)"
+                                  transform: "scale(1.3)",
                                 },
-                                "100%": { 
+                                "100%": {
                                   opacity: 1,
-                                  transform: "scale(1)"
+                                  transform: "scale(1)",
                                 },
                               },
                             }}
@@ -1212,12 +1221,12 @@ export default function ForecastTable({
         open={errorSnackbar.open}
         autoHideDuration={4000}
         onClose={handleErrorSnackbarClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert 
-          onClose={handleErrorSnackbarClose} 
-          severity="error" 
-          sx={{ width: '100%' }}
+        <Alert
+          onClose={handleErrorSnackbarClose}
+          severity="error"
+          sx={{ width: "100%" }}
         >
           {errorSnackbar.message}
         </Alert>
@@ -1238,6 +1247,7 @@ export default function ForecastTable({
           models={models}
           loadingModels={loadingModels}
           avgMapeData={avgMape}
+          countryName={selectedCountry}
         />
       )}
 
