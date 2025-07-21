@@ -27,7 +27,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-// const API_BASE_URL = `http://localhost:5000/api`;
 
 /* ---------- MAPE color coding function ---------- */
 const getMapeColor = (mapeValue) => {
