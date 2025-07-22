@@ -28,11 +28,9 @@ import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 
-// const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL = `http://localhost:5000/api`;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-
-// ✅ Z-INDEX LAYERS for proper stacking
+// Z-INDEX LAYERS for proper stacking
 const Z_INDEX_LAYERS = {
   TABLE_CELL: 1,
   STICKY_COLUMN: 3,
@@ -174,7 +172,7 @@ function isMonthLocked(monthLabel) {
   );
 }
 
-// ✅ UPDATED Red Triangle Icon Component with proper z-index
+// UPDATED Red Triangle Icon Component with proper z-index
 const RedTriangleIcon = ({ visible = true }) => {
   if (!visible) return null;
 
@@ -188,7 +186,7 @@ const RedTriangleIcon = ({ visible = true }) => {
         height: 0,
         borderLeft: "8px solid transparent",
         borderTop: "8px solid #f44336",
-        zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // ✅ Proper z-index
+        zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // Proper z-index
         pointerEvents: "none",
       }}
     />
@@ -393,7 +391,7 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
   );
 }
 
-// ✅ HELPER FUNCTION: Get appropriate z-index based on cell state
+// Get appropriate z-index based on cell state
 const getCellZIndex = (isSticky, isHighlighted, isEditing) => {
   if (isEditing) return Z_INDEX_LAYERS.EDITING_CELL;
   if (isHighlighted) return Z_INDEX_LAYERS.HIGHLIGHTED_CELL;
@@ -461,7 +459,7 @@ export default function ForecastTable({
     message: "",
   });
 
-  // ✅ Keep the highlightEditableCells state for future use
+  // Keep the highlightEditableCells state for future use
   const [highlightEditableCells, setHighlightEditableCells] = useState(false);
 
   const months = useMemo(() => {
@@ -584,7 +582,7 @@ export default function ForecastTable({
     setErrorSnackbar({ open: false, message: "" });
   };
 
-  // ✅ Keep the useEffect for future highlight trigger functionality
+  // Keep the useEffect for future highlight trigger functionality
   useEffect(() => {
     if (highlightTrigger && canEditConsensus) {
       // Validate SKU selection before highlighting
@@ -603,7 +601,7 @@ export default function ForecastTable({
     }
   }, [highlightTrigger, canEditConsensus]);
 
-  // ✅ Reset highlight when canEditConsensus becomes false
+  // Reset highlight when canEditConsensus becomes false
   useEffect(() => {
     if (!canEditConsensus) {
       setHighlightEditableCells(false);
@@ -908,7 +906,7 @@ export default function ForecastTable({
         </Stack>
       </Box>
 
-      {/* ✅ UPDATED Table with proper z-index implementation and RESTORED highlighting */}
+      {/* UPDATED Table with proper z-index implementation and RESTORED highlighting */}
       <Box
         sx={{
           p: 3,
@@ -939,7 +937,7 @@ export default function ForecastTable({
                   position: "sticky",
                   left: 0,
                   background: "#DEE2E6",
-                  zIndex: Z_INDEX_LAYERS.STICKY_HEADER_COLUMN, // ✅ Proper z-index for sticky header
+                  zIndex: Z_INDEX_LAYERS.STICKY_HEADER_COLUMN, // Proper z-index for sticky header
                   fontWeight: 700,
                   fontSize: 14,
                   textAlign: "left",
@@ -955,7 +953,7 @@ export default function ForecastTable({
                   key={m}
                   style={{
                     background: "#DEE2E6",
-                    zIndex: Z_INDEX_LAYERS.STICKY_HEADER, // ✅ Proper z-index for headers
+                    zIndex: Z_INDEX_LAYERS.STICKY_HEADER, // Proper z-index for headers
                     fontWeight: 700,
                     fontSize: 14,
                     textAlign: "right",
@@ -984,7 +982,7 @@ export default function ForecastTable({
                     position: "sticky",
                     left: 0,
                     background: "#F1F5F9",
-                    zIndex: Z_INDEX_LAYERS.STICKY_COLUMN, // ✅ Proper z-index for sticky column
+                    zIndex: Z_INDEX_LAYERS.STICKY_COLUMN, // Proper z-index for sticky column
                     fontWeight: label === "Consensus" ? 700 : 500,
                     fontSize: 14,
                     textAlign: "left",
@@ -1010,7 +1008,7 @@ export default function ForecastTable({
                     new Date(getMonthDate(m)).getTime() ===
                     new Date(getMonthDate(firstFutureMonth)).getTime();
 
-                  // ✅ RESTORED: Original highlighting logic without extra condition
+                  // Original highlighting logic without extra condition
                   const isEditableCell =
                     isConsensusRow && isAllowedMonth && !locked;
                   const shouldHighlight = canEditConsensus && isEditableCell;
@@ -1028,14 +1026,14 @@ export default function ForecastTable({
                         background: isEditing
                           ? "#ffffff"
                           : shouldHighlight
-                          ? "#efeddaff" // ✅ Restored original highlighting color
+                          ? "rgba(251, 251, 251, 1)" // original highlighting color
                           : futureMonthSet.has(m)
                           ? "#e9f0f7"
                           : undefined,
                         boxShadow: isEditing
                           ? "0 0 0 2px #2563EB, 0 2px 8px rgba(37, 99, 235, 0.15)"
                           : shouldHighlight
-                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)" // ✅ Restored original highlighting box-shadow
+                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)" // original highlighting box-shadow
                           : undefined,
                         padding: "8px 12px",
                         borderBottom: "1px solid #e0e7ef",
@@ -1049,8 +1047,8 @@ export default function ForecastTable({
                           false,
                           shouldHighlight,
                           isEditing
-                        ), // ✅ Dynamic z-index
-                        transition: "all 0.3s ease-in-out", // ✅ Smooth transition for highlighting
+                        ), // Dynamic z-index
+                        transition: "all 0.3s ease-in-out", // Smooth transition for highlighting
                       }}
                       onClick={(e) => {
                         if (
@@ -1065,7 +1063,7 @@ export default function ForecastTable({
                           if (validateSingleSKUSelection()) {
                             setEditingCell({ month: m, row: label });
                             setEditValue(value === "-" ? "" : value);
-                            setHighlightEditableCells(false); // ✅ Hide highlight when editing starts
+                            setHighlightEditableCells(false); // Hide highlight when editing starts
                           }
                         } else if (
                           isConsensusRow &&
@@ -1080,12 +1078,12 @@ export default function ForecastTable({
                         }
                       }}
                     >
-                      {/* ✅ Red triangle indicator for consensus cells with proper z-index */}
+                      {/* Red triangle indicator for consensus cells with proper z-index */}
                       {label === "Consensus" && value !== "-" && (
                         <RedTriangleIcon visible={true} />
                       )}
 
-                      {/* ✅ RESTORED: Visual indicator for highlighted editable cells */}
+                      {/* Visual indicator for highlighted editable cells */}
                       {shouldHighlight && (
                         <>
                           <Box
@@ -1095,9 +1093,9 @@ export default function ForecastTable({
                               left: 4,
                               width: 12,
                               height: 12,
-                              backgroundColor: "#ff9800",
-                              borderRadius: "50%",
-                              zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // ✅ Proper z-index
+                              // backgroundColor: "#ff9800",
+                              // borderRadius: "50%",
+                              zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // Proper z-index
                               animation: "pulse 1s infinite",
                               "@keyframes pulse": {
                                 "0%": {
@@ -1145,7 +1143,7 @@ export default function ForecastTable({
                               borderRadius: 4,
                               background: "#fff",
                               outline: "none",
-                              zIndex: Z_INDEX_LAYERS.EDITING_CELL, // ✅ Highest z-index for editing
+                              zIndex: Z_INDEX_LAYERS.EDITING_CELL, // Highest z-index for editing
                             }}
                             autoFocus
                             disabled={isUpdating}
