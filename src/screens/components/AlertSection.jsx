@@ -25,7 +25,8 @@ import ShareOutlined from "@mui/icons-material/ShareOutlined";
 // Custom alert context for global state
 import { useAlert } from "./AlertContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `http://localhost:5000/api`;
 
 // Main component
 export const AlertsSection = () => {
@@ -74,7 +75,7 @@ export const AlertsSection = () => {
     if (arr.length === 0) return null;
 
     const categories = arr.map((item) => {
-      const raw = item.month_name;
+      const raw = item.sales_week_start;
       const date = new Date(raw.length === 7 ? `${raw}-01` : raw);
       return isNaN(date.getTime())
         ? raw

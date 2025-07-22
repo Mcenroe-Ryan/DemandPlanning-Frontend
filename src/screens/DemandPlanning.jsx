@@ -56,7 +56,8 @@ import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/Chatbox";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `http://localhost:5000/api`;
 
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options

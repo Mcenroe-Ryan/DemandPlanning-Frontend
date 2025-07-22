@@ -28,7 +28,9 @@ import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `http://localhost:5000/api`;
+
 
 // ✅ Z-INDEX LAYERS for proper stacking
 const Z_INDEX_LAYERS = {
@@ -1012,6 +1014,7 @@ export default function ForecastTable({
                   const isEditableCell =
                     isConsensusRow && isAllowedMonth && !locked;
                   const shouldHighlight = canEditConsensus && isEditableCell;
+                  // const shouldHighlight = false;
 
                   const displayValue =
                     value === undefined || value === null
@@ -1247,6 +1250,8 @@ export default function ForecastTable({
           loadingModels={loadingModels}
           avgMapeData={avgMape}
           countryName={selectedCountry}
+          showForecast={showForecast}
+          
         />
       )}
 
