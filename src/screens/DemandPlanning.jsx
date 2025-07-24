@@ -488,7 +488,6 @@ export const DemandProjectMonth = () => {
   const [canEditConsensus, setCanEditConsensus] = useState(false);
 
   const [isFilterDisabled, setIsFilterDisabled] = useState(false);
-  
 
   // For plus button menu
   const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
@@ -504,12 +503,12 @@ export const DemandProjectMonth = () => {
   const [isChatBotOpen, setIsChatBotOpen] = useState(false);
 
   // const [canEditConsensus, setCanEditConsensus] = useState(false);
-const [highlightTrigger, setHighlightTrigger] = useState(0);
+  const [highlightTrigger, setHighlightTrigger] = useState(0);
 
-const handleEnableEditConsensus = () => {
-  setCanEditConsensus(true);
-setHighlightTrigger(Date.now()); // as you already do
-};
+  const handleEnableEditConsensus = () => {
+    setCanEditConsensus(true);
+    setHighlightTrigger(Date.now()); // as you already do
+  };
 
   const handleOpenChatBot = () => {
     setIsChatBotOpen(true);
@@ -1007,7 +1006,11 @@ setHighlightTrigger(Date.now()); // as you already do
         </Box>
 
         <Stack direction="row" spacing={1}>
-          <DateFilter onDateChange={(range) => setDateRange(range)} />
+          {/* <DateFilter onDateChange={(range) => setDateRange(range)} /> */}
+          <DateFilter
+            onDateChange={(range) => setDateRange(range)}
+            disabled={activeTab === 1 || activeTab === 2}
+          />
           <MultiSelectWithCheckboxes
             label="Country"
             options={filtersData.countries}
@@ -1019,7 +1022,9 @@ setHighlightTrigger(Date.now()); // as you already do
             loading={loadingCountries}
             onOpen={fetchCountries}
             width={110}
+            disabled={activeTab === 1 || activeTab === 2}
           />
+
           <MultiSelectWithCheckboxes
             label="State"
             options={filtersData.states}
@@ -1250,7 +1255,7 @@ setHighlightTrigger(Date.now()); // as you already do
               )}
               canEditConsensus={canEditConsensus}
               setCanEditConsensus={setCanEditConsensus}
-  highlightTrigger={highlightTrigger}
+              highlightTrigger={highlightTrigger}
             />
           </>
         )}

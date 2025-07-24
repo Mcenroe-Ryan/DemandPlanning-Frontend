@@ -12,7 +12,7 @@ import { addDays, format, parse, addMonths, subMonths } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 
-export default function DateFilter({ onDateChange }) {
+export default function DateFilter({ onDateChange, disabled = false }) {
   const defaultRange = [
     {
       startDate: subMonths(new Date(), 6), // 6 months historical
@@ -32,7 +32,10 @@ export default function DateFilter({ onDateChange }) {
     format(defaultRange[0].endDate, "MM/dd/yyyy")
   );
 
-  const handleOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleOpen = (event) => {
+    if (disabled) return;
+    setAnchorEl(event.currentTarget);
+  };
 
   const handleCancel = () => {
     setTempRange(range);
@@ -47,7 +50,7 @@ export default function DateFilter({ onDateChange }) {
     setAnchorEl(null);
     const startDate = format(tempRange[0].startDate, "yyyy-MM-dd");
     const endDate = format(tempRange[0].endDate, "yyyy-MM-dd");
-    onDateChange({ startDate, endDate }); // Send selected range to parent
+    if (onDateChange) onDateChange({ startDate, endDate });
   };
 
   const handleStartChange = (e) => {
@@ -83,10 +86,10 @@ export default function DateFilter({ onDateChange }) {
         size="small"
         sx={{
           height: 32,
-          minWidth: 110, // Increase width to fit full date
+          minWidth: 110,
           px: 2,
           fontSize: "13px",
-          bgcolor: "common.white",
+          bgcolor: disabled ? "grey.100" : "common.white", 
           textTransform: "none",
           borderRadius: 1,
           display: "inline-flex",
@@ -95,12 +98,22 @@ export default function DateFilter({ onDateChange }) {
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
+          opacity: 1, 
+          cursor: disabled ? "not-allowed" : "pointer",
+          borderColor: disabled ? "grey.300" : "primary.main",
+          "&:hover": {
+            bgcolor: disabled ? "grey.100" : "grey.100",
+          },
         }}
         onClick={handleOpen}
+        disabled={disabled}
       >
         <Typography
           variant="body2"
-          sx={{ fontSize: "13px", color: "primary.main" }}
+          sx={{
+            fontSize: "13px",
+            color: disabled ? "grey.500" : "primary.main",
+          }}
         >
           {getLabel()}
         </Typography>
@@ -121,6 +134,7 @@ export default function DateFilter({ onDateChange }) {
             overflow: "hidden",
           },
         }}
+        disableRestoreFocus
       >
         {/* Start & End Date Input Row */}
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
@@ -147,6 +161,7 @@ export default function DateFilter({ onDateChange }) {
                 },
               }}
               fullWidth
+              disabled={disabled}
             />
           </Box>
           <Box sx={{ flex: 0.3, minWidth: 100 }}>
@@ -172,6 +187,7 @@ export default function DateFilter({ onDateChange }) {
                 },
               }}
               fullWidth
+              disabled={disabled}
             />
           </Box>
         </Stack>
@@ -188,6 +204,7 @@ export default function DateFilter({ onDateChange }) {
           ranges={tempRange}
           rangeColors={["#2563eb"]}
           showDateDisplay={false}
+          disabled={disabled}
         />
 
         {/* Footer Buttons */}
@@ -198,6 +215,7 @@ export default function DateFilter({ onDateChange }) {
             size="small"
             onClick={handleCancel}
             sx={{ textTransform: "uppercase" }}
+            disabled={false}
           >
             Cancel
           </Button>
@@ -206,6 +224,7 @@ export default function DateFilter({ onDateChange }) {
             variant="contained"
             onClick={handleApply}
             sx={{ textTransform: "uppercase" }}
+            disabled={disabled}
           >
             Apply
           </Button>
