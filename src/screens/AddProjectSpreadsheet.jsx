@@ -197,8 +197,11 @@ export const AddNewProjectSpreadsheet = () => {
             onClick={handleNext}
             sx={{
               flex: 1,
-              bgcolor: "#0F91D2",
+              bgcolor: "#2563EB",
               fontWeight: 600,
+              "&:hover": {
+                bgcolor: "#1E40AF",
+              },
             }}
           >
             Next
@@ -281,16 +284,21 @@ export const AddNewProjectSpreadsheet = () => {
         <Stack direction="row" spacing={2} sx={{ width: 269 }}>
           <Button
             variant="outlined"
-            onClick={() => setCurrentStep(2)}
+            onClick={handleBack}
             sx={{
               flex: 1,
-              color: "#1d4ed8",
-              borderColor: "#1d4ed8",
+              color: "#2563EB",
+              borderColor: "#1D4ED8",
               fontWeight: 600,
+              "&:hover": {
+                borderColor: "#1E40AF",
+                color: "#1E40AF",
+              },
             }}
           >
             Back
           </Button>
+
           <Button
             variant="contained"
             sx={{
@@ -388,7 +396,7 @@ export const AddNewProjectSpreadsheet = () => {
       <Box sx={{ px: 6, pt: 4 }}>
         <Typography
           variant="h6"
-          fontWeight={800}
+          fontWeight={600}
           color="text.primary"
           sx={{ mb: 4 }}
         >

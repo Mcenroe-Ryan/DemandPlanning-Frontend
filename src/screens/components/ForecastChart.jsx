@@ -221,9 +221,13 @@ function TreeMenuSection({ section, modelName, setModelName }) {
                     value={item.value}
                     control={<Radio size="small" />}
                     label={
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
                         {item.starred && (
-                          <StarIcon sx={{ fontSize: 14, color: "warning.main" }} />
+                          <StarIcon
+                            sx={{ fontSize: 14, color: "warning.main" }}
+                          />
                         )}
                         <Typography variant="body2">{item.label}</Typography>
                       </Box>
@@ -251,7 +255,14 @@ function TreeMenuSection({ section, modelName, setModelName }) {
 }
 
 /* ---------- Floating tree-menu wrapper ---------- */
-function TreeMenu({ open, onClose, modelName, setModelName, treeData, anchorEl }) {
+function TreeMenu({
+  open,
+  onClose,
+  modelName,
+  setModelName,
+  treeData,
+  anchorEl,
+}) {
   const [pos, setPos] = useState({ top: 80, left: 40 });
 
   useEffect(() => {
@@ -315,14 +326,42 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
     {LEGEND_CONFIG.filter(({ key }) => {
       if (!showForecast) {
         // Hide forecast-related legends when showForecast is false
-        return !["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
+        return ![
+          "baseline_forecast",
+          "ml_forecast",
+          "consensus_forecast",
+        ].includes(key);
       }
       return true;
     }).map(({ key, label, color, dash }) => {
       // Check if this is a forecast item that should have dashed indicator
-      const isForecast = ["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
-      
+      const isForecast = [
+        "baseline_forecast",
+        "ml_forecast",
+        "consensus_forecast",
+      ].includes(key);
+
       return (
+        // <Box
+        //   key={key}
+        //   onClick={(e) => {
+        //     e.preventDefault();
+        //     e.stopPropagation();
+        //     onToggle(key);
+        //   }}
+        //   sx={{
+        //     display: "flex",
+        //     alignItems: "center",
+        //     cursor: "pointer",
+        //     opacity: activeKeys.includes(key) ? 1 : 0.5,
+        //     borderRadius: 1,
+        //     border: "1px solid",
+        //     borderColor: "#CBD5E1",
+        //     px: 1,
+        //     userSelect: "none",
+        //     "&:hover": { opacity: 0.8 },
+        //   }}
+        // >
         <Box
           key={key}
           onClick={(e) => {
@@ -333,12 +372,16 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
           sx={{
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
+            height: 25,
+            minWidth: 60,
+            px: 1.1,
+            py: 0.3,
             cursor: "pointer",
             opacity: activeKeys.includes(key) ? 1 : 0.5,
-            borderRadius: 1,
+            borderRadius: 1.2,
             border: "1px solid",
             borderColor: "#CBD5E1",
-            px: 1,
             userSelect: "none",
             "&:hover": { opacity: 0.8 },
           }}
@@ -382,7 +425,17 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
               }}
             />
           )}
-          <Typography variant="body2" fontWeight={500}>
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "14px",
+              lineHeight: "100%",
+              letterSpacing: "0.1px",
+              color: "#475569",
+            }}
+          >
             {label}
           </Typography>
         </Box>
@@ -414,7 +467,10 @@ export default function ForecastChart({
   const chartRef = useRef();
   const gridIconRef = useRef();
   const [treeOpen, setTreeOpen] = useState(false);
-  const [overlays, setOverlays] = useState({ holidays: true, promotions: true });
+  const [overlays, setOverlays] = useState({
+    holidays: true,
+    promotions: true,
+  });
   const [hiddenSeries, setHiddenSeries] = useState({});
   const [events, setEvents] = useState([]);
 
@@ -494,14 +550,21 @@ export default function ForecastChart({
       evts.reduce((acc, ev) => {
         const s = new Date(ev.start_date);
         const e = new Date(ev.end_date);
-        const sm = s.toLocaleString("default", { month: "short", year: "2-digit" });
-        const em = e.toLocaleString("default", { month: "short", year: "2-digit" });
+        const sm = s.toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        });
+        const em = e.toLocaleString("default", {
+          month: "short",
+          year: "2-digit",
+        });
         const sIdx = monthsArr.indexOf(sm);
         const eIdx = monthsArr.indexOf(em);
 
         if (sIdx === -1) return acc;
         const holiday = ev.event_type === "Holiday";
-        if (holiday ? !overlayState.holidays : !overlayState.promotions) return acc;
+        if (holiday ? !overlayState.holidays : !overlayState.promotions)
+          return acc;
 
         const dayFrac = (date) => {
           const year = date.getFullYear();
@@ -532,7 +595,9 @@ export default function ForecastChart({
               if (ch.customTooltip) ch.customTooltip.destroy();
               const tip = `
                 <div style="padding:8px;font-size:12px;font-family:Inter">
-                  <b>${holiday ? "Holiday" : "Promotion"}:</b> ${ev.event_name}<br/>
+                  <b>${holiday ? "Holiday" : "Promotion"}:</b> ${
+                ev.event_name
+              }<br/>
                   <b>Start:</b> ${s.toLocaleDateString()}<br/>
                   <b>End&nbsp;&nbsp;:</b> ${e.toLocaleDateString()}<br/>
                   <b>Country:</b> ${ev.country_name || "N/A"}
@@ -625,7 +690,11 @@ export default function ForecastChart({
   /* ---------- Highcharts option object ---------- */
   const options = useMemo(
     () => ({
-      chart: { backgroundColor: "#fafafa", style: { fontFamily: "Inter" }, zoomType: "x" },
+      chart: {
+        backgroundColor: "#fafafa",
+        style: { fontFamily: "Inter" },
+        zoomType: "x",
+      },
       title: { text: "" },
       xAxis: {
         categories: months,
@@ -653,16 +722,68 @@ export default function ForecastChart({
       legend: { enabled: false },
       credits: { enabled: false },
       series: [
-        { name: "Actual", data: seriesData.actual, color: "#EF4444", marker: { enabled: false }, visible: !hiddenSeries[0] },
-        { name: "Baseline", data: seriesData.baseline, color: "#60A5FA", marker: { enabled: false }, visible: !hiddenSeries[1] },
-        { name: "ML", data: seriesData.ml, color: "#EAB308", marker: { enabled: false }, visible: !hiddenSeries[2] },
-        { name: "Consensus", data: seriesData.consensus, color: "#0E7490", marker: { enabled: false }, visible: !hiddenSeries[3] },
-        { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: "#60A5FA", dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[4] },
-        { name: "ML Forecast", data: seriesData.ml_forecast, color: "#EAB308", dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[5] },
-        { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: "#0E7490", dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[6] },
+        {
+          name: "Actual",
+          data: seriesData.actual,
+          color: "#EF4444",
+          marker: { enabled: false },
+          visible: !hiddenSeries[0],
+        },
+        {
+          name: "Baseline",
+          data: seriesData.baseline,
+          color: "#60A5FA",
+          marker: { enabled: false },
+          visible: !hiddenSeries[1],
+        },
+        {
+          name: "ML",
+          data: seriesData.ml,
+          color: "#EAB308",
+          marker: { enabled: false },
+          visible: !hiddenSeries[2],
+        },
+        {
+          name: "Consensus",
+          data: seriesData.consensus,
+          color: "#0E7490",
+          marker: { enabled: false },
+          visible: !hiddenSeries[3],
+        },
+        {
+          name: "Baseline Forecast",
+          data: seriesData.baseline_forecast,
+          color: "#60A5FA",
+          dashStyle: "Dash",
+          marker: { enabled: false },
+          visible: !hiddenSeries[4],
+        },
+        {
+          name: "ML Forecast",
+          data: seriesData.ml_forecast,
+          color: "#EAB308",
+          dashStyle: "Dash",
+          marker: { enabled: false },
+          visible: !hiddenSeries[5],
+        },
+        {
+          name: "Consensus Forecast",
+          data: seriesData.consensus_forecast,
+          color: "#0E7490",
+          dashStyle: "Dash",
+          marker: { enabled: false },
+          visible: !hiddenSeries[6],
+        },
       ],
     }),
-    [months, seriesData, filteredEvents, overlays, hiddenSeries, createPlotBands]
+    [
+      months,
+      seriesData,
+      filteredEvents,
+      overlays,
+      hiddenSeries,
+      createPlotBands,
+    ]
   );
 
   /* ---------- Legend pill click handler ---------- */
@@ -739,36 +860,94 @@ export default function ForecastChart({
   const mapeColor = getMapeColor(mapeStr);
 
   return (
-    <Box sx={{ mt: 3, p: 2, bgcolor: "#fff", borderRadius: 1, boxShadow: 1, position: "relative" }}>
+    <Box
+      sx={{
+        mt: 3,
+        p: 2,
+        bgcolor: "#fff",
+        borderRadius: 1,
+        boxShadow: 1,
+        position: "relative",
+      }}
+    >
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="body2" fontWeight={700}>
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontStyle: "normal",
+              fontSize: 14,
+              lineHeight: "100%",
+              letterSpacing: "0.1px",
+              textAlign: "right",
+              verticalAlign: "middle",
+              color: "#334155",
+            }}
+          >
             Demand Forecast
           </Typography>
-          <Typography variant="body2" fontWeight={700} color="#555">
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 600,
+              fontStyle: "normal",
+              fontSize: "14px",
+              lineHeight: "100%",
+              letterSpacing: "0.1px",
+              textAlign: "center",
+              verticalAlign: "middle",
+              color: "#555",
+            }}
+          >
             MAPE:&nbsp;
-            <Box component="span" sx={{ color: mapeColor, fontWeight: 700 }}>
+            <Box component="span" sx={{ color: mapeColor }}>
               {mapeStr}
             </Box>
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.3 }}>
-          <IconButton ref={gridIconRef} size="small" onClick={() => setTreeOpen((v) => !v)}>
+          <IconButton
+            ref={gridIconRef}
+            size="small"
+            onClick={() => setTreeOpen((v) => !v)}
+          >
             <GridViewIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small"><ChatBubbleOutlineIcon fontSize="small" /></IconButton>
-          <IconButton size="small"><ShareIcon fontSize="small" /></IconButton>
-          <IconButton size="small"><SettingsIcon fontSize="small" /></IconButton>
+          <IconButton size="small">
+            <ChatBubbleOutlineIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small">
+            <ShareIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small">
+            <SettingsIcon fontSize="small" />
+          </IconButton>
         </Box>
       </Box>
 
       {/* Legend */}
-      <CustomLegend activeKeys={activeKeys} onToggle={handleLegendClick} showForecast={showForecast} />
+      <CustomLegend
+        activeKeys={activeKeys}
+        onToggle={handleLegendClick}
+        showForecast={showForecast}
+      />
 
       {/* Chart */}
       <Box sx={{ height: 400 }}>
-        <HighchartsReact ref={chartRef} highcharts={Highcharts} options={options} />
+        <HighchartsReact
+          ref={chartRef}
+          highcharts={Highcharts}
+          options={options}
+        />
       </Box>
 
       {/* Floating tree menu */}
@@ -783,4 +962,3 @@ export default function ForecastChart({
     </Box>
   );
 }
-

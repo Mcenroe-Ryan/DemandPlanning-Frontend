@@ -1,15 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Add from "@mui/icons-material/Add";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SearchIcon from "@mui/icons-material/Search";
+
 import {
   Box,
   Card,
   CardContent,
-  FormControl,
-  MenuItem,
-  Select,
   Stack,
   Typography,
   Alert,
@@ -18,10 +16,22 @@ import {
   Paper,
   CircularProgress,
   IconButton,
+  Checkbox,
+  Button,
+  Popper,
+  ClickAwayListener,
+  Fade,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 
 /* ─────────────────── CONSTANTS ─────────────────── */
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 
 const metrics = [
   { id: "MAPE", label: "MAPE" },
@@ -30,9 +40,8 @@ const metrics = [
   { id: "FVAvsConsensus", label: "FVA vs Consensus" },
 ];
 
-/* ─────────────────── HELPERS ─────────────────── */
-const transformModelData = (rows = []) =>
-  [...rows]
+const transformModelData = (rows) =>
+  rows
     .sort((a, b) => Number(b.accuracy) - Number(a.accuracy))
     .map((r) => ({
       id: r.id,
@@ -52,6 +61,147 @@ const transformModelData = (rows = []) =>
         fvaConsensus: Number(r.fva_consensus),
       },
     }));
+
+/* ─────────────────── GRAPH UP ARROW ICON ─────────────────── */
+function GraphUpArrowIcon({ positive }) {
+  return (
+    <i
+      className="bi bi-graph-up-arrow"
+      style={{
+        fontSize: 14,
+        color: positive ? "#2e7d32" : "#d32f2f", // MUI success / error palette
+        display: "inline-block",
+        lineHeight: 1,
+      }}
+    />
+  );
+}
+
+/* ─────────────────── ADD MODEL DROPDOWN ─────────────────── */
+function AddModelDropdown({ selected = [], onChange }) {
+  const [models, setModels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/models`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
+      .then((data) => {
+        setModels(data);
+        // Auto-select all models when they're loaded
+        if (onChange && data.length > 0) {
+          const allModelIds = data.map((m) => m.id);
+          onChange(allModelIds);
+        }
+      })
+      .catch(() => setModels([]))
+      .finally(() => setLoading(false));
+  }, [onChange]);
+
+  // Filter models based on search term
+  const filteredModels = useMemo(() => {
+    if (!searchTerm) return models;
+    return models.filter((m) =>
+      m.model_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [models, searchTerm]);
+
+  if (loading)
+    return (
+      <Typography sx={{ px: 2, py: 2, fontSize: 12 }}>
+        Loading models…
+      </Typography>
+    );
+  if (!models.length)
+    return (
+      <Typography sx={{ px: 2, py: 2, fontSize: 12 }}>
+        No models found.
+      </Typography>
+    );
+
+  return (
+    <Box>
+      {/* Smaller Search Field */}
+      <Box sx={{ p: 0.5, borderBottom: "1px solid #e0e0e0" }}>
+        <TextField
+          size="small"
+          placeholder="Search models…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+            sx: { fontSize: 13, height: 32, minHeight: 30 },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: "#e0e0e0",
+              },
+              "&:hover fieldset": {
+                borderColor: "#1976d2",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "#1976d2",
+              },
+              fontSize: 13,
+              height: 32,
+              minHeight: 30,
+              py: 0,
+            },
+          }}
+        />
+      </Box>
+
+      {/* Smaller Models List */}
+      <List dense sx={{ maxHeight: 140, overflow: "auto", py: 0 }}>
+        {filteredModels.length === 0 ? (
+          <ListItem>
+            <ListItemText
+              primary="No models match your search"
+              primaryTypographyProps={{ fontSize: 12, color: "text.secondary" }}
+            />
+          </ListItem>
+        ) : (
+          filteredModels.map((m) => (
+            <ListItem
+              key={m.id}
+              component={ButtonBase}
+              onClick={() => {
+                if (!onChange) return;
+                const checked = selected.includes(m.id);
+                onChange(
+                  checked
+                    ? selected.filter((id) => id !== m.id)
+                    : [...selected, m.id]
+                );
+              }}
+              sx={{ py: 0.5, minHeight: 28 }}
+            >
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                <Checkbox
+                  checked={selected.includes(m.id)}
+                  tabIndex={-1}
+                  disableRipple
+                  size="small"
+                  sx={{ p: 0.25 }}
+                />
+              </ListItemIcon>
+              <ListItemText
+                primary={m.model_name}
+                primaryTypographyProps={{ fontSize: 13 }}
+              />
+            </ListItem>
+          ))
+        )}
+      </List>
+    </Box>
+  );
+}
 
 /* ─────────────────── MINI-CHART POP-UP ─────────────────── */
 function FvaVsStatsPopup({ modelId, metricType, onClose }) {
@@ -233,7 +383,21 @@ function ExplainFrame({ modelName, modelId, onClose }) {
       }}
       onClick={onClose}
     >
-      <Typography variant="h6" fontWeight={600} textAlign="left" mb={3}>
+      <Typography
+        sx={{
+          fontFamily: "Poppins",
+          fontWeight: 500,
+          fontStyle: "normal",
+          fontSize: "14px",
+          lineHeight: "100%",
+          letterSpacing: "0.4px",
+          color: "#334155",
+          width: "851px",
+          height: "21px",
+          textAlign: "left",
+          mb: 3,
+        }}
+      >
         Explainability – {modelName}
       </Typography>
 
@@ -251,26 +415,32 @@ function ExplainFrame({ modelName, modelId, onClose }) {
       ) : error ? (
         <Alert severity="error">Failed to load feature data: {error}</Alert>
       ) : (
-        <Box sx={{ flexGrow: 1, display: "flex", position: "relative" }}>
-          <Typography
-            variant="body2"
+        <Stack direction="row" sx={{ flexGrow: 1, position: "relative" }}>
+          <Box
             sx={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 500,
-              fontSize: 14,
-              lineHeight: "100%",
-              letterSpacing: "0.4px",
-              textAlign: "center",
-              color: "#334155",
-              position: "absolute",
-              left: 8,
-              top: "50%",
-              transform: "rotate(-90deg) translateY(-50%)",
-              transformOrigin: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 16,
             }}
           >
-            Feature
-          </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: "100%",
+                letterSpacing: "0.4px",
+                textAlign: "center",
+                color: "#334155",
+                transform: "rotate(-90deg)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Feature
+            </Typography>
+          </Box>
 
           <Box
             sx={{
@@ -335,6 +505,7 @@ function ExplainFrame({ modelName, modelId, onClose }) {
               </Box>
             ))}
           </Box>
+
           <Typography
             variant="body2"
             sx={{
@@ -346,14 +517,14 @@ function ExplainFrame({ modelName, modelId, onClose }) {
               textAlign: "center",
               color: "#334155",
               position: "absolute",
-              bottom: 1,
+              bottom: -12,
               left: "50%",
               transform: "translateX(-50%)",
             }}
           >
             Impact
           </Typography>
-        </Box>
+        </Stack>
       )}
     </Paper>
   );
@@ -366,6 +537,9 @@ export default function ModelComparisonSection() {
   const [busy, setBusy] = useState(true);
   const [explain, setExplain] = useState(null);
   const [popup, setPopup] = useState(null);
+  const [selectedModels, setSelectedModels] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/getDsModelData`)
@@ -384,29 +558,48 @@ export default function ModelComparisonSection() {
     });
   };
 
+  const handleDropdownClick = (event) => {
+    setAnchorEl(event.currentTarget);
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleDropdownClose = () => {
+    setDropdownOpen(false);
+    setAnchorEl(null);
+  };
+
   if (busy) return <Skeleton variant="rectangular" width="100%" height={260} />;
   if (loadErr)
     return <Alert severity="error">Failed to load – {String(loadErr)}</Alert>;
   if (!rows.length)
     return <Alert severity="info">No model data available.</Alert>;
+
   return (
     <Box
       sx={{
-        minHeight: "100vh", // full viewport height
-        bgcolor: "#E2E8F0", // entire page background color
+        minHeight: "100vh",
+        bgcolor: "#E2E8F0",
         p: 2,
+        pt: 6,
         fontFamily: `"Poppins", sans-serif !important`,
       }}
     >
       <Stack direction="row" spacing={0.5}>
         <Box>
           <Box
-            sx={{ height: 122, p: 2, display: "flex", alignItems: "flex-end" }}
+            sx={{
+              height: 122,
+              p: 2,
+              display: "flex",
+              alignItems: "flex-end",
+              position: "relative",
+            }}
           >
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="subtitle2" sx={{ color: "#64748B" }}>
               Metric
             </Typography>
           </Box>
+
           {metrics.map((m, idx) => (
             <Box
               key={m.id}
@@ -438,144 +631,168 @@ export default function ModelComparisonSection() {
             const shouldBeBlue = isFirstCard || model.isRecommended;
 
             return (
-              <Card
-                key={model.id}
-                variant="outlined"
-                sx={{
-                  width: 215,
-                  height: 338,
-                  borderTop: `15px solid ${
-                    shouldBeBlue ? "#1976d2" : "#CBD5E1"
-                  }`,
-                  borderBottom: "5px solid #CBD5E1",
-                  borderRadius: 2.5,
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <CardContent
-                  sx={{ p: 0, display: "flex", flexDirection: "column" }}
-                >
+              <Box key={model.id} sx={{ position: "relative" }}>
+                {/* Recommended label - positioned above the first card */}
+                {isFirstCard && (
                   <Box
                     sx={{
-                      width: 215,
-                      height: 107,
-                      px: 1.25,
-                      py: 1.875,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                      bgcolor: "background.paper",
+                      position: "absolute",
+                      top: -30,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      zIndex: 10,
                     }}
                   >
-                    <Typography sx={{ color: "#60A5FA", fontSize: 16 }}>
-                      {model.name}
-                    </Typography>
                     <Typography
-                      sx={{ fontSize: 23, fontWeight: 500, color: "#475569" }}
+                      sx={{
+                        fontFamily: "Poppins, sans-serif",
+                        fontWeight: 500,
+                        fontStyle: "normal",
+                        fontSize: "16px",
+                        lineHeight: "100%",
+                        letterSpacing: "0.15px",
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                        width: 185,
+                        height: 21,
+                        color: "#3764A9",
+                        bgcolor: "transparent",
+                        p: 0,
+                      }}
                     >
-                      {model.accuracy}
-                    </Typography>
-                    <Typography
-                      sx={{ fontSize: 14, fontWeight: 500, color: "#94A3B8" }}
-                    >
-                      Accuracy
+                      Recommended
                     </Typography>
                   </Box>
+                )}
 
-                  {metrics.map((m) => {
-                    const isFVA = m.id.includes("FVA");
-                    const raw =
-                      isFVA &&
-                      model.raw[
-                        m.id === "FVAvsStats" ? "fvaStats" : "fvaConsensus"
-                      ];
-                    const showIcon = isFVA && raw !== 0;
-                    const positive = raw > 0;
-                    return (
-                      <Box
-                        key={m.id}
-                        sx={{
-                          width: 215,
-                          height: 44,
-                          px: 2,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: showIcon
-                            ? "space-between"
-                            : "flex-start",
-                          borderBottom: "1px solid",
-                          borderColor: "divider",
-                        }}
+                <Card
+                  variant="outlined"
+                  sx={{
+                    width: 215,
+                    height: 338,
+                    borderTop: `15px solid ${
+                      shouldBeBlue ? "#1976d2" : "#CBD5E1"
+                    }`,
+                    borderBottom: "5px solid #CBD5E1",
+                    borderRadius: 2.5,
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <CardContent
+                    sx={{ p: 0, display: "flex", flexDirection: "column" }}
+                  >
+                    <Box
+                      sx={{
+                        width: 215,
+                        height: 107,
+                        px: 1.25,
+                        py: 1.875,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                        bgcolor: "background.paper",
+                      }}
+                    >
+                      <Typography sx={{ color: "#60A5FA", fontSize: 16 }}>
+                        {model.name}
+                      </Typography>
+                      <Typography
+                        sx={{ fontSize: 23, fontWeight: 500, color: "#475569" }}
                       >
-                        <Typography
+                        {model.accuracy}
+                      </Typography>
+                      <Typography
+                        sx={{ fontSize: 14, fontWeight: 500, color: "#94A3B8" }}
+                      >
+                        Accuracy
+                      </Typography>
+                    </Box>
+
+                    {metrics.map((m) => {
+                      const isFVA = m.id.includes("FVA");
+                      const raw =
+                        isFVA &&
+                        model.raw[
+                          m.id === "FVAvsStats" ? "fvaStats" : "fvaConsensus"
+                        ];
+                      const showIcon = isFVA && raw !== 0;
+                      const positive = raw > 0;
+                      return (
+                        <Box
+                          key={m.id}
                           sx={{
-                            fontSize: 16,
-                            fontWeight: 500,
-                            color:
-                              isFirstCard &&
-                              (m.id === "MAPE" || m.id === "WMAPE")
-                                ? "#16A34A"
-                                : "#475569",
-                            textAlign: "left",
-                            width: "100%",
+                            width: 215,
+                            height: 44,
+                            px: 2,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: showIcon
+                              ? "space-between"
+                              : "flex-start",
+                            borderBottom: "1px solid",
+                            borderColor: "divider",
                           }}
                         >
-                          {model.metrics[m.id]}
-                        </Typography>
-
-                        {showIcon && (
-                          <IconButton
-                            size="small"
-                            onClick={(e) => openPopup(m.id, model.id, e)}
-                            sx={{ p: 0 }}
+                          <Typography
+                            sx={{
+                              fontSize: 16,
+                              fontWeight: 500,
+                              color:
+                                isFirstCard &&
+                                (m.id === "MAPE" || m.id === "WMAPE")
+                                  ? "#16A34A"
+                                  : "#475569",
+                              textAlign: "left",
+                              width: "100%",
+                            }}
                           >
-                            {positive ? (
-                              <TrendingUpIcon
-                                fontSize="small"
-                                color="success"
-                              />
-                            ) : (
-                              <TrendingDownIcon
-                                fontSize="small"
-                                color="error"
-                              />
-                            )}
-                          </IconButton>
-                        )}
-                      </Box>
-                    );
-                  })}
+                            {model.metrics[m.id]}
+                          </Typography>
 
-                  <ButtonBase
-                    sx={{
-                      width: 215,
-                      height: 41,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: shouldBeBlue ? "#1976d2" : "#CBD5E1",
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                      "&:hover": {
-                        bgcolor: shouldBeBlue ? "#1565c0" : "#cbd5e1",
-                      },
-                    }}
-                    onClick={() =>
-                      setExplain({ id: model.id, name: model.name })
-                    }
-                  >
-                    <Typography
-                      variant="body2"
-                      color={shouldBeBlue ? "#fff" : "text.primary"}
+                          {showIcon && (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => openPopup(m.id, model.id, e)}
+                              sx={{ p: 0 }}
+                            >
+                              <GraphUpArrowIcon positive={positive} />
+                            </IconButton>
+                          )}
+                        </Box>
+                      );
+                    })}
+
+                    <ButtonBase
+                      sx={{
+                        width: 215,
+                        height: 41,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: shouldBeBlue ? "#1976d2" : "#CBD5E1",
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                        "&:hover": {
+                          bgcolor: shouldBeBlue ? "#1565c0" : "#cbd5e1",
+                        },
+                      }}
+                      onClick={() =>
+                        setExplain({ id: model.id, name: model.name })
+                      }
                     >
-                      Explainability
-                    </Typography>
-                  </ButtonBase>
-                </CardContent>
-              </Card>
+                      <Typography
+                        variant="body2"
+                        color={shouldBeBlue ? "#fff" : "text.primary"}
+                      >
+                        Explainability
+                      </Typography>
+                    </ButtonBase>
+                  </CardContent>
+                </Card>
+              </Box>
             );
           })}
 
@@ -600,25 +817,59 @@ export default function ModelComparisonSection() {
             <Typography variant="body2" color="text.secondary">
               Add Model
             </Typography>
-            <FormControl fullWidth size="small">
-              <Select
-                defaultValue=""
-                displayEmpty
-                sx={{
+
+            {/* Custom dropdown trigger button - always shows "Select Models" */}
+            <Button
+              variant="outlined"
+              onClick={handleDropdownClick}
+              endIcon={<ExpandMoreIcon />}
+              sx={{
+                width: "100%",
+                bgcolor: "background.paper",
+                borderColor: "#94A3B8",
+                color: "#334155",
+                textTransform: "none",
+                "&:hover": {
+                  borderColor: "#1976d2",
                   bgcolor: "background.paper",
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#94A3B8",
-                  },
-                }}
-              >
-                <MenuItem disabled value="">
-                  <Typography color="text.secondary">Select Model</Typography>
-                </MenuItem>
-                <MenuItem value="random-forest">Random Forest</MenuItem>
-                <MenuItem value="neural-network">Neural Network</MenuItem>
-                <MenuItem value="svm">SVM</MenuItem>
-              </Select>
-            </FormControl>
+                },
+              }}
+            >
+              Select Models
+            </Button>
+
+            {/* Smaller Dropdown popper */}
+            <Popper
+              open={dropdownOpen}
+              anchorEl={anchorEl}
+              placement="bottom-start"
+              transition
+              style={{ zIndex: 1300 }}
+            >
+              {({ TransitionProps }) => (
+                <Fade {...TransitionProps} timeout={200}>
+                  <Paper
+                    sx={{
+                      minWidth: 170,
+                      maxWidth: 210,
+                      maxHeight: 220,
+                      overflow: "hidden",
+                      mt: 0.5,
+                      boxShadow: 3,
+                    }}
+                  >
+                    <ClickAwayListener onClickAway={handleDropdownClose}>
+                      <Box>
+                        <AddModelDropdown
+                          selected={selectedModels}
+                          onChange={setSelectedModels}
+                        />
+                      </Box>
+                    </ClickAwayListener>
+                  </Paper>
+                </Fade>
+              )}
+            </Popper>
           </Card>
         </Stack>
       </Stack>

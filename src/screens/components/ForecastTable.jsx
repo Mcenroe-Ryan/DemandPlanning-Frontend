@@ -954,12 +954,17 @@ export default function ForecastTable({
                   style={{
                     background: "#DEE2E6",
                     zIndex: Z_INDEX_LAYERS.STICKY_HEADER, // Proper z-index for headers
-                    fontWeight: 700,
-                    fontSize: 14,
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    fontStyle: "normal",
+                    lineHeight: "100%",
+                    letterSpacing: "0.1px",
                     textAlign: "right",
+                    verticalAlign: "middle",
                     padding: "8px 12px",
                     borderBottom: "2px solid #e0e7ef",
-                    color: "#3c4257",
+                    color: "#334155",
                     minWidth: 90,
                   }}
                 >
@@ -982,15 +987,19 @@ export default function ForecastTable({
                     position: "sticky",
                     left: 0,
                     background: "#F1F5F9",
-                    zIndex: Z_INDEX_LAYERS.STICKY_COLUMN, // Proper z-index for sticky column
-                    fontWeight: label === "Consensus" ? 700 : 500,
-                    fontSize: 14,
+                    zIndex: Z_INDEX_LAYERS.STICKY_COLUMN,
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: label === "Consensus" ? 600 : 400,
+                    fontSize: "14px",
+                    lineHeight: "100%",
+                    letterSpacing: "0.1px",
                     textAlign: "left",
                     padding: "8px 16px",
                     borderRight: "1px solid #e0e7ef",
                     borderBottom: "1px solid #e0e7ef",
                     color: "#3c4257",
                     minWidth: 140,
+                    verticalAlign: "middle",
                   }}
                 >
                   {label}
@@ -1039,7 +1048,8 @@ export default function ForecastTable({
                         borderBottom: "1px solid #e0e7ef",
                         textAlign: "right",
                         fontSize: 14,
-                        color: "#222a36",
+                        fontWeight: 400,
+                        color: "#64748B",
                         minWidth: 90,
                         cursor: isConsensusRow ? "pointer" : "default",
                         position: "relative",
@@ -1249,7 +1259,6 @@ export default function ForecastTable({
           avgMapeData={avgMape}
           countryName={selectedCountry}
           showForecast={showForecast}
-          
         />
       )}
 

@@ -289,7 +289,7 @@ export const AddNewProject = () => {
         <Box sx={{ flexGrow: 1, pl: 8 }}>
           {stepIndex === 0 && (
             <Stack spacing={3} maxWidth={600}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Typography variant="h6" sx={{ fontWeight: 500 }}>
                 Get started
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -335,7 +335,7 @@ export const AddNewProject = () => {
 
           {stepIndex === 1 && (
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
                 Data Source
               </Typography>
               <Typography variant="body1">
@@ -446,7 +446,7 @@ export const AddNewProject = () => {
 
           {stepIndex === 2 && (
             <Box maxWidth={600}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 500, mb: 3 }}>
                 Configure Connection Credentials
               </Typography>
               <Stack spacing={3}>
@@ -507,7 +507,7 @@ export const AddNewProject = () => {
 
           {stepIndex === 3 && (
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
                 Entity Selection
               </Typography>
               <Typography
@@ -585,7 +585,7 @@ export const AddNewProject = () => {
 
           {stepIndex === 4 && (
             <Box maxWidth={700}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 500, mb: 3 }}>
                 Set run schedule
               </Typography>
               <Stack spacing={3}>

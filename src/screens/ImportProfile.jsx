@@ -104,7 +104,7 @@ export const ImportProfilesData = () => {
     >
       <Stack spacing={3.75} maxWidth="1259px">
         <Box display="flex" flexDirection="column" gap={2} width="100%">
-          <Typography variant="h6" fontWeight={600} color="#1f2937">
+          <Typography variant="h6" fontWeight={500} color="#1f2937">
             Set run schedule
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -113,7 +113,7 @@ export const ImportProfilesData = () => {
           </Typography>
         </Box>
         <Box display="flex" flexDirection="column" width="100%" gap={2}>
-          <Typography variant="h6" fontWeight={600} color="text.primary">
+          <Typography variant="h6" fontWeight={500} color="text.primary">
             Run schedule
           </Typography>
           <FormControl fullWidth variant="outlined" size="medium">
@@ -129,7 +129,7 @@ export const ImportProfilesData = () => {
           </FormControl>
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Typography variant="h6" fontWeight={600} color="text.primary">
+          <Typography variant="h6" fontWeight={500} color="text.primary">
             Daily
           </Typography>
           <FormGroup row sx={{ gap: 2 }}>
@@ -163,7 +163,7 @@ export const ImportProfilesData = () => {
           <FormControl fullWidth>
             <Typography
               variant="h6"
-              fontWeight={600}
+              fontWeight={500}
               color="#1f2937"
               gutterBottom
             >
@@ -186,7 +186,7 @@ export const ImportProfilesData = () => {
           <FormControl fullWidth>
             <Typography
               variant="h6"
-              fontWeight={600}
+              fontWeight={500}
               color="#1f2937"
               gutterBottom
             >
@@ -214,7 +214,7 @@ export const ImportProfilesData = () => {
             <Stack key={label} spacing={1} flex={1}>
               <Typography
                 variant="h6"
-                fontWeight={600}
+                fontWeight={500}
                 color="#1f2937"
                 sx={{ mt: "-1px" }}
               >

@@ -43,7 +43,12 @@ const Layout = ({ children }) => {
 
       <Box
         component="main"
-        sx={{ flexGrow: 1, overflow: "auto", position: "relative" }}
+        sx={{
+          flexGrow: 1,
+          overflow: "auto",
+          position: "relative",
+          fontWeight: 500,
+        }}
         style={blurStyle}
       >
         {showSidebar && !sidebarOpen && (

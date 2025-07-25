@@ -58,6 +58,7 @@ import ChatBot from "./components/Chatbox";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options
     .filter((opt) => selectedIds.includes(opt[optionKey]))
@@ -300,14 +301,13 @@ function MultiSelectWithCheckboxes({
           whiteSpace: "nowrap",
           bgcolor: "common.white",
           borderColor: "#bdbdbd",
+          fontWeight: 400,
           textTransform: "none",
           px: 1.5,
           transition: "all 0.2s ease",
-          // **KEY CHANGE: Add flexbox properties for right-justified icon**
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          // **Override Material-UI's default endIcon positioning**
           "& .MuiButton-endIcon": {
             marginLeft: 0,
             marginRight: 0,
