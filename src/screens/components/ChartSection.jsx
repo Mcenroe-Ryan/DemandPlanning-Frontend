@@ -27,9 +27,129 @@ import Highcharts from "highcharts";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+// CustomLegend Component
+const CustomLegend = ({
+  legendConfig = [],
+  activeKeys = [],
+  onToggle,
+  showForecast = true,
+  forecastKeys = ["ml_forecast", "baseline_forecast", "consensus_forecast"],
+}) => (
+  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+    {legendConfig
+      .filter(({ key }) => {
+        if (!showForecast) {
+          return !forecastKeys.includes(key);
+        }
+        return true;
+      })
+      .map(({ key, label, color, dash }) => {
+        const isForecast = forecastKeys.includes(key) || dash === "Dash";
+
+        return (
+          <Box
+            key={key}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggle && onToggle(key);
+            }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 25,
+              minWidth: 60,
+              px: 1.1,
+              py: 0.3,
+              cursor: "pointer",
+              opacity: activeKeys.includes(key) ? 1 : 0.5,
+              borderRadius: 1.2,
+              border: "1px solid",
+              borderColor: "#CBD5E1",
+              userSelect: "none",
+              "&:hover": { opacity: 0.8 },
+            }}
+          >
+            {isForecast ? (
+              <Box
+                sx={{
+                  width: 16,
+                  height: 12,
+                  mr: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "2px",
+                    background: `repeating-linear-gradient(
+                    to right,
+                    ${color} 0px,
+                    ${color} 4px,
+                    transparent 4px,
+                    transparent 6px
+                  )`,
+                  }}
+                />
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  bgcolor: color,
+                  borderRadius: 1,
+                  mr: 1,
+                }}
+              />
+            )}
+            <Typography
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 400,
+                fontSize: "14px",
+                lineHeight: "100%",
+                letterSpacing: "0.1px",
+                color: "#475569",
+              }}
+            >
+              {label}
+            </Typography>
+          </Box>
+        );
+      })}
+  </Box>
+);
+
+// Legend Configuration
+const LEGEND_CONFIG = [
+  {
+    key: "actual",
+    label: "Actual Units",
+    color: "#EF4444",
+    seriesIndex: 0,
+  },
+  {
+    key: "ml_forecast",
+    label: "ML Forecast",
+    color: "#EF4444",
+    dash: "Dash",
+    seriesIndex: 1,
+  },
+];
+
 // Chart rendering component
 const ForecastChart = ({ data, selectedAlert }) => {
   const chartRef = useRef(null);
+  const [chartInstance, setChartInstance] = useState(null);
+  const [activeLegendKeys, setActiveLegendKeys] = useState([
+    "actual",
+    "ml_forecast",
+  ]);
 
   if (!data || data.length === 0) return <p>No forecast data to display.</p>;
 
@@ -56,6 +176,20 @@ const ForecastChart = ({ data, selectedAlert }) => {
       ]
     : [];
 
+  // Legend Toggle Handler
+  const handleLegendToggle = (key) => {
+    const cfg = LEGEND_CONFIG.find((item) => item.key === key);
+    if (!cfg || !chartInstance) return;
+
+    const series = chartInstance.series[cfg.seriesIndex];
+    if (series) {
+      series.visible ? series.hide() : series.show();
+      setActiveLegendKeys((prev) =>
+        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      );
+    }
+  };
+
   const chartOptions = {
     chart: {
       type: "line",
@@ -64,6 +198,10 @@ const ForecastChart = ({ data, selectedAlert }) => {
       spacingRight: 8,
       spacingBottom: 8,
       spacingLeft: 0,
+      animation: {
+        duration: 800,
+        easing: "easeOutQuad"
+      }
     },
     title: { text: null },
     xAxis: {
@@ -71,13 +209,64 @@ const ForecastChart = ({ data, selectedAlert }) => {
       gridLineWidth: 1,
       gridLineColor: "#f0f0f0",
       plotBands,
-      labels: { style: { fontSize: "11px" } },
+      labels: {
+        style: {
+          fontFamily: "Poppins",
+          fontWeight: 600,
+          fontStyle: "normal",
+          fontSize: "10px",
+          lineHeight: "100%",
+          letterSpacing: "0.4px",
+          textAlign: "center",
+          color: "#64748B",
+        },
+        format: "{value:%b %Y}",
+      },
+      dateTimeLabelFormats: {
+        millisecond: "%b %Y",
+        second: "%b %Y",
+        minute: "%b %Y",
+        hour: "%b %Y",
+        day: "%b %Y",
+        week: "%b %Y",
+        month: "%b %Y",
+        year: "%b %Y",
+      },
+      tickInterval: 30 * 24 * 3600 * 1000,
+      minTickInterval: 30 * 24 * 3600 * 1000,
+      tickPositioner: function () {
+        const positions = [];
+        const start = this.dataMin;
+        const end = this.dataMax;
+
+        let current = new Date(start);
+        current.setDate(1);
+        current.setHours(0, 0, 0, 0);
+
+        while (current.getTime() <= end) {
+          positions.push(current.getTime());
+          current.setMonth(current.getMonth() + 1);
+        }
+
+        return positions;
+      },
     },
     yAxis: {
       gridLineWidth: 1,
       gridLineColor: "#f0f0f0",
       title: { text: null },
-      labels: { style: { fontSize: "11px" } },
+      labels: {
+        style: {
+          fontFamily: "Poppins",
+          fontWeight: 600,
+          fontStyle: "normal",
+          fontSize: "10px",
+          lineHeight: "100%",
+          letterSpacing: "0.4px",
+          textAlign: "center",
+          color: "#64748B",
+        },
+      },
     },
     tooltip: {
       shared: true,
@@ -87,18 +276,20 @@ const ForecastChart = ({ data, selectedAlert }) => {
       style: { fontSize: "11px" },
     },
     legend: {
-      enabled: true,
-      verticalAlign: "top",
-      y: 0,
-      itemStyle: { fontSize: "11px" },
-      symbolHeight: 8,
+      enabled: false, 
     },
-    plotOptions: {
-      line: {
-        marker: { enabled: true, radius: 2 },
-        lineWidth: 2,
-      },
-    },
+plotOptions: {
+  series: {
+    animation: {
+      duration: 1500,    // (or whatever you want)
+      easing: "easeOutQuad"
+    }
+  },
+  line: {
+    marker: { enabled: true, radius: 2 },
+    lineWidth: 2,
+  }
+},
     series: [
       {
         name: "Actual Units",
@@ -106,6 +297,7 @@ const ForecastChart = ({ data, selectedAlert }) => {
         color: "#EF4444",
         marker: { fillColor: "#EF4444", lineColor: "#fff", lineWidth: 1 },
         connectNulls: false,
+        visible: activeLegendKeys.includes("actual"),
       },
       {
         name: "ML Forecast",
@@ -114,6 +306,7 @@ const ForecastChart = ({ data, selectedAlert }) => {
         dashStyle: "ShortDash",
         marker: { fillColor: "#EF4444", lineColor: "#fff", lineWidth: 1 },
         connectNulls: false,
+        visible: activeLegendKeys.includes("ml_forecast"),
       },
     ],
     credits: { enabled: false },
@@ -125,9 +318,7 @@ const ForecastChart = ({ data, selectedAlert }) => {
           },
           chartOptions: {
             legend: {
-              layout: "horizontal",
-              align: "center",
-              verticalAlign: "bottom",
+              enabled: false, // Keep disabled
             },
           },
         },
@@ -138,6 +329,8 @@ const ForecastChart = ({ data, selectedAlert }) => {
   useEffect(() => {
     if (chartRef.current) {
       const chart = Highcharts.chart(chartRef.current, chartOptions);
+      setChartInstance(chart); // Store chart reference
+
       const resizeListener = () => chart.reflow();
       window.addEventListener("resize", resizeListener);
       return () => {
@@ -145,16 +338,26 @@ const ForecastChart = ({ data, selectedAlert }) => {
         window.removeEventListener("resize", resizeListener);
       };
     }
-  }, [data, selectedAlert]);
+  }, [data, selectedAlert, activeLegendKeys]);
 
   return (
-    <div
-      ref={chartRef}
-      style={{ width: "100%", height: "565.51px", overflowX: "auto" }}
-    />
+    <div>
+      {/* Custom Legend */}
+      <CustomLegend
+        legendConfig={LEGEND_CONFIG}
+        activeKeys={activeLegendKeys}
+        onToggle={handleLegendToggle}
+        showForecast={true}
+      />
+
+      {/* Chart */}
+      <div
+        ref={chartRef}
+        style={{ width: "100%", height: "565.51px", overflowX: "auto" }}
+      />
+    </div>
   );
 };
-
 // Main Component
 export const ChartSection = () => {
   const { selectAlert } = useAlert();
@@ -275,12 +478,11 @@ export const ChartSection = () => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const alerts = await res.json();
         setRawAlertsData(alerts);
-        // const rows = alerts.map(toAlertRow);
         const rows = alerts
           .sort(
             (a, b) =>
               new Date(a.error_start_date) - new Date(b.error_start_date)
-          ) // ascending
+          )
           .map(toAlertRow);
 
         setAlertsData(rows);

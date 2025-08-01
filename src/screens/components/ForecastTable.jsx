@@ -61,7 +61,7 @@ function getRevenueForecastLabel(selectedCountry) {
     (Array.isArray(selectedCountry) && selectedCountry.includes("USA")) ||
     selectedCountry === "USA"
   ) {
-    return "Revenue Forecast ($ in lakhs)";
+    return "Revenue Forecast ($ in K)";
   }
   return "Revenue Forecast (₹ in lakhs)";
 }
@@ -541,7 +541,7 @@ export default function ForecastTable({
     "ML Forecast": "ml_forecast",
     Consensus: "consensus_forecast",
     "Revenue Forecast (₹ in lakhs)": "revenue_forecast_lakhs",
-    "Revenue Forecast ($ in lakhs)": "revenue_forecast_lakhs",
+    "Revenue Forecast ($ in k)": "revenue_forecast_lakhs",
     Sales: "sales_units",
     "Promotion /Marketing Forecast": "promotion_marketing",
     "Inventory Level %": "inventory_level_pct",
@@ -634,7 +634,7 @@ export default function ForecastTable({
         const allRowsSet = new Set([
           ...CORE_ROWS,
           ...OPTIONAL_ROWS,
-          "Revenue Forecast ($ in lakhs)",
+          "Revenue Forecast ($ in k)",
           "Revenue Forecast (₹ in lakhs)",
         ]);
         const months = buildMonthLabelsBetween(startDate, endDate);
@@ -1246,6 +1246,7 @@ export default function ForecastTable({
           avgMapeData={avgMape}
           countryName={selectedCountry}
           showForecast={showForecast}
+          setErrorSnackbar={setErrorSnackbar}
         />
       )}
       <ConfirmationDialog

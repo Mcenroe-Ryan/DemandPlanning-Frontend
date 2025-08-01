@@ -158,6 +158,55 @@ const revenueComparisonData = [
   },
 ];
 
+// Color mapping function for table values
+const getValueColor = (value) => {
+  const colorMap = {
+    '-5': '#F87171',
+    '-4': '#F87171',
+    '-2': '#F87171',
+    '-1': '#FECACA',
+    '0': '#FFFFFF',
+    '1': '#FECACA',
+    '2': '#FEE2E2',
+    '3': '#FECACA',
+    '4': '#FECACA',
+    '5': '#FEE2E2',
+    '6': '#FEE2E2',
+    '7': '#FEF2F2',
+    '8': '#FEF2F2',
+    '9': '#FEF2F2',
+    '10': '#DCFCE7',
+    '11': '#DCFCE7',
+    '12': '#BBF7D0',
+    '13': '#BBF7D0',
+    '14': '#BBF7D0',
+    '16': '#86EFAC',
+    '18': '#86EFAC',
+    '20': '#4ADE80',
+    '21': '#4ADE80',
+    '23': '#4ADE80',
+    '24': '#4ADE80',
+  };
+  
+  return colorMap[value.toString()] || '#FFFFFF';
+};
+
+// Standard border style for all cells
+const cellBorderStyle = {
+  borderTop: "0px",
+  borderRight: "0px",
+  borderBottom: "1px solid #D2D2D3",
+  borderLeft: "1px solid #D2D2D3",
+};
+
+// Special border style for Baseline FY 2022 rows
+const baselineCellBorderStyle = {
+  borderTop: "1px solid #F0F0F0",
+  borderRight: "0px",
+  borderBottom: "1px solid #D2D2D3",
+  borderLeft: "1px solid #D2D2D3",
+};
+
 // -------- Custom Tooltip --------
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -196,8 +245,8 @@ export const AnalyticsFrameSection = () => {
         gap: 2,
         p: 2,
         width: "100%",
-        minHeight: "100vh", // Ensures full viewport height
-        backgroundColor: "#E2E8F0", // Added background color
+        minHeight: "100vh",
+        backgroundColor: "#E2E8F0",
       }}
     >
       {/* Charts Section - Always Side by Side */}
@@ -214,7 +263,7 @@ export const AnalyticsFrameSection = () => {
           <Paper
             elevation={0}
             sx={{
-              height: "533.5px",
+              height: "500px",
               p: "15px",
               borderTop: 0,
               borderRight: "1px solid #CBD5E1",
@@ -340,7 +389,7 @@ export const AnalyticsFrameSection = () => {
           <Paper
             elevation={0}
             sx={{
-              height: "533.5px",
+              height: "500px",
               p: "15px",
               borderTop: 0,
               borderRight: "1px solid #CBD5E1",
@@ -480,17 +529,15 @@ export const AnalyticsFrameSection = () => {
               <TableCell
                 sx={{
                   width: 207,
-                  bgcolor: "grey.200",
-                  border: 1,
-                  borderColor: "grey.300",
+                  bgcolor: "#E2E8F0",
+                  ...cellBorderStyle,
                 }}
               />
               <TableCell
                 sx={{
                   width: 207,
-                  bgcolor: "grey.200",
-                  border: 1,
-                  borderColor: "grey.300",
+                  bgcolor: "#E2E8F0",
+                  ...cellBorderStyle,
                 }}
               />
               {months.map((month, index) => (
@@ -499,30 +546,41 @@ export const AnalyticsFrameSection = () => {
                   align="right"
                   sx={{
                     bgcolor: "#E2E8F0",
-                    border: 1,
-                    borderColor: "grey.300",
+                    ...cellBorderStyle,
                   }}
                 >
-                  {month}
+                  <Typography
+                    sx={{
+                      fontFamily: "Poppins",
+                      fontWeight: 500,
+                      fontStyle: "normal",
+                      fontSize: "14px",
+                      lineHeight: "100%",
+                      letterSpacing: "0.1px",
+                      textAlign: "right",
+                      color: "#475569",
+                    }}
+                  >
+                    {month}
+                  </Typography>
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {/* Baseline FY 2022 Demand */}
+            {/* Baseline FY 2022 Demand - WITH TOP BORDER */}
             <TableRow>
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...baselineCellBorderStyle,
                 }}
               />
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...baselineCellBorderStyle,
                 }}
               >
                 <Typography
@@ -538,8 +596,7 @@ export const AnalyticsFrameSection = () => {
                   key={index}
                   align="right"
                   sx={{
-                    border: 1,
-                    borderColor: "grey.300",
+                    ...baselineCellBorderStyle,
                   }}
                 >
                   <Typography
@@ -552,13 +609,13 @@ export const AnalyticsFrameSection = () => {
                 </TableCell>
               ))}
             </TableRow>
-            {/* Demand Comparison Rows */}
+
+            {/* Demand Comparison Rows - WITH COLORS */}
             <TableRow>
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               >
                 <Typography
@@ -572,8 +629,7 @@ export const AnalyticsFrameSection = () => {
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               >
                 <Typography
@@ -589,9 +645,8 @@ export const AnalyticsFrameSection = () => {
                   key={index}
                   align="right"
                   sx={{
-                    bgcolor: demandComparisonData[0].colors[index],
-                    border: 1,
-                    borderColor: "grey.300",
+                    bgcolor: getValueColor(value),
+                    ...cellBorderStyle,
                   }}
                 >
                   <Typography
@@ -604,19 +659,18 @@ export const AnalyticsFrameSection = () => {
                 </TableCell>
               ))}
             </TableRow>
+
             <TableRow>
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               />
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               >
                 <Typography
@@ -632,9 +686,8 @@ export const AnalyticsFrameSection = () => {
                   key={index}
                   align="right"
                   sx={{
-                    bgcolor: demandComparisonData[1].colors[index],
-                    border: 1,
-                    borderColor: "grey.300",
+                    bgcolor: getValueColor(value),
+                    ...cellBorderStyle,
                   }}
                 >
                   <Typography
@@ -647,6 +700,7 @@ export const AnalyticsFrameSection = () => {
                 </TableCell>
               ))}
             </TableRow>
+
             {/* Spacer Row */}
             <TableRow>
               <TableCell
@@ -654,20 +708,19 @@ export const AnalyticsFrameSection = () => {
                 sx={{ borderTop: 1, borderColor: "grey.100", p: 0, height: 36 }}
               />
             </TableRow>
-            {/* Baseline FY 2022 Revenue */}
+
+            {/* Baseline FY 2022 Revenue - WITH TOP BORDER */}
             <TableRow>
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...baselineCellBorderStyle,
                 }}
               />
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...baselineCellBorderStyle,
                 }}
               >
                 <Typography
@@ -683,8 +736,7 @@ export const AnalyticsFrameSection = () => {
                   key={index}
                   align="right"
                   sx={{
-                    border: 1,
-                    borderColor: "grey.300",
+                    ...baselineCellBorderStyle,
                   }}
                 >
                   <Typography
@@ -697,13 +749,13 @@ export const AnalyticsFrameSection = () => {
                 </TableCell>
               ))}
             </TableRow>
-            {/* Revenue Comparison Rows */}
+
+            {/* Revenue Comparison Rows - WITH COLORS */}
             <TableRow>
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               >
                 <Typography
@@ -717,8 +769,7 @@ export const AnalyticsFrameSection = () => {
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               >
                 <Typography
@@ -734,9 +785,8 @@ export const AnalyticsFrameSection = () => {
                   key={index}
                   align="right"
                   sx={{
-                    bgcolor: revenueComparisonData[0].colors[index],
-                    border: 1,
-                    borderColor: "grey.300",
+                    bgcolor: getValueColor(value),
+                    ...cellBorderStyle,
                   }}
                 >
                   <Typography
@@ -749,19 +799,18 @@ export const AnalyticsFrameSection = () => {
                 </TableCell>
               ))}
             </TableRow>
+
             <TableRow>
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               />
               <TableCell
                 sx={{
                   bgcolor: "grey.100",
-                  border: 1,
-                  borderColor: "grey.300",
+                  ...cellBorderStyle,
                 }}
               >
                 <Typography
@@ -777,9 +826,8 @@ export const AnalyticsFrameSection = () => {
                   key={index}
                   align="right"
                   sx={{
-                    bgcolor: revenueComparisonData[1].colors[index],
-                    border: 1,
-                    borderColor: "grey.300",
+                    bgcolor: getValueColor(value),
+                    ...cellBorderStyle,
                   }}
                 >
                   <Typography

@@ -454,6 +454,7 @@ export default function ForecastChart({
   avgMapeData,
   countryName,
   showForecast,
+  setErrorSnackbar,
 }) {
   const chartRef = useRef();
   const gridIconRef = useRef();
@@ -772,31 +773,53 @@ export default function ForecastChart({
     ]
   );
 
-  const handleLegendClick = useCallback(
-    (key) => {
-      const cfg = LEGEND_CONFIG.find((i) => i.key === key);
-      if (!cfg) return;
-      const ch = chartRef.current?.chart;
-      if (!ch) return;
+  // Add this validation function inside ForecastChart component, before handleLegendClick
+const validateCountrySelection = useCallback(() => {
+  if (!countryName || 
+      (Array.isArray(countryName) && countryName.length === 0) ||
+      countryName === "") {
+    if (setErrorSnackbar) {
+      setErrorSnackbar({
+        open: true,
+        message: "Country is not selected. Please select a country before accessing holidays and promotions."
+      });
+    }
+    return false;
+  }
+  return true;
+}, [countryName, setErrorSnackbar]);
 
-      if (cfg.isOverlay) {
-        setOverlays((prev) => {
-          const next = { ...prev, [cfg.key]: !prev[cfg.key] };
-          setTimeout(() => {
-            ch.xAxis[0].update({
-              plotBands: createPlotBands(filteredEvents, months, next),
-            });
-          }, 0);
-          return next;
-        });
-      } else {
-        const s = ch.series[cfg.seriesIndex];
-        s.visible ? s.hide() : s.show();
-        setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
-      }
-    },
-    [createPlotBands, filteredEvents, months]
-  );
+const handleLegendClick = useCallback(
+  (key) => {
+    const cfg = LEGEND_CONFIG.find((i) => i.key === key);
+    if (!cfg) return;
+
+    // Add country validation for holidays and promotions
+    if ((key === "holidays" || key === "promotions") && !validateCountrySelection()) {
+      return; // Stop execution if validation fails
+    }
+
+    const ch = chartRef.current?.chart;
+    if (!ch) return;
+
+    if (cfg.isOverlay) {
+      setOverlays((prev) => {
+        const next = { ...prev, [cfg.key]: !prev[cfg.key] };
+        setTimeout(() => {
+          ch.xAxis[0].update({
+            plotBands: createPlotBands(filteredEvents, months, next),
+          });
+        }, 0);
+        return next;
+      });
+    } else {
+      const s = ch.series[cfg.seriesIndex];
+      s.visible ? s.hide() : s.show();
+      setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
+    }
+  },
+  [createPlotBands, filteredEvents, months, validateCountrySelection] // Add validateCountrySelection to dependencies
+);
 
   useEffect(() => {
     const ch = chartRef.current?.chart;
