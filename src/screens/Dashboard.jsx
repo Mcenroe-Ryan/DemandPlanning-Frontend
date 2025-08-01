@@ -147,7 +147,7 @@ const UnifiedDashboardPage = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: "#EFF6FF", width: "100%", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "#E2E8F0", minHeight: "100vh" }}>
       {/* NavBar */}
       <AppBar
         position="static"

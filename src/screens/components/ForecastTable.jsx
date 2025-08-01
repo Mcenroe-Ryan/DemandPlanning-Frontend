@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
@@ -54,22 +55,25 @@ async function updateConsensusForecastAPI(payload) {
   return response.json();
 }
 
-const CORE_ROWS = [
-  "Actual",
-  "Baseline Forecast",
-  "ML Forecast",
-  "Consensus",
-  "Revenue Forecast (₹ in lakhs)",
-];
+// Helper: Revenue forecast label by country
+function getRevenueForecastLabel(selectedCountry) {
+  if (
+    (Array.isArray(selectedCountry) && selectedCountry.includes("USA")) ||
+    selectedCountry === "USA"
+  ) {
+    return "Revenue Forecast ($ in lakhs)";
+  }
+  return "Revenue Forecast (₹ in lakhs)";
+}
 const FORECAST_ROWS = [
   "Baseline Forecast",
   "ML Forecast",
   "Consensus",
-  "Revenue Forecast (₹ in lakhs)",
+  // Not used directly, see CORE_ROWS in component
 ];
 const OPTIONAL_ROWS = [
   "Sales",
-  "Promotion/Marketing",
+  "Promotion /Marketing Forecast",
   "Inventory Level %",
   "Stock out days",
   "On Hand",
@@ -172,10 +176,9 @@ function isMonthLocked(monthLabel) {
   );
 }
 
-// UPDATED Red Triangle Icon Component with proper z-index
+// Red triangle for consensus cells (left as per your code)
 const RedTriangleIcon = ({ visible = true }) => {
   if (!visible) return null;
-
   return (
     <Box
       sx={{
@@ -186,14 +189,13 @@ const RedTriangleIcon = ({ visible = true }) => {
         height: 0,
         borderLeft: "8px solid transparent",
         borderTop: "8px solid #f44336",
-        zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // Proper z-index
+        zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
         pointerEvents: "none",
       }}
     />
   );
 };
 
-// --- Confirmation Dialog Component ---
 function ConfirmationDialog({
   open,
   onClose,
@@ -244,12 +246,10 @@ function ConfirmationDialog({
         </Box>
         {title}
       </DialogTitle>
-
       <DialogContent sx={{ pb: 2 }}>
         <DialogContentText sx={{ mb: 2, color: "text.primary", fontSize: 14 }}>
           {message}
         </DialogContentText>
-
         {editedDetails && (
           <Box
             sx={{
@@ -301,7 +301,6 @@ function ConfirmationDialog({
           </Box>
         )}
       </DialogContent>
-
       <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
         <Button
           onClick={onClose}
@@ -332,7 +331,6 @@ function ConfirmationDialog({
   );
 }
 
-// --- Lock Comment Popover ---
 function LockCommentPopover({ open, anchorEl, onClose }) {
   return (
     <Popover
@@ -365,7 +363,8 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
         <div style={{ fontSize: 14, marginBottom: 8 }}>
           Edited The correct option is B. 24.
           <br />
-          Demand of Company B<br />
+          Demand of Company B
+          <br />
           Demand of Company
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -391,7 +390,6 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
   );
 }
 
-// Get appropriate z-index based on cell state
 const getCellZIndex = (isSticky, isHighlighted, isEditing) => {
   if (isEditing) return Z_INDEX_LAYERS.EDITING_CELL;
   if (isHighlighted) return Z_INDEX_LAYERS.HIGHLIGHTED_CELL;
@@ -420,6 +418,20 @@ export default function ForecastTable({
   setOpenConsensusPopup,
   highlightTrigger,
 }) {
+  const REVENUE_LABEL = getRevenueForecastLabel(selectedCountry);
+
+  // Move core rows inside component to support dynamic label
+  const CORE_ROWS = useMemo(
+    () => [
+      "Actual",
+      "Baseline Forecast",
+      "ML Forecast",
+      "Consensus",
+      REVENUE_LABEL,
+    ],
+    [REVENUE_LABEL]
+  );
+
   const [period, setPeriod] = useState("M");
   const periodOptions = ["M", "W"];
   const [showForecast, setShowForecast] = useState(true);
@@ -427,24 +439,15 @@ export default function ForecastTable({
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
-
   const [avgMape, setAvgMape] = useState(null);
-
-  // For editing consensus cells
   const [editingCell, setEditingCell] = useState({ month: null, row: null });
   const [editValue, setEditValue] = useState("");
   const [updatingCell, setUpdatingCell] = useState({ month: null, row: null });
-
-  // For tracking edited cells with triangle indicator
   const [editedCells, setEditedCells] = useState(new Set());
-
-  // For lock comment popup
   const [lockComment, setLockComment] = useState({
     open: false,
     anchor: null,
   });
-
-  // Add confirmation dialog state
   const [confirmationDialog, setConfirmationDialog] = useState({
     open: false,
     month: null,
@@ -452,14 +455,10 @@ export default function ForecastTable({
     value: null,
     pendingPayload: null,
   });
-
-  // Add new state for error handling
   const [errorSnackbar, setErrorSnackbar] = useState({
     open: false,
     message: "",
   });
-
-  // Keep the highlightEditableCells state for future use
   const [highlightEditableCells, setHighlightEditableCells] = useState(false);
 
   const months = useMemo(() => {
@@ -504,7 +503,6 @@ export default function ForecastTable({
     months.forEach((label) => {
       const [mon, yr] = label.split(" ");
       const monthIdx = MONTH_MAP[mon.toUpperCase()];
-
       if (monthIdx !== undefined) {
         const yearNum = 2000 + parseInt(yr, 10);
         const key = yearNum * 12 + monthIdx;
@@ -519,34 +517,33 @@ export default function ForecastTable({
   // Add filtered months based on showForecast checkbox
   const visibleMonths = useMemo(() => {
     if (showForecast) {
-      return months; // Show all months when forecast is enabled
+      return months;
     } else {
-      // Show only past and current months when forecast is disabled
       const today = new Date();
       const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
-
       return months.filter((label) => {
         const [mon, yr] = label.split(" ");
         const monthIdx = MONTH_MAP[mon.toUpperCase()];
-
         if (monthIdx !== undefined) {
           const yearNum = 2000 + parseInt(yr, 10);
           const key = yearNum * 12 + monthIdx;
-          return key <= currentMonthKey; // Only show past and current months
+          return key <= currentMonthKey;
         }
         return false;
       });
     }
   }, [months, showForecast]);
 
+  // Keymap needs both Revenue row label options, so we update:
   const keyMap = {
     Actual: "actual_units",
     "Baseline Forecast": "baseline_forecast",
     "ML Forecast": "ml_forecast",
     Consensus: "consensus_forecast",
     "Revenue Forecast (₹ in lakhs)": "revenue_forecast_lakhs",
+    "Revenue Forecast ($ in lakhs)": "revenue_forecast_lakhs",
     Sales: "sales_units",
-    "Promotion/Marketing": "promotion_marketing",
+    "Promotion /Marketing Forecast": "promotion_marketing",
     "Inventory Level %": "inventory_level_pct",
     "Stock out days": "stock_out_days",
     "On Hand": "on_hand_units",
@@ -561,7 +558,6 @@ export default function ForecastTable({
       });
       return false;
     }
-
     if (selectedSKUs.length > 1) {
       setErrorSnackbar({
         open: true,
@@ -570,11 +566,8 @@ export default function ForecastTable({
       });
       return false;
     }
-
     return true;
   };
-
-  // Handle error snackbar close
   const handleErrorSnackbarClose = (event, reason) => {
     if (reason === "clickaway") {
       return;
@@ -582,33 +575,25 @@ export default function ForecastTable({
     setErrorSnackbar({ open: false, message: "" });
   };
 
-  // Keep the useEffect for future highlight trigger functionality
   useEffect(() => {
     if (highlightTrigger && canEditConsensus) {
-      // Validate SKU selection before highlighting
       if (validateSingleSKUSelection()) {
         setHighlightEditableCells(true);
-
-        // Auto-hide highlight after 5 seconds
         const timer = setTimeout(() => {
           setHighlightEditableCells(false);
         }, 5000);
-
         return () => clearTimeout(timer);
       }
     } else {
       setHighlightEditableCells(false);
     }
   }, [highlightTrigger, canEditConsensus]);
-
-  // Reset highlight when canEditConsensus becomes false
   useEffect(() => {
     if (!canEditConsensus) {
       setHighlightEditableCells(false);
     }
   }, [canEditConsensus]);
 
-  // Fetch data function with improved data mapping and consistent month ordering
   const fetchForecastData = () => {
     setIsLoading(true);
     fetch(`${API_BASE_URL}/forecast`, {
@@ -634,7 +619,6 @@ export default function ForecastTable({
           setAvgMape(null);
           return;
         }
-        // Extract avgMape data from raw, adjust according to actual API response shape
         if (raw.length) {
           const mapeValues = raw
             .map((item) => Number(item.avg_mape))
@@ -647,15 +631,19 @@ export default function ForecastTable({
           setAvgMape(null);
         }
         const ds = {};
+        const allRowsSet = new Set([
+          ...CORE_ROWS,
+          ...OPTIONAL_ROWS,
+          "Revenue Forecast ($ in lakhs)",
+          "Revenue Forecast (₹ in lakhs)",
+        ]);
         const months = buildMonthLabelsBetween(startDate, endDate);
-
         months.forEach((m) => {
           ds[m] = {};
-          [...CORE_ROWS, ...OPTIONAL_ROWS].forEach((row) => {
+          allRowsSet.forEach((row) => {
             ds[m][row] = "-";
           });
         });
-
         raw.forEach((item) => {
           const label = dateToMonthLabel(item.month_name);
           if (!ds[label]) return;
@@ -666,7 +654,6 @@ export default function ForecastTable({
             }
           });
         });
-
         setData(ds);
       })
       .catch((error) => {
@@ -694,6 +681,7 @@ export default function ForecastTable({
     selectedSKUs,
     selectedChannels,
     modelName,
+    REVENUE_LABEL,
   ]);
 
   useEffect(() => {
@@ -707,7 +695,6 @@ export default function ForecastTable({
     setActualLatestMonth(latestMonth);
   }, [data]);
 
-  // Initialize edited cells from data (if your API provides edit flags)
   useEffect(() => {
     if (data) {
       const editedCellsFromData = new Set();
@@ -715,9 +702,25 @@ export default function ForecastTable({
     }
   }, [data, months]);
 
-  // Keep all rows, don't filter based on showForecast
-  const baseRows = [...CORE_ROWS, ...optionalRows];
-  const allRows = baseRows; // Show all rows regardless of showForecast
+  // Reorder rows to ensure Sales and Promotion/Marketing appear below ML Forecast
+  const reorderRows = () => {
+    const result = [];
+    for (let row of CORE_ROWS) {
+      result.push(row);
+      if (row === "ML Forecast") {
+        if (optionalRows.includes("Sales")) result.push("Sales");
+        if (optionalRows.includes("Promotion /Marketing Forecast"))
+          result.push("Promotion /Marketing Forecast");
+      }
+    }
+    for (let row of optionalRows) {
+      if (row !== "Sales" && row !== "Promotion /Marketing Forecast")
+        result.push(row);
+    }
+    return result;
+  };
+
+  const allRows = reorderRows();
 
   // Add New menu handlers
   const handleAddRowsClick = (event) => setAnchorEl(event.currentTarget);
@@ -739,15 +742,10 @@ export default function ForecastTable({
   const handleConfirmationSubmit = async () => {
     const { pendingPayload, month, row } = confirmationDialog;
     if (!pendingPayload) return;
-
     setUpdatingCell({ month, row });
-
     try {
       await updateConsensusForecastAPI(pendingPayload);
-
-      // Add the edited cell to the tracking set
       setEditedCells((prev) => new Set([...prev, `${month}-${row}`]));
-
       setConfirmationDialog({
         open: false,
         month: null,
@@ -758,7 +756,6 @@ export default function ForecastTable({
       setEditingCell({ month: null, row: null });
       setUpdatingCell({ month: null, row: null });
       setEditValue("");
-
       setTimeout(() => {
         fetchForecastData();
       }, 100);
@@ -905,12 +902,12 @@ export default function ForecastTable({
           </IconButton>
         </Stack>
       </Box>
-
-      {/* UPDATED Table with proper z-index implementation and RESTORED highlighting */}
+      {/* TABLE */}
       <Box
         sx={{
           p: 3,
           pt: 0,
+          mx: 1,
           bgcolor: "common.white",
           padding: 0,
           borderRadius: 0,
@@ -937,7 +934,7 @@ export default function ForecastTable({
                   position: "sticky",
                   left: 0,
                   background: "#DEE2E6",
-                  zIndex: Z_INDEX_LAYERS.STICKY_HEADER_COLUMN, // Proper z-index for sticky header
+                  zIndex: Z_INDEX_LAYERS.STICKY_HEADER_COLUMN,
                   fontWeight: 700,
                   fontSize: 14,
                   textAlign: "left",
@@ -953,7 +950,7 @@ export default function ForecastTable({
                   key={m}
                   style={{
                     background: "#DEE2E6",
-                    zIndex: Z_INDEX_LAYERS.STICKY_HEADER, // Proper z-index for headers
+                    zIndex: Z_INDEX_LAYERS.STICKY_HEADER,
                     fontFamily: "'Poppins', sans-serif",
                     fontWeight: 500,
                     fontSize: "14px",
@@ -973,7 +970,6 @@ export default function ForecastTable({
               ))}
             </tr>
           </thead>
-
           <tbody>
             {allRows.map((label, idx) => (
               <tr
@@ -982,6 +978,7 @@ export default function ForecastTable({
                   background: idx % 2 === 1 ? "#f7fafd" : "#fff",
                 }}
               >
+                {/* ONLY paddingLeft for left label cell for Sales and Promotions row */}
                 <td
                   style={{
                     position: "sticky",
@@ -995,6 +992,10 @@ export default function ForecastTable({
                     letterSpacing: "0.1px",
                     textAlign: "left",
                     padding: "8px 16px",
+                    ...(label === "Sales" ||
+                    label === "Promotion /Marketing Forecast"
+                      ? { paddingLeft: "36px" }
+                      : {}),
                     borderRight: "1px solid #e0e7ef",
                     borderBottom: "1px solid #e0e7ef",
                     color: "#3c4257",
@@ -1012,16 +1013,13 @@ export default function ForecastTable({
                   const isUpdating =
                     updatingCell.month === m && updatingCell.row === label;
                   const locked = isConsensusRow && isMonthLocked(m);
-
                   const isAllowedMonth =
                     new Date(getMonthDate(m)).getTime() ===
                     new Date(getMonthDate(firstFutureMonth)).getTime();
 
-                  // Original highlighting logic without extra condition
                   const isEditableCell =
                     isConsensusRow && isAllowedMonth && !locked;
                   const shouldHighlight = canEditConsensus && isEditableCell;
-                  // const shouldHighlight = false;
 
                   const displayValue =
                     value === undefined || value === null
@@ -1035,14 +1033,14 @@ export default function ForecastTable({
                         background: isEditing
                           ? "#ffffff"
                           : shouldHighlight
-                          ? "rgba(251, 251, 251, 1)" // original highlighting color
+                          ? "rgba(251, 251, 251, 1)"
                           : futureMonthSet.has(m)
                           ? "#e9f0f7"
                           : undefined,
                         boxShadow: isEditing
                           ? "0 0 0 2px #2563EB, 0 2px 8px rgba(37, 99, 235, 0.15)"
                           : shouldHighlight
-                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)" // original highlighting box-shadow
+                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)"
                           : undefined,
                         padding: "8px 12px",
                         borderBottom: "1px solid #e0e7ef",
@@ -1057,8 +1055,8 @@ export default function ForecastTable({
                           false,
                           shouldHighlight,
                           isEditing
-                        ), // Dynamic z-index
-                        transition: "all 0.3s ease-in-out", // Smooth transition for highlighting
+                        ),
+                        transition: "all 0.3s ease-in-out",
                       }}
                       onClick={(e) => {
                         if (
@@ -1069,11 +1067,10 @@ export default function ForecastTable({
                           !isUpdating &&
                           isAllowedMonth
                         ) {
-                          // Add SKU validation before allowing edit
                           if (validateSingleSKUSelection()) {
                             setEditingCell({ month: m, row: label });
                             setEditValue(value === "-" ? "" : value);
-                            setHighlightEditableCells(false); // Hide highlight when editing starts
+                            setHighlightEditableCells(false);
                           }
                         } else if (
                           isConsensusRow &&
@@ -1088,12 +1085,9 @@ export default function ForecastTable({
                         }
                       }}
                     >
-                      {/* Red triangle indicator for consensus cells with proper z-index */}
                       {label === "Consensus" && value !== "-" && (
                         <RedTriangleIcon visible={true} />
                       )}
-
-                      {/* Visual indicator for highlighted editable cells */}
                       {shouldHighlight && (
                         <>
                           <Box
@@ -1103,9 +1097,7 @@ export default function ForecastTable({
                               left: 4,
                               width: 12,
                               height: 12,
-                              // backgroundColor: "#ff9800",
-                              // borderRadius: "50%",
-                              zIndex: Z_INDEX_LAYERS.CELL_INDICATORS, // Proper z-index
+                              zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
                               animation: "pulse 1s infinite",
                               "@keyframes pulse": {
                                 "0%": {
@@ -1125,7 +1117,6 @@ export default function ForecastTable({
                           />
                         </>
                       )}
-
                       {isConsensusRow ? (
                         locked ? (
                           <span
@@ -1153,7 +1144,7 @@ export default function ForecastTable({
                               borderRadius: 4,
                               background: "#fff",
                               outline: "none",
-                              zIndex: Z_INDEX_LAYERS.EDITING_CELL, // Highest z-index for editing
+                              zIndex: Z_INDEX_LAYERS.EDITING_CELL,
                             }}
                             autoFocus
                             disabled={isUpdating}
@@ -1188,7 +1179,6 @@ export default function ForecastTable({
                                 target_month: targetDate,
                                 model_name: modelName,
                               };
-
                               setConfirmationDialog({
                                 open: true,
                                 month: m,
@@ -1225,7 +1215,6 @@ export default function ForecastTable({
           </tbody>
         </table>
       </Box>
-
       {/* Error Snackbar */}
       <Snackbar
         open={errorSnackbar.open}
@@ -1241,13 +1230,11 @@ export default function ForecastTable({
           {errorSnackbar.message}
         </Alert>
       </Snackbar>
-
       <LockCommentPopover
         open={lockComment.open}
         anchorEl={lockComment.anchor}
         onClose={() => setLockComment({ ...lockComment, open: false })}
       />
-
       {data && (
         <ForecastChart
           months={visibleMonths}
@@ -1261,7 +1248,6 @@ export default function ForecastTable({
           showForecast={showForecast}
         />
       )}
-
       <ConfirmationDialog
         open={confirmationDialog.open}
         onClose={handleConfirmationClose}

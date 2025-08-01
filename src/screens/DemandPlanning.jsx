@@ -13,13 +13,10 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
-  Paper,
   Stack,
   Tab,
   Tabs,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Toolbar,
   Typography,
   ListItemText,
@@ -30,34 +27,25 @@ import {
   Slide,
 } from "@mui/material";
 import {
-  CheckBox,
   ChevronRight as ChevronRightIcon,
   ChatBubbleOutline,
-  Download,
   Edit,
-  FilterAlt,
   MoreVert,
   Notifications as NotificationsIcon,
   Search as SearchIcon,
-  Share,
-  SmartToy,
 } from "@mui/icons-material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { format, addMonths, subMonths, parseISO } from "date-fns";
-import AddBox from "@mui/icons-material/AddBox";
-import ArrowUpward from "@mui/icons-material/ArrowUpward";
-import OpenInFull from "@mui/icons-material/OpenInFull";
 import DateFilter from "./components/DateFilter";
 import ModelComparisonSection from "./components/RecommendedModelsSection";
 import ForecastTable from "./components/ForecastTable";
-import { AlertsSection } from "./components/AlertSection";
 import { ChartSection } from "./components/ChartSection";
 import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/Chatbox";
+import { AnalyticsFrameSection } from "./components/AnalyticsFrameSection";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-
 
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options
@@ -80,7 +68,7 @@ const Listbox = () => {
     setChecked(newChecked);
   };
   return (
-    <Box sx={{ bgcolor: "#fff", px: 0.5, py: 0.5, minWidth: 180 }}>
+    <Box sx={{ bgcolor: "#EFF6FF", px: 0.5, py: 0.5, minWidth: 180 }}>
       <List disablePadding>
         {listItems.map((item) => (
           <ListItem
@@ -139,92 +127,11 @@ const Listbox = () => {
 const DATA_ROW_OPTIONS = [
   { key: "all", label: "All" },
   { key: "sales", label: "Sales" },
-  { key: "promotion", label: "Promotion/Marketing" },
+  { key: "promotion", label: "Promotion /Marketing Forecast" },
   { key: "inventory", label: "Inventory Level %" },
   { key: "stockout", label: "Stock out days" },
   { key: "onhand", label: "On Hand" },
 ];
-
-function DataRowsMenu({ anchorEl, open, onClose, selected, setSelected }) {
-  const [search, setSearch] = useState("");
-  const searchInputRef = useRef(null);
-
-  const filteredOptions = DATA_ROW_OPTIONS.filter((option) =>
-    option.label.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const isAllSelected = selected.length === DATA_ROW_OPTIONS.length - 1;
-
-  const handleToggle = (key) => {
-    if (key === "all") {
-      if (isAllSelected) {
-        setSelected([]);
-      } else {
-        setSelected(
-          DATA_ROW_OPTIONS.filter((opt) => opt.key !== "all").map(
-            (opt) => opt.key
-          )
-        );
-      }
-    } else {
-      setSelected((prev) =>
-        prev.includes(key) ? prev.filter((v) => v !== key) : [...prev, key]
-      );
-    }
-  };
-
-  useEffect(() => {
-    if (open && searchInputRef.current) {
-      setTimeout(() => searchInputRef.current.focus(), 100);
-    }
-  }, [open]);
-
-  return (
-    <Menu
-      anchorEl={anchorEl}
-      open={open}
-      onClose={onClose}
-      PaperProps={{ style: { width: 260, paddingTop: 0, paddingBottom: 0 } }}
-    >
-      <Box sx={{ p: 1, pb: 0 }}>
-        <TextField
-          inputRef={searchInputRef}
-          size="small"
-          placeholder="Search Data Rows"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          fullWidth
-        />
-      </Box>
-      {filteredOptions.map((option) => (
-        <MenuItem
-          key={option.key}
-          onClick={() => handleToggle(option.key)}
-          dense
-        >
-          <Checkbox
-            checked={
-              option.key === "all"
-                ? isAllSelected
-                : selected.includes(option.key)
-            }
-            indeterminate={
-              option.key === "all" && selected.length > 0 && !isAllSelected
-            }
-          />
-          <ListItemText primary={option.label} />
-        </MenuItem>
-      ))}
-    </Menu>
-  );
-}
 
 // --- UPDATED MultiSelectWithCheckboxes with Right-Justified Icons ---
 function MultiSelectWithCheckboxes({
@@ -386,24 +293,6 @@ function MultiSelectWithCheckboxes({
   );
 }
 
-// Pivot for chart
-const pivotData = (data) => {
-  const metrics = [
-    { key: "actual", label: "Actual" },
-    { key: "baseline_forecast", label: "Baseline Forecast" },
-    { key: "ml_forecast", label: "ML Forecast" },
-    { key: "consensus", label: "Consensus" },
-    { key: "revenue_forecast_lakhs", label: "Revenue Forecast (Lakhs)" },
-  ];
-
-  return metrics.map((metric) => ({
-    name: metric.label,
-    values: data.map((row) => row[metric.key] ?? null),
-    suffix: metric.key === "revenue_forecast_lakhs" ? "L" : undefined,
-    isConsensus: metric.key === "consensus",
-  }));
-};
-
 const SlideTransition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="left" ref={ref} {...props} />;
 });
@@ -449,10 +338,10 @@ export const DemandProjectMonth = () => {
   });
 
   const [activeTab, setActiveTab] = useState(0);
-  const [timePeriod, setTimePeriod] = useState("M");
-  const [showForecast, setShowForecast] = useState(true);
-  const [rowData, setRowData] = useState([]);
-  const [months, setMonths] = useState([]);
+  // const [timePeriod, setTimePeriod] = useState("M");
+  // const [showForecast, setShowForecast] = useState(true);
+  // const [rowData, setRowData] = useState([]);
+  // const [months, setMonths] = useState([]);
   const [filtersData, setFiltersData] = useState({
     countries: [],
     states: [],
@@ -487,11 +376,11 @@ export const DemandProjectMonth = () => {
   const [modelName, setModelName] = useState("XGBoost");
   const [canEditConsensus, setCanEditConsensus] = useState(false);
 
-  const [isFilterDisabled, setIsFilterDisabled] = useState(false);
+  // const [isFilterDisabled, setIsFilterDisabled] = useState(false);
 
   // For plus button menu
-  const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
-  const [selectedDataRows, setSelectedDataRows] = useState([]);
+  // const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
+  // const [selectedDataRows, setSelectedDataRows] = useState([]);
   // For MoreVert (three dots) filter menu
   const [moreAnchorEl, setMoreAnchorEl] = useState(null);
 
@@ -504,6 +393,11 @@ export const DemandProjectMonth = () => {
 
   // const [canEditConsensus, setCanEditConsensus] = useState(false);
   const [highlightTrigger, setHighlightTrigger] = useState(0);
+
+  // Loading states for tab sections
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [chartLoading, setChartLoading] = useState(false);
 
   const handleEnableEditConsensus = () => {
     setCanEditConsensus(true);
@@ -983,16 +877,12 @@ export const DemandProjectMonth = () => {
             onClick={handleOpenChatBot}
             aria-label="Open ChatBot"
           >
-            <SmartToy
-              sx={{
-                width: 20,
-                height: 20,
+            <i
+              className="bi bi-robot"
+              style={{
+                fontSize: 20,
                 color: "#ffffff",
                 transition: "all 0.2s ease",
-                "&:hover": {
-                  color: "#e3f2fd",
-                  transform: "scale(1.1)",
-                },
               }}
             />
           </IconButton>
@@ -1009,7 +899,7 @@ export const DemandProjectMonth = () => {
           {/* <DateFilter onDateChange={(range) => setDateRange(range)} /> */}
           <DateFilter
             onDateChange={(range) => setDateRange(range)}
-            disabled={activeTab === 1 || activeTab === 2}
+            disabled={activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
           />
           <MultiSelectWithCheckboxes
             label="Country"
@@ -1022,7 +912,7 @@ export const DemandProjectMonth = () => {
             loading={loadingCountries}
             onOpen={fetchCountries}
             width={110}
-            disabled={activeTab === 1 || activeTab === 2}
+            disabled={activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
           />
 
           <MultiSelectWithCheckboxes
@@ -1135,7 +1025,22 @@ export const DemandProjectMonth = () => {
       {/* Tabs */}
       <Tabs
         value={activeTab}
-        onChange={(e, newValue) => setActiveTab(newValue)}
+        onChange={(e, newValue) => {
+          setActiveTab(newValue);
+
+          // Add loading for different tabs
+          // if (newValue === 1) { // Chart Section (Alerts for Forecast Error)
+          //   setChartLoading(true);
+          //   setTimeout(() => setChartLoading(false), 300);
+          // } else 
+          if (newValue === 2) { // Compare Model
+            setCompareLoading(true);
+            setTimeout(() => setCompareLoading(false), 300);
+          } else if (newValue === 3) { // Analytics
+            setAnalyticsLoading(true);
+            setTimeout(() => setAnalyticsLoading(false), 300);
+          }
+        }}
         sx={{
           borderBottom: 1,
           borderColor: "grey.200",
@@ -1178,145 +1083,178 @@ export const DemandProjectMonth = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}></Box>
         </Box>
       )}
-
-      <Box sx={{ flexGrow: 1, overflow: "auto" }}>
-        {activeTab === 1 ? (
-          <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0 }}>
-            <AlertProvider>
-              <div>
-                <ChartSection />
-              </div>
-            </AlertProvider>
-          </Box>
-        ) : activeTab === 2 ? (
-          <Box
-            sx={{
-              width: "100%",
-              minHeight: 0,
-              bgcolor: "#e9f0f7",
-              p: 0,
-              m: 0,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <ModelComparisonSection />
-          </Box>
-        ) : (
-          <>
-            <ForecastTable
-              startDate={dateRange.startDate}
-              endDate={dateRange.endDate}
-              modelName={modelName}
-              setModelName={setModelName}
-              models={models}
-              loadingModels={loadingModels}
-              selectedCountry={getSelectedNames(
-                selectedCountry,
-                filtersData.countries,
-                "country_id",
-                "country_name"
-              )}
-              selectedState={getSelectedNames(
-                selectedState,
-                filtersData.states,
-                "state_id",
-                "state_name"
-              )}
-              selectedCities={getSelectedNames(
-                selectedCities,
-                filtersData.cities,
-                "city_id",
-                "city_name"
-              )}
-              selectedPlants={getSelectedNames(
-                selectedPlants,
-                filtersData.plants,
-                "plant_id",
-                "plant_name"
-              )}
-              selectedCategories={getSelectedNames(
-                selectedCategories,
-                filtersData.categories,
-                "category_id",
-                "category_name"
-              )}
-              selectedSKUs={getSelectedNames(
-                selectedSKUs,
-                filtersData.skus,
-                "sku_id",
-                "sku_code"
-              )}
-              selectedChannels={getSelectedNames(
-                selectedChannels,
-                filtersData.channels,
-                "channel_id",
-                "channel_name"
-              )}
-              canEditConsensus={canEditConsensus}
-              setCanEditConsensus={setCanEditConsensus}
-              highlightTrigger={highlightTrigger}
-            />
-          </>
-        )}
-      </Box>
-
-      {/* --- Activities Sidebar Overlay --- */}
-      {showActivities && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            right: 0,
-            height: "100vh",
-            width: 700,
-            zIndex: 1400,
-            bgcolor: "rgba(0,0,0,0.18)",
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "flex-end",
-          }}
-          onClick={handleCloseActivities}
-        >
-          <Box
-            sx={{
-              height: "100vh",
-              boxShadow: 6,
-              bgcolor: "grey.400",
-              position: "relative",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Chart onClose={handleCloseActivities} />
-          </Box>
+      <Box sx={{ bgcolor: "#EFF6FF", minHeight: "100vh", py: 0 }}>
+        <Box sx={{ flexGrow: 1, overflow: "auto" }}>
+          {activeTab === 1 ? (
+            chartLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0, lineHeight: 1, minHeight: "auto" }}>
+                <AlertProvider>
+                  <div style={{ margin: 0, padding: 0 }}>
+                    <ChartSection />
+                  </div>
+                </AlertProvider>
+              </Box>
+            )
+          ) : activeTab === 2 ? (
+            compareLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  minHeight: 0,
+                  bgcolor: "#e9f0f7",
+                  p: 0,
+                  m: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <ModelComparisonSection />
+              </Box>
+            )
+          ) : activeTab === 3 ? (
+            analyticsLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  minHeight: 0,
+                  bgcolor: "#e9f0f7",
+                  p: 0,
+                  m: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <AnalyticsFrameSection />
+              </Box>
+            )
+          ) : (
+            <>
+              <ForecastTable
+                startDate={dateRange.startDate}
+                endDate={dateRange.endDate}
+                modelName={modelName}
+                setModelName={setModelName}
+                models={models}
+                loadingModels={loadingModels}
+                selectedCountry={getSelectedNames(
+                  selectedCountry,
+                  filtersData.countries,
+                  "country_id",
+                  "country_name"
+                )}
+                selectedState={getSelectedNames(
+                  selectedState,
+                  filtersData.states,
+                  "state_id",
+                  "state_name"
+                )}
+                selectedCities={getSelectedNames(
+                  selectedCities,
+                  filtersData.cities,
+                  "city_id",
+                  "city_name"
+                )}
+                selectedPlants={getSelectedNames(
+                  selectedPlants,
+                  filtersData.plants,
+                  "plant_id",
+                  "plant_name"
+                )}
+                selectedCategories={getSelectedNames(
+                  selectedCategories,
+                  filtersData.categories,
+                  "category_id",
+                  "category_name"
+                )}
+                selectedSKUs={getSelectedNames(
+                  selectedSKUs,
+                  filtersData.skus,
+                  "sku_id",
+                  "sku_code"
+                )}
+                selectedChannels={getSelectedNames(
+                  selectedChannels,
+                  filtersData.channels,
+                  "channel_id",
+                  "channel_name"
+                )}
+                canEditConsensus={canEditConsensus}
+                setCanEditConsensus={setCanEditConsensus}
+                highlightTrigger={highlightTrigger}
+              />
+            </>
+          )}
         </Box>
-      )}
-      <Dialog
-        open={isChatBotOpen}
-        onClose={handleCloseChatBot}
-        TransitionComponent={SlideTransition}
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            margin: 0,
-            maxWidth: "none",
-            maxHeight: "none",
-            borderRadius: "10px",
-            overflow: "hidden",
-            position: "fixed",
-            right: 0,
-            top: 0,
-            height: "100vh",
-          },
-        }}
-        sx={{
-          "& .MuiDialog-container": {
-            justifyContent: "flex-end",
-          },
-        }}
-      >
-        <ChatBot onClose={handleCloseChatBot} />
-      </Dialog>
+
+        {/* --- Activities Sidebar Overlay --- */}
+        {showActivities && (
+          <Box
+            sx={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              height: "100vh",
+              width: 700,
+              zIndex: 1400,
+              bgcolor: "rgba(0,0,0,0.18)",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "flex-end",
+            }}
+            onClick={handleCloseActivities}
+          >
+            <Box
+              sx={{
+                height: "100vh",
+                boxShadow: 6,
+                bgcolor: "grey.400",
+                position: "relative",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Chart onClose={handleCloseActivities} />
+            </Box>
+          </Box>
+        )}
+        <Dialog
+          open={isChatBotOpen}
+          onClose={handleCloseChatBot}
+          TransitionComponent={SlideTransition}
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              margin: 0,
+              maxWidth: "none",
+              maxHeight: "none",
+              borderRadius: "10px",
+              overflow: "hidden",
+              position: "fixed",
+              right: 0,
+              top: 0,
+              height: "100vh",
+            },
+          }}
+          sx={{
+            "& .MuiDialog-container": {
+              justifyContent: "flex-end",
+            },
+          }}
+        >
+          <ChatBot onClose={handleCloseChatBot} />
+        </Dialog>
+      </Box>
     </Box>
   );
 };

@@ -26,6 +26,7 @@ import {
 import { styled } from "@mui/material/styles";
 import GridViewIcon from "@mui/icons-material/GridView";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import DownloadIcon from "@mui/icons-material/Download";
 import ShareIcon from "@mui/icons-material/Share";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
@@ -320,7 +321,6 @@ function TreeMenu({
   );
 }
 
-/* ---------- UPDATED: Pill legend with longer dashed line indicator for forecast items ---------- */
 const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
     {LEGEND_CONFIG.filter(({ key }) => {
@@ -444,37 +444,27 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
   </Box>
 );
 
-/* **********************************************************************
- *                          MAIN COMPONENT
- * *********************************************************************/
 export default function ForecastChart({
-  /* filters & data */
   months,
   data,
-  /* model radio */
   modelName,
   setModelName,
   models,
   loadingModels,
-  /* metrics */
   avgMapeData,
-  /* geo filter */
   countryName,
-  /* NEW: sync flag from table */
   showForecast,
 }) {
-  /* ---------- refs & simple state ---------- */
   const chartRef = useRef();
   const gridIconRef = useRef();
   const [treeOpen, setTreeOpen] = useState(false);
   const [overlays, setOverlays] = useState({
-    holidays: true,
-    promotions: true,
+    holidays: false,
+    promotions: false,
   });
   const [hiddenSeries, setHiddenSeries] = useState({});
   const [events, setEvents] = useState([]);
 
-  /* ---------- tree-data (sorted models) ---------- */
   const treeData = useMemo(() => {
     const sorted = [...models].sort((a, b) => {
       if (a.model_name === "XGBoost") return -1;
@@ -494,35 +484,34 @@ export default function ForecastChart({
           starred: m.model_name === "XGBoost",
         })),
       },
-      {
-        id: 2,
-        title: "External Factors",
-        disabled: true,
-        type: "checkbox",
-        items: [
-          { id: 21, label: "All", checked: false },
-          { id: 22, label: "CPI", checked: true, starred: true },
-          { id: 23, label: "Interest Rate", checked: false },
-          { id: 24, label: "GDP", checked: true, starred: true },
-          { id: 25, label: "Unemployment Rate", checked: true, starred: true },
-          { id: 26, label: "Average Disposable Income", checked: false },
-        ],
-      },
-      {
-        id: 3,
-        title: "Events",
-        disabled: true,
-        type: "checkbox",
-        items: [
-          { id: 31, label: "All", checked: true, starred: true },
-          { id: 32, label: "Holidays", checked: true },
-          { id: 33, label: "Marketing & Promotion", checked: true },
-        ],
-      },
+      // {
+      //   id: 2,
+      //   title: "External Factors",
+      //   disabled: true,
+      //   type: "checkbox",
+      //   items: [
+      //     { id: 21, label: "All", checked: false },
+      //     { id: 22, label: "CPI", checked: true, starred: true },
+      //     { id: 23, label: "Interest Rate", checked: false },
+      //     { id: 24, label: "GDP", checked: true, starred: true },
+      //     { id: 25, label: "Unemployment Rate", checked: true, starred: true },
+      //     { id: 26, label: "Average Disposable Income", checked: false },
+      //   ],
+      // },
+      // {
+      //   id: 3,
+      //   title: "Events",
+      //   disabled: true,
+      //   type: "checkbox",
+      //   items: [
+      //     { id: 31, label: "All", checked: true, starred: true },
+      //     { id: 32, label: "Holidays", checked: true },
+      //     { id: 33, label: "Marketing & Promotion", checked: true },
+      //   ],
+      // },
     ];
   }, [models, loadingModels]);
 
-  /* ---------- Load events (one-off) ---------- */
   useEffect(() => {
     fetch(`${API_BASE_URL}/events`)
       .then((r) => r.json())
@@ -530,7 +519,6 @@ export default function ForecastChart({
       .catch(() => setEvents([]));
   }, []);
 
-  /* ---------- Country-filtered events ---------- */
   const filteredEvents = useMemo(() => {
     if (!events.length) return [];
     if (!countryName) return events;
@@ -544,7 +532,6 @@ export default function ForecastChart({
     );
   }, [events, countryName]);
 
-  /* ---------- Plot band factory (memoised) ---------- */
   const createPlotBands = useCallback(
     (evts, monthsArr, overlayState) =>
       evts.reduce((acc, ev) => {
@@ -635,7 +622,6 @@ export default function ForecastChart({
     []
   );
 
-  /* ---------- Derive series arrays ---------- */
   const todayIdx = months.indexOf(
     new Date().toLocaleString("default", { month: "short", year: "2-digit" })
   );
@@ -667,12 +653,10 @@ export default function ForecastChart({
         const v = data?.[m]?.[row];
         return v == null || v === "-" ? null : +v;
       });
-
     const baselineFull = getRow("Baseline Forecast");
     const mlFull = getRow("ML Forecast");
     const consFull = getRow("Consensus");
     const actual = getRow("Actual");
-
     const hist = (arr) => arr.map((v, i) => (i <= todayIdx ? v : null));
     const fut = (arr) => arr.map((v, i) => (i > todayIdx ? v : null));
 
@@ -687,7 +671,6 @@ export default function ForecastChart({
     };
   }, [months, data, todayIdx]);
 
-  /* ---------- Highcharts option object ---------- */
   const options = useMemo(
     () => ({
       chart: {
@@ -700,6 +683,9 @@ export default function ForecastChart({
         categories: months,
         gridLineWidth: 1,
         gridLineColor: "#e0e0e0",
+        tickmarkPlacement: "on",
+        startOnTick: true, 
+        endOnTick: true,
         title: { text: "", style: AXIS_TITLE_STYLE },
         labels: { style: AXIS_LABEL_STYLE, overflow: "justify", crop: false },
         plotBands: createPlotBands(filteredEvents, months, overlays),
@@ -786,7 +772,6 @@ export default function ForecastChart({
     ]
   );
 
-  /* ---------- Legend pill click handler ---------- */
   const handleLegendClick = useCallback(
     (key) => {
       const cfg = LEGEND_CONFIG.find((i) => i.key === key);
@@ -813,7 +798,6 @@ export default function ForecastChart({
     [createPlotBands, filteredEvents, months]
   );
 
-  /* ---------- Initialise hiddenSeries after first render ---------- */
   useEffect(() => {
     const ch = chartRef.current?.chart;
     if (!ch) return;
@@ -824,9 +808,8 @@ export default function ForecastChart({
     setHiddenSeries(init);
   }, []);
 
-  /* ---------- NEW: Sync with showForecast flag ---------- */
   useEffect(() => {
-    if (showForecast === undefined) return; // guard for legacy callers
+    if (showForecast === undefined) return;
     const forecastIdx = [4, 5, 6]; // BaselineFc, MLFc, ConsFc
     const ch = chartRef.current?.chart;
     setHiddenSeries((prev) => {
@@ -841,7 +824,6 @@ export default function ForecastChart({
     });
   }, [showForecast]);
 
-  /* ---------- Destroy stray tooltips on unmount ---------- */
   useEffect(
     () => () => {
       const ch = chartRef.current?.chart;
@@ -850,24 +832,24 @@ export default function ForecastChart({
     []
   );
 
-  /* ---------- Active legend pill bookkeeping ---------- */
   const activeKeys = LEGEND_CONFIG.filter((cfg) =>
     cfg.isOverlay ? overlays[cfg.key] : !hiddenSeries[cfg.seriesIndex]
   ).map((i) => i.key);
 
-  /* ---------- Render ---------- */
   const mapeStr = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
   const mapeColor = getMapeColor(mapeStr);
 
   return (
     <Box
       sx={{
-        mt: 3,
-        p: 2,
+        mt: 1,
+        mx: 1,
+        p: 1,
         bgcolor: "#fff",
         borderRadius: 1,
         boxShadow: 1,
         position: "relative",
+        border: "1px solid #CBD5E1", // <-- Adds border to all sides
       }}
     >
       {/* Header */}
@@ -879,17 +861,12 @@ export default function ForecastChart({
           mb: 2,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography
             sx={{
               fontFamily: "Poppins",
               fontWeight: 500,
-              fontStyle: "normal",
               fontSize: 14,
-              lineHeight: "100%",
-              letterSpacing: "0.1px",
-              textAlign: "right",
-              verticalAlign: "middle",
               color: "#334155",
             }}
           >
@@ -898,14 +875,26 @@ export default function ForecastChart({
           <Typography
             sx={{
               fontFamily: "Poppins",
-              fontWeight: 600,
+              fontWeight: 500,
               fontStyle: "normal",
               fontSize: "14px",
               lineHeight: "100%",
               letterSpacing: "0.1px",
               textAlign: "center",
               verticalAlign: "middle",
+              color: "#4f4f58ff",
+            }}
+          >
+            |
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 600,
+              fontSize: 14,
               color: "#555",
+              display: "flex",
+              alignItems: "center",
             }}
           >
             MAPE:&nbsp;
@@ -914,6 +903,7 @@ export default function ForecastChart({
             </Box>
           </Typography>
         </Box>
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.3 }}>
           <IconButton
             ref={gridIconRef}
@@ -922,8 +912,13 @@ export default function ForecastChart({
           >
             <GridViewIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small">
+          {/* <IconButton size="small">
             <ChatBubbleOutlineIcon fontSize="small" />
+          </IconButton> */}
+          <IconButton size="small">
+            <DownloadIcon
+              sx={{ width: 20, height: 20, color: "text.secondary" }}
+            />
           </IconButton>
           <IconButton size="small">
             <ShareIcon fontSize="small" />
@@ -942,13 +937,11 @@ export default function ForecastChart({
       />
 
       {/* Chart */}
-      <Box sx={{ height: 400 }}>
-        <HighchartsReact
-          ref={chartRef}
-          highcharts={Highcharts}
-          options={options}
-        />
-      </Box>
+      <HighchartsReact
+        ref={chartRef}
+        highcharts={Highcharts}
+        options={options}
+      />
 
       {/* Floating tree menu */}
       <TreeMenu

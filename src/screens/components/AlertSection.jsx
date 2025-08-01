@@ -27,7 +27,6 @@ import { useAlert } from "./AlertContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-
 // Main component
 export const AlertsSection = () => {
   // Pull alert-related state from context

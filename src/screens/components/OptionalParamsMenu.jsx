@@ -1,17 +1,7 @@
 import React, { useState } from "react";
-
-/**
- * OptionalParamsMenu component renders the dropdown shown when the `+` button is clicked.
- *
- * Props
- *  - open (boolean): whether the dropdown should be visible.
- *  - onClose (function): callback to close the dropdown (called on Escape key or outside click).
- *  - selected (array<string>): list of currently-selected optional rows.
- *  - onChange (function): (newSelected: string[]) => void – sent whenever the selection changes.
- */
 const PARAM_OPTIONS = [
   "Sales",
-  "Promotion/Marketing",
+  "Promotion /Marketing Forecast",
   "Inventory Level %",
   "Stock out days",
   "On Hand",
