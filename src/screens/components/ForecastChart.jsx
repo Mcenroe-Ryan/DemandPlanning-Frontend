@@ -576,47 +576,127 @@ export default function ForecastChart({
           from: fromPos,
           to: fromPos + wid,
           color: holiday ? "#DCFCE7" : "#FFEDD5",
+          // events: {
+          //   mouseover: function (mouseEvt) {
+          //     const ch = chartRef.current?.chart;
+          //     if (!ch) return;
+          //     if (ch.customTooltip) ch.customTooltip.destroy();
+          //     const tip = `
+          //       <div style="padding:8px;font-size:12px;font-family:Inter">
+          //         <b>${holiday ? "Holiday" : "Promotion"}:</b> ${
+          //       ev.event_name
+          //     }<br/>
+          //         <b>Start:</b> ${s.toLocaleDateString()}<br/>
+          //         <b>End&nbsp;&nbsp;:</b> ${e.toLocaleDateString()}<br/>
+          //         <b>Country:</b> ${ev.country_name || "N/A"}
+          //       </div>`;
+          //     const rect = ch.container.getBoundingClientRect();
+          //     const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
+          //     const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
+          //     ch.customTooltip = ch.renderer
+          //       .label(tip, x, y, "round", null, null, true)
+          //       .attr({
+          //         fill: "rgba(255,255,255,0.95)",
+          //         stroke: "rgba(51,51,51,0.3)",
+          //         "stroke-width": 1,
+          //         r: 3,
+          //         padding: 8,
+          //         zIndex: 999,
+          //       })
+          //       .css({
+          //         boxShadow:
+          //           "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
+          //       })
+          //       .add();
+          //   },
+          //   mouseout: function () {
+          //     const ch = chartRef.current?.chart;
+          //     if (ch?.customTooltip) {
+          //       ch.customTooltip.destroy();
+          //       ch.customTooltip = null;
+          //     }
+          //   },
+          // },
           events: {
-            mouseover: function (mouseEvt) {
-              const ch = chartRef.current?.chart;
-              if (!ch) return;
-              if (ch.customTooltip) ch.customTooltip.destroy();
-              const tip = `
-                <div style="padding:8px;font-size:12px;font-family:Inter">
-                  <b>${holiday ? "Holiday" : "Promotion"}:</b> ${
-                ev.event_name
-              }<br/>
-                  <b>Start:</b> ${s.toLocaleDateString()}<br/>
-                  <b>End&nbsp;&nbsp;:</b> ${e.toLocaleDateString()}<br/>
-                  <b>Country:</b> ${ev.country_name || "N/A"}
-                </div>`;
-              const rect = ch.container.getBoundingClientRect();
-              const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-              const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
-              ch.customTooltip = ch.renderer
-                .label(tip, x, y, "round", null, null, true)
-                .attr({
-                  fill: "rgba(255,255,255,0.95)",
-                  stroke: "rgba(51,51,51,0.3)",
-                  "stroke-width": 1,
-                  r: 3,
-                  padding: 8,
-                  zIndex: 999,
-                })
-                .css({
-                  boxShadow:
-                    "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
-                })
-                .add();
-            },
-            mouseout: function () {
-              const ch = chartRef.current?.chart;
-              if (ch?.customTooltip) {
-                ch.customTooltip.destroy();
-                ch.customTooltip = null;
-              }
-            },
-          },
+  mouseover: function (mouseEvt) {
+    const ch = chartRef.current?.chart;
+    if (!ch) return;
+    if (ch.customTooltip) ch.customTooltip.destroy();
+    
+    // Check country for date formatting
+    const isUSA = 
+      (Array.isArray(countryName) && 
+       countryName.some(c => c.toLowerCase().includes("usa") || c.toLowerCase().includes("us"))) ||
+      (typeof countryName === "string" && 
+       (countryName.toLowerCase().includes("usa") || countryName.toLowerCase().includes("us"))) ||
+      (ev.country_name && 
+       (ev.country_name.toLowerCase().includes("usa") || ev.country_name.toLowerCase().includes("us")));
+
+    const isIndia = 
+      (Array.isArray(countryName) && 
+       countryName.some(c => c.toLowerCase().includes("india"))) ||
+      (typeof countryName === "string" && 
+       countryName.toLowerCase().includes("india")) ||
+      (ev.country_name && 
+       ev.country_name.toLowerCase().includes("india"));
+
+    // Format dates based on country
+    const formatDate = (date) => {
+      if (isUSA) {
+        // US format: MM/DD/YYYY
+        return date.toLocaleDateString("en-US", {
+          month: "2-digit",
+          day: "2-digit", 
+          year: "numeric"
+        });
+      } else if (isIndia) {
+        // India format: DD/MM/YYYY
+        return date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        });
+      }
+      // Default format for other countries
+      return date.toLocaleDateString();
+    };
+
+    const tip = `
+      <div style="padding:8px;font-size:12px;font-family:Inter">
+        <b>${holiday ? "Holiday" : "Promotion"}:</b> ${ev.event_name}<br/>
+        <b>Start:</b> ${formatDate(s)}<br/>
+        <b>End&nbsp;&nbsp;:</b> ${formatDate(e)}<br/>
+        <b>Country:</b> ${ev.country_name || "N/A"}
+      </div>`;
+    
+    const rect = ch.container.getBoundingClientRect();
+    const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
+    const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
+    ch.customTooltip = ch.renderer
+      .label(tip, x, y, "round", null, null, true)
+      .attr({
+        fill: "rgba(255,255,255,0.95)",
+        stroke: "rgba(51,51,51,0.3)",
+        "stroke-width": 1,
+        r: 3,
+        padding: 8,
+        zIndex: 999,
+      })
+      .css({
+        boxShadow:
+          "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
+      })
+      .add();
+  },
+  mouseout: function () {
+    const ch = chartRef.current?.chart;
+    if (ch?.customTooltip) {
+      ch.customTooltip.destroy();
+      ch.customTooltip = null;
+    }
+  },
+}
+
         });
         return acc;
       }, []),

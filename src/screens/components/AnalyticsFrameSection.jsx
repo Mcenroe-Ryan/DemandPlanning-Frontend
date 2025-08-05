@@ -161,34 +161,34 @@ const revenueComparisonData = [
 // Color mapping function for table values
 const getValueColor = (value) => {
   const colorMap = {
-    '-5': '#F87171',
-    '-4': '#F87171',
-    '-2': '#F87171',
-    '-1': '#FECACA',
-    '0': '#FFFFFF',
-    '1': '#FECACA',
-    '2': '#FEE2E2',
-    '3': '#FECACA',
-    '4': '#FECACA',
-    '5': '#FEE2E2',
-    '6': '#FEE2E2',
-    '7': '#FEF2F2',
-    '8': '#FEF2F2',
-    '9': '#FEF2F2',
-    '10': '#DCFCE7',
-    '11': '#DCFCE7',
-    '12': '#BBF7D0',
-    '13': '#BBF7D0',
-    '14': '#BBF7D0',
-    '16': '#86EFAC',
-    '18': '#86EFAC',
-    '20': '#4ADE80',
-    '21': '#4ADE80',
-    '23': '#4ADE80',
-    '24': '#4ADE80',
+    "-5": "#FA4545",
+    "-4": "#F67F7F",
+    "-2": "#FAABAB",
+    "-1": "#FECACA",
+    0: "#FFFFFF",
+    1: "#DCFCE7",
+    2: "#DCFCE7",
+    3: "#DCFCE7",
+    4: "#BBFCD1",
+    5: "#BBFCD1",
+    6: "#BBFCD1",
+    7: "#8FF6B2",
+    8: "#8FF6B2",
+    9: "#8FF6B2",
+    10: "#65F696",
+    11: "#65F696",
+    12: "#65F696",
+    13: "#37F879",
+    14: "#37F879",
+    16: "#3BE274",
+    18: "#3BE274",
+    20: "#1AD45A",
+    21: "#1AD45A",
+    23: "#1EC858",
+    24: "#1EC858",
   };
-  
-  return colorMap[value.toString()] || '#FFFFFF';
+
+  return colorMap[value.toString()] || "#FFFFFF";
 };
 
 // Standard border style for all cells

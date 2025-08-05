@@ -44,6 +44,7 @@ import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/Chatbox";
 import { AnalyticsFrameSection } from "./components/AnalyticsFrameSection";
+// import { useAlertCount } from './hooks/useAlertCount';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -127,7 +128,7 @@ const Listbox = () => {
 const DATA_ROW_OPTIONS = [
   { key: "all", label: "All" },
   { key: "sales", label: "Sales" },
-  { key: "promotion", label: "Promotion /Marketing Forecast" },
+  { key: "promotion", label: "Promotion / Marketing" },
   { key: "inventory", label: "Inventory Level %" },
   { key: "stockout", label: "Stock out days" },
   { key: "onhand", label: "On Hand" },
@@ -342,6 +343,8 @@ export const DemandProjectMonth = () => {
   // const [showForecast, setShowForecast] = useState(true);
   // const [rowData, setRowData] = useState([]);
   // const [months, setMonths] = useState([]);
+    // const { alertCount, alertCountLoading, alertCountError } = useAlertCount();
+
   const [filtersData, setFiltersData] = useState({
     countries: [],
     states: [],
@@ -442,6 +445,7 @@ export const DemandProjectMonth = () => {
   const tabs = [
     { label: "Demand", count: null },
     { label: "Alerts for Forecast Error", count: 2 },
+    // { label: "Alerts for Forecast Error", count: alertCountLoading ? "..." : alertCount },
     { label: "Compare Model", count: null },
     { label: "Analytics", count: null },
     { label: "Scenarios", count: null },
@@ -894,7 +898,7 @@ export const DemandProjectMonth = () => {
             sx={{ bgcolor: "grey.500" }}
           />
         </Box>
-
+         
         <Stack direction="row" spacing={1}>
           {/* <DateFilter onDateChange={(range) => setDateRange(range)} /> */}
           <DateFilter
@@ -924,7 +928,7 @@ export const DemandProjectMonth = () => {
             setSelected={setSelectedState}
             searchPlaceholder="Search state"
             loading={loadingStates}
-            disabled={!filtersData.states.length}
+            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
             width={110}
           />
           <MultiSelectWithCheckboxes
@@ -936,7 +940,7 @@ export const DemandProjectMonth = () => {
             setSelected={setSelectedCities}
             searchPlaceholder="Search city"
             loading={loadingCities}
-            disabled={!filtersData.cities.length}
+            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
             width={110}
           />
 
@@ -950,7 +954,7 @@ export const DemandProjectMonth = () => {
             setSelected={setSelectedPlants}
             searchPlaceholder="Search plant"
             loading={loadingPlants}
-            disabled={!filtersData.plants.length}
+            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
             width={110}
           />
 
@@ -964,7 +968,7 @@ export const DemandProjectMonth = () => {
             setSelected={setSelectedCategories}
             searchPlaceholder="Search category"
             loading={loadingCategories}
-            disabled={!filtersData.categories.length}
+            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
             width={110}
           />
 
@@ -978,7 +982,7 @@ export const DemandProjectMonth = () => {
             setSelected={setSelectedSKUs}
             searchPlaceholder="Search SKU"
             loading={loadingSkus}
-            disabled={!filtersData.skus.length}
+            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
             width={110}
           />
 
@@ -993,7 +997,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search channel"
             loading={loadingChannels}
             width={110}
-            disabled={!selectedSKUs.length}
+            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
           />
 
           {/* --- Three dots menu for filters --- */}

@@ -17,6 +17,12 @@ import {
   DialogContentText,
   Alert,
   Snackbar,
+  FormControl,
+  InputLabel ,
+  Select,
+  OutlinedInput,
+  MenuItem,
+  ListItemText   
 } from "@mui/material";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
@@ -73,7 +79,7 @@ const FORECAST_ROWS = [
 ];
 const OPTIONAL_ROWS = [
   "Sales",
-  "Promotion /Marketing Forecast",
+  "Promotion / Marketing",
   "Inventory Level %",
   "Stock out days",
   "On Hand",
@@ -541,9 +547,9 @@ export default function ForecastTable({
     "ML Forecast": "ml_forecast",
     Consensus: "consensus_forecast",
     "Revenue Forecast (₹ in lakhs)": "revenue_forecast_lakhs",
-    "Revenue Forecast ($ in k)": "revenue_forecast_lakhs",
+    "Revenue Forecast ($ in K)": "revenue_forecast_lakhs",
     Sales: "sales_units",
-    "Promotion /Marketing Forecast": "promotion_marketing",
+    "Promotion / Marketing": "promotion_marketing",
     "Inventory Level %": "inventory_level_pct",
     "Stock out days": "stock_out_days",
     "On Hand": "on_hand_units",
@@ -709,12 +715,12 @@ export default function ForecastTable({
       result.push(row);
       if (row === "ML Forecast") {
         if (optionalRows.includes("Sales")) result.push("Sales");
-        if (optionalRows.includes("Promotion /Marketing Forecast"))
-          result.push("Promotion /Marketing Forecast");
+        if (optionalRows.includes("Promotion / Marketing"))
+          result.push("Promotion / Marketing");
       }
     }
     for (let row of optionalRows) {
-      if (row !== "Sales" && row !== "Promotion /Marketing Forecast")
+      if (row !== "Sales" && row !== "Promotion / Marketing")
         result.push(row);
     }
     return result;
@@ -723,8 +729,14 @@ export default function ForecastTable({
   const allRows = reorderRows();
 
   // Add New menu handlers
-  const handleAddRowsClick = (event) => setAnchorEl(event.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
+  // const handleAddRowsClick = (event) => setAnchorEl(event.currentTarget);
+  const handleAddRowsClick = (event) => {
+  setAnchorEl(anchorEl ? null : event.currentTarget);
+};
+  // const handleMenuClose = () => setAnchorEl(null);
+  const handleMenuClose = () => {
+  setAnchorEl(null);
+};
 
   const handleConfirmationClose = () => {
     setConfirmationDialog({
@@ -774,7 +786,6 @@ export default function ForecastTable({
       setCanEditConsensus(false);
     }
   };
-
   return (
     <>
       {/* Header Bar */}
@@ -852,7 +863,7 @@ export default function ForecastTable({
           </Stack>
         </Stack>
         <Stack direction="row" spacing={1.5} alignItems="center">
-          <IconButton size="small" onClick={handleAddRowsClick}>
+          {/* <IconButton size="small" onClick={handleAddRowsClick}>
             <AddBoxOutlinedIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
             />
@@ -879,7 +890,23 @@ export default function ForecastTable({
               selected={optionalRows}
               onChange={setOptionalRows}
             />
-          </Menu>
+          </Menu> */}
+
+<Box sx={{ position: "relative" }}>
+  <IconButton size="small" onClick={handleAddRowsClick}>
+    <AddBoxOutlinedIcon
+      sx={{ width: 20, height: 20, color: "text.secondary" }}
+    />
+  </IconButton>
+  
+  <OptionalParamsMenu
+    open={Boolean(anchorEl)}
+    onClose={handleMenuClose}
+    selected={optionalRows}
+    onChange={setOptionalRows}
+  />
+</Box>
+
           <IconButton size="small">
             <SwapVertIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
@@ -993,7 +1020,7 @@ export default function ForecastTable({
                     textAlign: "left",
                     padding: "8px 16px",
                     ...(label === "Sales" ||
-                    label === "Promotion /Marketing Forecast"
+                    label === "Promotion / Marketing"
                       ? { paddingLeft: "36px" }
                       : {}),
                     borderRight: "1px solid #e0e7ef",
