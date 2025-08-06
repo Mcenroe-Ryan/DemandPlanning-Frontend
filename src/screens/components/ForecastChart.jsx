@@ -576,127 +576,106 @@ export default function ForecastChart({
           from: fromPos,
           to: fromPos + wid,
           color: holiday ? "#DCFCE7" : "#FFEDD5",
-          // events: {
-          //   mouseover: function (mouseEvt) {
-          //     const ch = chartRef.current?.chart;
-          //     if (!ch) return;
-          //     if (ch.customTooltip) ch.customTooltip.destroy();
-          //     const tip = `
-          //       <div style="padding:8px;font-size:12px;font-family:Inter">
-          //         <b>${holiday ? "Holiday" : "Promotion"}:</b> ${
-          //       ev.event_name
-          //     }<br/>
-          //         <b>Start:</b> ${s.toLocaleDateString()}<br/>
-          //         <b>End&nbsp;&nbsp;:</b> ${e.toLocaleDateString()}<br/>
-          //         <b>Country:</b> ${ev.country_name || "N/A"}
-          //       </div>`;
-          //     const rect = ch.container.getBoundingClientRect();
-          //     const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-          //     const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
-          //     ch.customTooltip = ch.renderer
-          //       .label(tip, x, y, "round", null, null, true)
-          //       .attr({
-          //         fill: "rgba(255,255,255,0.95)",
-          //         stroke: "rgba(51,51,51,0.3)",
-          //         "stroke-width": 1,
-          //         r: 3,
-          //         padding: 8,
-          //         zIndex: 999,
-          //       })
-          //       .css({
-          //         boxShadow:
-          //           "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
-          //       })
-          //       .add();
-          //   },
-          //   mouseout: function () {
-          //     const ch = chartRef.current?.chart;
-          //     if (ch?.customTooltip) {
-          //       ch.customTooltip.destroy();
-          //       ch.customTooltip = null;
-          //     }
-          //   },
-          // },
+
+          // Inside createPlotBands, in the events.mouseover function:
           events: {
-  mouseover: function (mouseEvt) {
-    const ch = chartRef.current?.chart;
-    if (!ch) return;
-    if (ch.customTooltip) ch.customTooltip.destroy();
-    
-    // Check country for date formatting
-    const isUSA = 
-      (Array.isArray(countryName) && 
-       countryName.some(c => c.toLowerCase().includes("usa") || c.toLowerCase().includes("us"))) ||
-      (typeof countryName === "string" && 
-       (countryName.toLowerCase().includes("usa") || countryName.toLowerCase().includes("us"))) ||
-      (ev.country_name && 
-       (ev.country_name.toLowerCase().includes("usa") || ev.country_name.toLowerCase().includes("us")));
+            mouseover: function (mouseEvt) {
+              const ch = chartRef.current?.chart;
+              if (!ch) return;
+              if (ch.customTooltip) ch.customTooltip.destroy();
 
-    const isIndia = 
-      (Array.isArray(countryName) && 
-       countryName.some(c => c.toLowerCase().includes("india"))) ||
-      (typeof countryName === "string" && 
-       countryName.toLowerCase().includes("india")) ||
-      (ev.country_name && 
-       ev.country_name.toLowerCase().includes("india"));
+              // Gather all country names: selected filter + event's own country
+              const names = [];
+              if (Array.isArray(countryName)) {
+                names.push(...countryName);
+              } else if (typeof countryName === "string") {
+                names.push(countryName);
+              }
+              if (ev.country_name) {
+                names.push(ev.country_name);
+              }
+              const all = names.map((t) => t.toLowerCase());
 
-    // Format dates based on country
-    const formatDate = (date) => {
-      if (isUSA) {
-        // US format: MM/DD/YYYY
-        return date.toLocaleDateString("en-US", {
-          month: "2-digit",
-          day: "2-digit", 
-          year: "numeric"
-        });
-      } else if (isIndia) {
-        // India format: DD/MM/YYYY
-        return date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric"
-        });
-      }
-      // Default format for other countries
-      return date.toLocaleDateString();
-    };
+              // Helper to match any substring
+              const matchAny = (text, keys) =>
+                keys.some((k) => text.includes(k));
 
-    const tip = `
+              // Detect USA vs India
+              const isUSA = all.some((t) =>
+                matchAny(t, [
+                  "usa",
+                  "u.s.",
+                  "united states",
+                  "united states of america",
+                  "us",
+                ])
+              );
+              const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
+
+              // Date formatting - prioritize USA format when both are selected
+              const formatDate = (date) => {
+                if (isUSA && isIndia) {
+                  // Both USA and India selected - use MM/DD/YYYY format
+                  return date.toLocaleDateString("en-US", {
+                    month: "2-digit",
+                    day: "2-digit",
+                    year: "numeric",
+                  });
+                } else if (isUSA) {
+                  return date.toLocaleDateString("en-US", {
+                    month: "2-digit",
+                    day: "2-digit",
+                    year: "numeric",
+                  });
+                } else if (isIndia) {
+                  return date.toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  });
+                }
+                return date.toLocaleDateString(); // fallback
+              };
+
+              const s = new Date(ev.start_date);
+              const e = new Date(ev.end_date);
+
+              const tip = `
       <div style="padding:8px;font-size:12px;font-family:Inter">
-        <b>${holiday ? "Holiday" : "Promotion"}:</b> ${ev.event_name}<br/>
+        <b>${ev.event_type}:</b> ${ev.event_name}<br/>
         <b>Start:</b> ${formatDate(s)}<br/>
         <b>End&nbsp;&nbsp;:</b> ${formatDate(e)}<br/>
         <b>Country:</b> ${ev.country_name || "N/A"}
       </div>`;
-    
-    const rect = ch.container.getBoundingClientRect();
-    const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-    const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
-    ch.customTooltip = ch.renderer
-      .label(tip, x, y, "round", null, null, true)
-      .attr({
-        fill: "rgba(255,255,255,0.95)",
-        stroke: "rgba(51,51,51,0.3)",
-        "stroke-width": 1,
-        r: 3,
-        padding: 8,
-        zIndex: 999,
-      })
-      .css({
-        boxShadow:
-          "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
-      })
-      .add();
-  },
-  mouseout: function () {
-    const ch = chartRef.current?.chart;
-    if (ch?.customTooltip) {
-      ch.customTooltip.destroy();
-      ch.customTooltip = null;
-    }
-  },
-}
 
+              const rect = ch.container.getBoundingClientRect();
+              const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
+              const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
+
+              ch.customTooltip = ch.renderer
+                .label(tip, x, y, "round", null, null, true)
+                .attr({
+                  fill: "rgba(255,255,255,0.95)",
+                  stroke: "rgba(51,51,51,0.3)",
+                  "stroke-width": 1,
+                  r: 3,
+                  padding: 8,
+                  zIndex: 999,
+                })
+                .css({
+                  boxShadow:
+                    "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
+                })
+                .add();
+            },
+            mouseout: function () {
+              const ch = chartRef.current?.chart;
+              if (ch?.customTooltip) {
+                ch.customTooltip.destroy();
+                ch.customTooltip = null;
+              }
+            },
+          },
         });
         return acc;
       }, []),
@@ -765,7 +744,7 @@ export default function ForecastChart({
         gridLineWidth: 1,
         gridLineColor: "#e0e0e0",
         tickmarkPlacement: "on",
-        startOnTick: true, 
+        startOnTick: true,
         endOnTick: true,
         title: { text: "", style: AXIS_TITLE_STYLE },
         labels: { style: AXIS_LABEL_STYLE, overflow: "justify", crop: false },
@@ -854,52 +833,58 @@ export default function ForecastChart({
   );
 
   // Add this validation function inside ForecastChart component, before handleLegendClick
-const validateCountrySelection = useCallback(() => {
-  if (!countryName || 
+  const validateCountrySelection = useCallback(() => {
+    if (
+      !countryName ||
       (Array.isArray(countryName) && countryName.length === 0) ||
-      countryName === "") {
-    if (setErrorSnackbar) {
-      setErrorSnackbar({
-        open: true,
-        message: "Country is not selected. Please select a country before accessing holidays and promotions."
-      });
+      countryName === ""
+    ) {
+      if (setErrorSnackbar) {
+        setErrorSnackbar({
+          open: true,
+          message:
+            "Country is not selected. Please select a country before accessing holidays and promotions.",
+        });
+      }
+      return false;
     }
-    return false;
-  }
-  return true;
-}, [countryName, setErrorSnackbar]);
+    return true;
+  }, [countryName, setErrorSnackbar]);
 
-const handleLegendClick = useCallback(
-  (key) => {
-    const cfg = LEGEND_CONFIG.find((i) => i.key === key);
-    if (!cfg) return;
+  const handleLegendClick = useCallback(
+    (key) => {
+      const cfg = LEGEND_CONFIG.find((i) => i.key === key);
+      if (!cfg) return;
 
-    // Add country validation for holidays and promotions
-    if ((key === "holidays" || key === "promotions") && !validateCountrySelection()) {
-      return; // Stop execution if validation fails
-    }
+      // Add country validation for holidays and promotions
+      if (
+        (key === "holidays" || key === "promotions") &&
+        !validateCountrySelection()
+      ) {
+        return; // Stop execution if validation fails
+      }
 
-    const ch = chartRef.current?.chart;
-    if (!ch) return;
+      const ch = chartRef.current?.chart;
+      if (!ch) return;
 
-    if (cfg.isOverlay) {
-      setOverlays((prev) => {
-        const next = { ...prev, [cfg.key]: !prev[cfg.key] };
-        setTimeout(() => {
-          ch.xAxis[0].update({
-            plotBands: createPlotBands(filteredEvents, months, next),
-          });
-        }, 0);
-        return next;
-      });
-    } else {
-      const s = ch.series[cfg.seriesIndex];
-      s.visible ? s.hide() : s.show();
-      setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
-    }
-  },
-  [createPlotBands, filteredEvents, months, validateCountrySelection] // Add validateCountrySelection to dependencies
-);
+      if (cfg.isOverlay) {
+        setOverlays((prev) => {
+          const next = { ...prev, [cfg.key]: !prev[cfg.key] };
+          setTimeout(() => {
+            ch.xAxis[0].update({
+              plotBands: createPlotBands(filteredEvents, months, next),
+            });
+          }, 0);
+          return next;
+        });
+      } else {
+        const s = ch.series[cfg.seriesIndex];
+        s.visible ? s.hide() : s.show();
+        setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
+      }
+    },
+    [createPlotBands, filteredEvents, months, validateCountrySelection] // Add validateCountrySelection to dependencies
+  );
 
   useEffect(() => {
     const ch = chartRef.current?.chart;

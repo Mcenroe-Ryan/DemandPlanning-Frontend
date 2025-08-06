@@ -200,8 +200,8 @@ const ForecastChart = ({ data, selectedAlert }) => {
       spacingLeft: 0,
       animation: {
         duration: 800,
-        easing: "easeOutQuad"
-      }
+        easing: "easeOutQuad",
+      },
     },
     title: { text: null },
     xAxis: {
@@ -276,20 +276,20 @@ const ForecastChart = ({ data, selectedAlert }) => {
       style: { fontSize: "11px" },
     },
     legend: {
-      enabled: false, 
+      enabled: false,
     },
-plotOptions: {
-  series: {
-    animation: {
-      duration: 1500,    // (or whatever you want)
-      easing: "easeOutQuad"
-    }
-  },
-  line: {
-    marker: { enabled: true, radius: 2 },
-    lineWidth: 2,
-  }
-},
+    plotOptions: {
+      series: {
+        animation: {
+          duration: 1500,
+          easing: "easeOutQuad",
+        },
+      },
+      line: {
+        marker: { enabled: true, radius: 2 },
+        lineWidth: 2,
+      },
+    },
     series: [
       {
         name: "Actual Units",
@@ -318,7 +318,7 @@ plotOptions: {
           },
           chartOptions: {
             legend: {
-              enabled: false, // Keep disabled
+              enabled: false,
             },
           },
         },
@@ -329,7 +329,7 @@ plotOptions: {
   useEffect(() => {
     if (chartRef.current) {
       const chart = Highcharts.chart(chartRef.current, chartOptions);
-      setChartInstance(chart); // Store chart reference
+      setChartInstance(chart);
 
       const resizeListener = () => chart.reflow();
       window.addEventListener("resize", resizeListener);
@@ -342,7 +342,6 @@ plotOptions: {
 
   return (
     <div>
-      {/* Custom Legend */}
       <CustomLegend
         legendConfig={LEGEND_CONFIG}
         activeKeys={activeLegendKeys}
@@ -350,7 +349,6 @@ plotOptions: {
         showForecast={true}
       />
 
-      {/* Chart */}
       <div
         ref={chartRef}
         style={{ width: "100%", height: "565.51px", overflowX: "auto" }}
@@ -358,6 +356,7 @@ plotOptions: {
     </div>
   );
 };
+
 // Main Component
 export const ChartSection = () => {
   const { selectAlert } = useAlert();
@@ -470,6 +469,24 @@ export const ChartSection = () => {
     }
   };
 
+  // ✅ API function to update is_checked status
+  const updateCheckedStatus = async (id, newValue) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/forecast-error/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ in_checked: newValue }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { updated } = await res.json();
+      return updated.is_checked;
+    } catch (err) {
+      console.error("Checkbox update failed:", err);
+      return null;
+    }
+  };
+
+  // ✅ MODIFIED: Updated useEffect to respect is_checked from API
   useEffect(() => {
     (async () => {
       try {
@@ -486,13 +503,16 @@ export const ChartSection = () => {
           .map(toAlertRow);
 
         setAlertsData(rows);
-        setCheckedItems(Object.fromEntries(rows.map((r) => [r.id, false])));
+        // ✅ CHANGED: Use is_checked from API instead of defaulting to false
+        setCheckedItems(
+          Object.fromEntries(alerts.map((a) => [a.id, !!a.is_checked]))
+        );
+
         if (alerts.length) {
           const oldest = alerts.reduce((o, c) =>
             new Date(c.error_start_date) < new Date(o.error_start_date) ? c : o
           );
           setSelectedAlertId(oldest.id);
-          setCheckedItems({ [oldest.id]: true });
           await fetchForecastData(oldest);
         }
       } catch (err) {
@@ -521,14 +541,9 @@ export const ChartSection = () => {
       });
   }, []);
 
-  const setSingleCheck = (id) =>
-    setCheckedItems(
-      Object.fromEntries(Object.keys(checkedItems).map((k) => [k, k === id]))
-    );
-
   const onAlertSelect = async (row) => {
     setSelectedAlertId(row.id);
-    setSingleCheck(row.id);
+    // setSingleCheck(row.id);
     setErrorMessage(row.message);
     await fetchForecastData(row.rawData);
   };
@@ -721,10 +736,25 @@ export const ChartSection = () => {
                   sx={{ p: 0, width: 16, height: 16, ml: 0.5, mr: 1 }}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    setCheckedItems((prev) => ({
-                      ...prev,
-                      [row.id]: checked,
-                    }));
+                    // Optimistically update UI
+                    setCheckedItems((prev) => ({ ...prev, [row.id]: checked }));
+
+                    // Persist change to backend
+                    updateCheckedStatus(row.id, checked).then((saved) => {
+                      if (saved === null) {
+                        // API failed – revert UI
+                        setCheckedItems((prev) => ({
+                          ...prev,
+                          [row.id]: !checked,
+                        }));
+                      } else if (saved !== checked) {
+                        // API responded with different value – sync UI
+                        setCheckedItems((prev) => ({
+                          ...prev,
+                          [row.id]: saved,
+                        }));
+                      }
+                    });
                   }}
                   onClick={(e) => e.stopPropagation()}
                 />

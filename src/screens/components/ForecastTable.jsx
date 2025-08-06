@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
@@ -18,11 +17,11 @@ import {
   Alert,
   Snackbar,
   FormControl,
-  InputLabel ,
+  InputLabel,
   Select,
   OutlinedInput,
   MenuItem,
-  ListItemText   
+  ListItemText,
 } from "@mui/material";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
@@ -720,8 +719,7 @@ export default function ForecastTable({
       }
     }
     for (let row of optionalRows) {
-      if (row !== "Sales" && row !== "Promotion / Marketing")
-        result.push(row);
+      if (row !== "Sales" && row !== "Promotion / Marketing") result.push(row);
     }
     return result;
   };
@@ -731,12 +729,12 @@ export default function ForecastTable({
   // Add New menu handlers
   // const handleAddRowsClick = (event) => setAnchorEl(event.currentTarget);
   const handleAddRowsClick = (event) => {
-  setAnchorEl(anchorEl ? null : event.currentTarget);
-};
+    setAnchorEl(anchorEl ? null : event.currentTarget);
+  };
   // const handleMenuClose = () => setAnchorEl(null);
   const handleMenuClose = () => {
-  setAnchorEl(null);
-};
+    setAnchorEl(null);
+  };
 
   const handleConfirmationClose = () => {
     setConfirmationDialog({
@@ -892,7 +890,21 @@ export default function ForecastTable({
             />
           </Menu> */}
 
-<Box sx={{ position: "relative" }}>
+          {/* <Box sx={{ position: "relative" }}>
+            <IconButton size="small" onClick={handleAddRowsClick}>
+              <AddBoxOutlinedIcon
+                sx={{ width: 20, height: 20, color: "text.secondary" }}
+              />
+            </IconButton>
+
+            <OptionalParamsMenu
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              selected={optionalRows}
+              onChange={setOptionalRows}
+            />
+          </Box> */} 
+          <Box sx={{ position: "relative" }}>
   <IconButton size="small" onClick={handleAddRowsClick}>
     <AddBoxOutlinedIcon
       sx={{ width: 20, height: 20, color: "text.secondary" }}
@@ -1019,8 +1031,7 @@ export default function ForecastTable({
                     letterSpacing: "0.1px",
                     textAlign: "left",
                     padding: "8px 16px",
-                    ...(label === "Sales" ||
-                    label === "Promotion / Marketing"
+                    ...(label === "Sales" || label === "Promotion / Marketing"
                       ? { paddingLeft: "36px" }
                       : {}),
                     borderRight: "1px solid #e0e7ef",

@@ -44,7 +44,6 @@ import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/Chatbox";
 import { AnalyticsFrameSection } from "./components/AnalyticsFrameSection";
-// import { useAlertCount } from './hooks/useAlertCount';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -300,6 +299,43 @@ const SlideTransition = React.forwardRef(function Transition(props, ref) {
 
 export const DemandProjectMonth = () => {
   const navigate = useNavigate();
+  const [alertCount, setAlertCount] = useState(null);
+  const [alertCountLoading, setAlertCountLoading] = useState(true);
+
+useEffect(() => {
+  const fetchAlertCount = async () => {
+    setAlertCountLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/getAlertCount`);
+      if (response.ok) {
+        const count = await response.json();
+        setAlertCount(count);
+      } else {
+        setAlertCount(null);
+      }
+    } catch (error) {
+      console.error("Error fetching alert count:", error);
+      setAlertCount(null);
+    } finally {
+      setAlertCountLoading(false);
+    }
+  };
+
+  fetchAlertCount();
+}, []);
+
+
+  // ✅ Move tabs array to component level
+  const tabs = [
+    { label: "Demand", count: null },
+    { 
+      label: "Alerts for Forecast Error", 
+      count: alertCountLoading ? "..." : alertCount 
+    },
+    { label: "Compare Model", count: null },
+    { label: "Analytics", count: null },
+    { label: "Scenarios", count: null },
+  ];
   const scrollRef = useRef(null);
   const isDown = useRef(false);
   const startX = useRef(0);
@@ -441,15 +477,6 @@ export const DemandProjectMonth = () => {
 
     fetchModels();
   }, []);
-
-  const tabs = [
-    { label: "Demand", count: null },
-    { label: "Alerts for Forecast Error", count: 2 },
-    // { label: "Alerts for Forecast Error", count: alertCountLoading ? "..." : alertCount },
-    { label: "Compare Model", count: null },
-    { label: "Analytics", count: null },
-    { label: "Scenarios", count: null },
-  ];
 
   const fetchCountries = () => {
     setLoadingCountries(true);
