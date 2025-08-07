@@ -11,6 +11,9 @@ import ArrowClockwiseIcon from "@mui/icons-material/Star";
 import CalendarToday from "@mui/icons-material/CalendarToday";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   AppBar,
   Avatar,
@@ -39,12 +42,19 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Alert,
+  Collapse,
 } from "@mui/material";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const ImportProfilesData = () => {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationResult, setGenerationResult] = useState(null);
+  const [showMessage, setShowMessage] = useState(false);
 
   const tableData = [
     {
@@ -75,6 +85,138 @@ export const ImportProfilesData = () => {
     { icon: <PlusLgIcon />, label: "Import Data" },
     { icon: <PlusLgIcon />, label: "Export Data" },
   ];
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    setGenerationResult(null);
+    setShowMessage(false);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/generate/all`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Data generation successful:", result);
+
+        if (result.success && result.data) {
+          const { totalRecords, results } = result.data;
+          const indiaRecords =
+            results.find((r) => r.country === "India")?.recordsGenerated || 0;
+          const usaRecords =
+            results.find((r) => r.country === "USA")?.recordsGenerated || 0;
+
+          setGenerationResult({
+            success: true,
+            totalRecords,
+            indiaRecords,
+            usaRecords,
+            timestamp: result.data.timestamp,
+          });
+        } else {
+          setGenerationResult({
+            success: true,
+            message: "Data generated successfully!",
+          });
+        }
+      } else {
+        const errorData = await response.json();
+        console.error("Data generation failed:", errorData);
+        setGenerationResult({
+          success: false,
+          message: errorData.message || "Unknown error occurred",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating data:", error);
+      setGenerationResult({
+        success: false,
+        message: error.message || "Network error occurred",
+      });
+    } finally {
+      setIsGenerating(false);
+      setShowMessage(true);
+      
+      // Auto-hide message after 10 seconds
+      setTimeout(() => {
+        setShowMessage(false);
+      }, 10000);
+    }
+  };
+
+  const renderGenerationMessage = () => {
+    if (!generationResult) return null;
+
+    const { success } = generationResult;
+
+    return (
+      <Collapse in={showMessage}>
+        <Box sx={{ mt: 2 }}>
+          <Alert
+            severity={success ? "success" : "error"}
+            icon={success ? <CheckCircleIcon /> : <ErrorIcon />}
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => setShowMessage(false)}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            sx={{
+              "& .MuiAlert-message": {
+                width: "100%",
+              },
+            }}
+          >
+            {success ? (
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                  ✅ Data Generated Successfully!
+                </Typography>
+                {generationResult.totalRecords ? (
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      <strong>Total Records:</strong> {generationResult.totalRecords.toLocaleString()}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      📍 <strong>India:</strong> {generationResult.indiaRecords.toLocaleString()} records
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      🇺🇸 <strong>USA:</strong> {generationResult.usaRecords.toLocaleString()} records
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      Generated at: {new Date(generationResult.timestamp).toLocaleString()}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography variant="body2">
+                    {generationResult.message}
+                  </Typography>
+                )}
+              </Box>
+            ) : (
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                  ❌ Data Generation Failed
+                </Typography>
+                <Typography variant="body2">
+                  {generationResult.message}
+                </Typography>
+              </Box>
+            )}
+          </Alert>
+        </Box>
+      </Collapse>
+    );
+  };
+
   const renderSubmitActions = () => (
     <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 4 }}>
       <Button
@@ -91,6 +233,7 @@ export const ImportProfilesData = () => {
       </Button>
     </Stack>
   );
+
   const renderRunSchedule = () => (
     <Paper
       sx={{
@@ -311,9 +454,6 @@ export const ImportProfilesData = () => {
           sx={{ bgcolor: "#455a64", minHeight: "41px", px: 2 }}
         >
           <Stack direction="row" alignItems="center" spacing={2}>
-            {/* <IconButton color="inherit" size="small" onClick={() => setShowDetails(false)}>
-              <img src="https://c.animaapp.com/QiGZUQ6N/img/union.svg" alt="Back" style={{ width: 20, height: 20 }} />
-            </IconButton> */}
             <IconButton
               size="small"
               onClick={() => navigate("/dashboard")}
@@ -363,130 +503,176 @@ export const ImportProfilesData = () => {
 
       <Box sx={{ p: 2 }}>
         {!showDetails ? (
-          <Card sx={{ p: 2 }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-              Import Profiles
-            </Typography>
-            <TableContainer component={Paper} elevation={0}>
-              <Table>
-                <TableHead>
-                  <TableRow
-                    sx={{
-                      bgcolor: "action.hover",
-                      borderBottom: 1,
-                      borderColor: "grey.300",
-                    }}
-                  >
-                    <TableCell padding="checkbox">
-                      <Checkbox size="small" />
-                    </TableCell>
-                    <TableCell width={476}>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={600}
-                        color="text.secondary"
-                      >
-                        Project Name
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={600}
-                        color="text.secondary"
-                      >
-                        Description
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={600}
-                        color="text.secondary"
-                      >
-                        Imported By
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={600}
-                        color="text.secondary"
-                      >
-                        Created On
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={600}
-                        color="text.secondary"
-                      >
-                        Import Type
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {tableData.map((row) => (
+          <>
+            {/* Import Profiles Card */}
+            <Card sx={{ p: 2, mb: 2 }}>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                Import Profiles
+              </Typography>
+              <TableContainer component={Paper} elevation={0}>
+                <Table>
+                  <TableHead>
                     <TableRow
-                      key={row.id}
-                      sx={{ borderBottom: 1, borderColor: "grey.300" }}
+                      sx={{
+                        bgcolor: "action.hover",
+                        borderBottom: 1,
+                        borderColor: "grey.300",
+                      }}
                     >
                       <TableCell padding="checkbox">
                         <Checkbox size="small" />
                       </TableCell>
                       <TableCell width={476}>
-                        <Link
-                          component="button"
-                          underline="always"
-                          color="primary"
-                          variant="body2"
-                          onClick={() => setShowDetails(true)}
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={600}
+                          color="text.secondary"
                         >
-                          {row.projectName}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {row.description}
+                          Project Name
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={600}
+                          color="text.secondary"
                         >
-                          <Avatar
-                            src={row.importedBy.avatar}
-                            alt={row.importedBy.name}
-                            sx={{ width: 35, height: 35 }}
-                          />
-                          <Link
-                            href="#"
-                            underline="always"
-                            color="primary"
-                            variant="body2"
-                          >
-                            {row.importedBy.name}
-                          </Link>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {row.createdOn}
+                          Description
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {row.importType}
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={600}
+                          color="text.secondary"
+                        >
+                          Imported By
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={600}
+                          color="text.secondary"
+                        >
+                          Created On
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={600}
+                          color="text.secondary"
+                        >
+                          Import Type
                         </Typography>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
+                  </TableHead>
+                  <TableBody>
+                    {tableData.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        sx={{ borderBottom: 1, borderColor: "grey.300" }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox size="small" />
+                        </TableCell>
+                        <TableCell width={476}>
+                          <Link
+                            component="button"
+                            underline="always"
+                            color="primary"
+                            variant="body2"
+                            onClick={() => setShowDetails(true)}
+                          >
+                            {row.projectName}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {row.description}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Avatar
+                              src={row.importedBy.avatar}
+                              alt={row.importedBy.name}
+                              sx={{ width: 35, height: 35 }}
+                            />
+                            <Link
+                              href="#"
+                              underline="always"
+                              color="primary"
+                              variant="body2"
+                            >
+                              {row.importedBy.name}
+                            </Link>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {row.createdOn}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {row.importType}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Card>
+
+            {/* Generate Data Card */}
+            <Card sx={{ p: 2 }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Box>
+                  <Typography variant="h6" fontWeight={600}>
+                    Generate Data
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    Generate forecast data for both countries (India and USA)
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    minWidth: 120,
+                    bgcolor: "#2563EB",
+                    "&:hover": { bgcolor: "#2563EB" },
+                    "&:disabled": { bgcolor: "#94a3b8" },
+                  }}
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? "Generating..." : "Generate"}
+                </Button>
+              </Stack>
+              
+              {/* Generation Result Message */}
+              {renderGenerationMessage()}
+            </Card>
+          </>
         ) : (
           <Box>
             <Typography
