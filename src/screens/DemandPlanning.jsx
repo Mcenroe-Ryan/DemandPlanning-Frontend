@@ -302,35 +302,34 @@ export const DemandProjectMonth = () => {
   const [alertCount, setAlertCount] = useState(null);
   const [alertCountLoading, setAlertCountLoading] = useState(true);
 
-useEffect(() => {
-  const fetchAlertCount = async () => {
-    setAlertCountLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/getAlertCount`);
-      if (response.ok) {
-        const count = await response.json();
-        setAlertCount(count);
-      } else {
+  useEffect(() => {
+    const fetchAlertCount = async () => {
+      setAlertCountLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/getAlertCount`);
+        if (response.ok) {
+          const count = await response.json();
+          setAlertCount(count);
+        } else {
+          setAlertCount(null);
+        }
+      } catch (error) {
+        console.error("Error fetching alert count:", error);
         setAlertCount(null);
+      } finally {
+        setAlertCountLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching alert count:", error);
-      setAlertCount(null);
-    } finally {
-      setAlertCountLoading(false);
-    }
-  };
+    };
 
-  fetchAlertCount();
-}, []);
-
+    fetchAlertCount();
+  }, []);
 
   // ✅ Move tabs array to component level
   const tabs = [
     { label: "Demand", count: null },
-    { 
-      label: "Alerts for Forecast Error", 
-      count: alertCountLoading ? "..." : alertCount 
+    {
+      label: "Alerts for Forecast Error",
+      count: alertCountLoading ? "..." : alertCount,
     },
     { label: "Compare Model", count: null },
     { label: "Analytics", count: null },
@@ -379,7 +378,7 @@ useEffect(() => {
   // const [showForecast, setShowForecast] = useState(true);
   // const [rowData, setRowData] = useState([]);
   // const [months, setMonths] = useState([]);
-    // const { alertCount, alertCountLoading, alertCountError } = useAlertCount();
+  // const { alertCount, alertCountLoading, alertCountError } = useAlertCount();
 
   const [filtersData, setFiltersData] = useState({
     countries: [],
@@ -925,12 +924,17 @@ useEffect(() => {
             sx={{ bgcolor: "grey.500" }}
           />
         </Box>
-         
+
         <Stack direction="row" spacing={1}>
           {/* <DateFilter onDateChange={(range) => setDateRange(range)} /> */}
           <DateFilter
             onDateChange={(range) => setDateRange(range)}
-            disabled={activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
           />
           <MultiSelectWithCheckboxes
             label="Country"
@@ -943,7 +947,12 @@ useEffect(() => {
             loading={loadingCountries}
             onOpen={fetchCountries}
             width={110}
-            disabled={activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
           />
 
           <MultiSelectWithCheckboxes
@@ -955,7 +964,13 @@ useEffect(() => {
             setSelected={setSelectedState}
             searchPlaceholder="Search state"
             loading={loadingStates}
-            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              !filtersData.states.length ||
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
             width={110}
           />
           <MultiSelectWithCheckboxes
@@ -967,7 +982,13 @@ useEffect(() => {
             setSelected={setSelectedCities}
             searchPlaceholder="Search city"
             loading={loadingCities}
-            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              !filtersData.states.length ||
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
             width={110}
           />
 
@@ -981,7 +1002,13 @@ useEffect(() => {
             setSelected={setSelectedPlants}
             searchPlaceholder="Search plant"
             loading={loadingPlants}
-            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              !filtersData.states.length ||
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
             width={110}
           />
 
@@ -995,7 +1022,13 @@ useEffect(() => {
             setSelected={setSelectedCategories}
             searchPlaceholder="Search category"
             loading={loadingCategories}
-            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              !filtersData.states.length ||
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
             width={110}
           />
 
@@ -1009,7 +1042,13 @@ useEffect(() => {
             setSelected={setSelectedSKUs}
             searchPlaceholder="Search SKU"
             loading={loadingSkus}
-            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              !filtersData.states.length ||
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
             width={110}
           />
 
@@ -1024,7 +1063,13 @@ useEffect(() => {
             searchPlaceholder="Search channel"
             loading={loadingChannels}
             width={110}
-            disabled={!filtersData.states.length || activeTab === 1 || activeTab === 2 || activeTab === 3 || activeTab === 4}
+            disabled={
+              !filtersData.states.length ||
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
           />
 
           {/* --- Three dots menu for filters --- */}
@@ -1054,7 +1099,7 @@ useEffect(() => {
       </Box>
 
       {/* Tabs */}
-      <Tabs
+      {/* <Tabs
         value={activeTab}
         onChange={(e, newValue) => {
           setActiveTab(newValue);
@@ -1068,6 +1113,57 @@ useEffect(() => {
             setCompareLoading(true);
             setTimeout(() => setCompareLoading(false), 300);
           } else if (newValue === 3) { // Analytics
+            setAnalyticsLoading(true);
+            setTimeout(() => setAnalyticsLoading(false), 300);
+          }
+        }}
+        sx={{
+          borderBottom: 1,
+          borderColor: "grey.200",
+          bgcolor: "common.white",
+          minHeight: 30,
+        }}
+      > */}
+      <Tabs
+        value={activeTab}
+        onChange={(e, newValue) => {
+          setActiveTab(newValue);
+
+          // Reset all filter selections when switching to restricted tabs
+          if (
+            newValue === 1 ||
+            newValue === 2 ||
+            newValue === 3 ||
+            newValue === 4
+          ) {
+            // Reset all selections
+            setSelectedCountry([]);
+            setSelectedState([]);
+            setSelectedCities([]);
+            setSelectedPlants([]);
+            setSelectedCategories([]);
+            setSelectedSKUs([]);
+            setSelectedChannels([]);
+
+            // Reset all filter data to empty arrays
+            setFiltersData({
+              countries: [],
+              states: [],
+              cities: [],
+              plants: [],
+              categories: [],
+              skus: [],
+              channels: [],
+            });
+          }
+
+          // Add loading for different tabs
+          if (newValue === 2) {
+            // Compare Model
+            setCompareLoading(true);
+            setTimeout(() => setCompareLoading(false), 300);
+          } else if (newValue === 3) {
+            // Analytics
             setAnalyticsLoading(true);
             setTimeout(() => setAnalyticsLoading(false), 300);
           }
@@ -1118,11 +1214,27 @@ useEffect(() => {
         <Box sx={{ flexGrow: 1, overflow: "auto" }}>
           {activeTab === 1 ? (
             chartLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: "400px",
+                }}
+              >
                 <CircularProgress />
               </Box>
             ) : (
-              <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0, lineHeight: 1, minHeight: "auto" }}>
+              <Box
+                sx={{
+                  width: "100%",
+                  bgcolor: "#f6faff",
+                  p: 0,
+                  m: 0,
+                  lineHeight: 1,
+                  minHeight: "auto",
+                }}
+              >
                 <AlertProvider>
                   <div style={{ margin: 0, padding: 0 }}>
                     <ChartSection />
@@ -1132,7 +1244,14 @@ useEffect(() => {
             )
           ) : activeTab === 2 ? (
             compareLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: "400px",
+                }}
+              >
                 <CircularProgress />
               </Box>
             ) : (
@@ -1152,7 +1271,14 @@ useEffect(() => {
             )
           ) : activeTab === 3 ? (
             analyticsLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: "400px",
+                }}
+              >
                 <CircularProgress />
               </Box>
             ) : (
