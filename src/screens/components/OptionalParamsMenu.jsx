@@ -15,7 +15,7 @@ import {
 const PARAM_OPTIONS = [
   "Sales",
   "Promotion / Marketing",
-  "Inventory Level %",
+  "Inventory Level",
   "Stock out days",
   "On Hand",
 ];

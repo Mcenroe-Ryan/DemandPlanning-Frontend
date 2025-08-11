@@ -111,7 +111,7 @@ const LEGEND_CONFIG = [
   },
   {
     key: "consensus_forecast",
-    label: "Consensus Forecast",
+    label: "Consensus Plan",
     color: "#0E7490",
     dash: "Dash",
     seriesIndex: 6,

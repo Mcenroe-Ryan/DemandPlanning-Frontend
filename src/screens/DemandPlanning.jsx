@@ -128,7 +128,7 @@ const DATA_ROW_OPTIONS = [
   { key: "all", label: "All" },
   { key: "sales", label: "Sales" },
   { key: "promotion", label: "Promotion / Marketing" },
-  { key: "inventory", label: "Inventory Level %" },
+  { key: "inventory", label: "Inventory Level" },
   { key: "stockout", label: "Stock out days" },
   { key: "onhand", label: "On Hand" },
 ];
@@ -324,7 +324,6 @@ export const DemandProjectMonth = () => {
     fetchAlertCount();
   }, []);
 
-  // ✅ Move tabs array to component level
   const tabs = [
     { label: "Demand", count: null },
     {
@@ -333,8 +332,10 @@ export const DemandProjectMonth = () => {
     },
     { label: "Compare Model", count: null },
     { label: "Analytics", count: null },
-    { label: "Scenarios", count: null },
+    //removed for demo
+    // { label: "Scenarios", count: null},
   ];
+
   const scrollRef = useRef(null);
   const isDown = useRef(false);
   const startX = useRef(0);
@@ -1099,35 +1100,15 @@ export const DemandProjectMonth = () => {
       </Box>
 
       {/* Tabs */}
-      {/* <Tabs
-        value={activeTab}
-        onChange={(e, newValue) => {
-          setActiveTab(newValue);
-
-          // Add loading for different tabs
-          // if (newValue === 1) { // Chart Section (Alerts for Forecast Error)
-          //   setChartLoading(true);
-          //   setTimeout(() => setChartLoading(false), 300);
-          // } else 
-          if (newValue === 2) { // Compare Model
-            setCompareLoading(true);
-            setTimeout(() => setCompareLoading(false), 300);
-          } else if (newValue === 3) { // Analytics
-            setAnalyticsLoading(true);
-            setTimeout(() => setAnalyticsLoading(false), 300);
-          }
-        }}
-        sx={{
-          borderBottom: 1,
-          borderColor: "grey.200",
-          bgcolor: "common.white",
-          minHeight: 30,
-        }}
-      > */}
       <Tabs
         value={activeTab}
         onChange={(e, newValue) => {
           setActiveTab(newValue);
+          
+                setDateRange({
+        startDate: format(subMonths(new Date("2024-12-01"), 6), "yyyy-MM-dd"),
+        endDate: format(addMonths(new Date("2025-12-31"), 6), "yyyy-MM-dd"),
+      });
 
           // Reset all filter selections when switching to restricted tabs
           if (
