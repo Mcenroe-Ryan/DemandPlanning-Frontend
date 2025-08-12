@@ -242,7 +242,6 @@ function MultiSelectWithCheckboxes({
           />
         </Box>
       </Button>
-
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -375,11 +374,6 @@ export const DemandProjectMonth = () => {
   });
 
   const [activeTab, setActiveTab] = useState(0);
-  // const [timePeriod, setTimePeriod] = useState("M");
-  // const [showForecast, setShowForecast] = useState(true);
-  // const [rowData, setRowData] = useState([]);
-  // const [months, setMonths] = useState([]);
-  // const { alertCount, alertCountLoading, alertCountError } = useAlertCount();
 
   const [filtersData, setFiltersData] = useState({
     countries: [],
@@ -415,11 +409,6 @@ export const DemandProjectMonth = () => {
   const [modelName, setModelName] = useState("XGBoost");
   const [canEditConsensus, setCanEditConsensus] = useState(false);
 
-  // const [isFilterDisabled, setIsFilterDisabled] = useState(false);
-
-  // For plus button menu
-  // const [dataRowsAnchorEl, setDataRowsAnchorEl] = useState(null);
-  // const [selectedDataRows, setSelectedDataRows] = useState([]);
   // For MoreVert (three dots) filter menu
   const [moreAnchorEl, setMoreAnchorEl] = useState(null);
 
@@ -430,7 +419,6 @@ export const DemandProjectMonth = () => {
   // Updated chatbox state management
   const [isChatBotOpen, setIsChatBotOpen] = useState(false);
 
-  // const [canEditConsensus, setCanEditConsensus] = useState(false);
   const [highlightTrigger, setHighlightTrigger] = useState(0);
 
   // Loading states for tab sections
@@ -449,6 +437,35 @@ export const DemandProjectMonth = () => {
 
   const handleCloseChatBot = () => {
     setIsChatBotOpen(false);
+  };
+
+  // Clear Filters Handler
+  const handleClearFilters = () => {
+    // Reset date range to default
+    setDateRange({
+      startDate: format(subMonths(new Date("2024-12-01"), 6), "yyyy-MM-dd"),
+      endDate: format(addMonths(new Date("2025-12-31"), 6), "yyyy-MM-dd"),
+    });
+
+    // Reset all selected filter arrays
+    setSelectedCountry([]);
+    setSelectedState([]);
+    setSelectedCities([]);
+    setSelectedPlants([]);
+    setSelectedCategories([]);
+    setSelectedSKUs([]);
+    setSelectedChannels([]);
+
+    // Reset all filter data arrays
+    setFiltersData({
+      countries: [],
+      states: [],
+      cities: [],
+      plants: [],
+      categories: [],
+      skus: [],
+      channels: [],
+    });
   };
 
   // Add this useEffect to fetch models on component mount
@@ -855,7 +872,6 @@ export const DemandProjectMonth = () => {
 
         <IconButton
           size="small"
-          // onClick={() => setCanEditConsensus(true)}
           onClick={() => setCanEditConsensus((prev) => !prev)}
           sx={{
             backgroundColor: canEditConsensus ? "#BFDBFE" : "transparent",
@@ -927,7 +943,6 @@ export const DemandProjectMonth = () => {
         </Box>
 
         <Stack direction="row" spacing={1}>
-          {/* <DateFilter onDateChange={(range) => setDateRange(range)} /> */}
           <DateFilter
             onDateChange={(range) => setDateRange(range)}
             disabled={
@@ -937,6 +952,7 @@ export const DemandProjectMonth = () => {
               activeTab === 4
             }
           />
+
           <MultiSelectWithCheckboxes
             label="Country"
             options={filtersData.countries}
@@ -966,7 +982,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search state"
             loading={loadingStates}
             disabled={
-              !filtersData.states.length ||
+              selectedCountry.length === 0 || // Only enabled if country is selected
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -974,6 +990,7 @@ export const DemandProjectMonth = () => {
             }
             width={110}
           />
+
           <MultiSelectWithCheckboxes
             label="City"
             options={filtersData.cities}
@@ -984,7 +1001,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search city"
             loading={loadingCities}
             disabled={
-              !filtersData.states.length ||
+              selectedState.length === 0 || // Only enabled if state is selected
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1004,7 +1021,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search plant"
             loading={loadingPlants}
             disabled={
-              !filtersData.states.length ||
+              selectedCities.length === 0 || // Only enabled if cities are selected
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1024,7 +1041,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search category"
             loading={loadingCategories}
             disabled={
-              !filtersData.states.length ||
+              selectedPlants.length === 0 || // Only enabled if plants are selected
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1044,7 +1061,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search SKU"
             loading={loadingSkus}
             disabled={
-              !filtersData.states.length ||
+              selectedCategories.length === 0 || // Only enabled if categories are selected
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1065,13 +1082,52 @@ export const DemandProjectMonth = () => {
             loading={loadingChannels}
             width={110}
             disabled={
-              !filtersData.states.length ||
+              selectedSKUs.length === 0 || // Only enabled if SKUs are selected
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
               activeTab === 4
             }
           />
+
+          {/* Clear Filters Button */}
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleClearFilters}
+            sx={{
+              minWidth: 100,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+              bgcolor: "common.white",
+              borderColor: "#bdbdbd",
+              color: "#1976D2",
+              fontWeight: 400,
+              textTransform: "none",
+              px: 1.5,
+              transition: "all 0.2s ease",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              "&:hover": {
+                borderColor: "#1976d2",
+                bgcolor: "common.white",
+              },
+              "&:disabled": {
+                bgcolor: "#f5f5f5",
+                borderColor: "#e0e0e0",
+                color: "#9e9e9e",
+              },
+            }}
+            disabled={
+              activeTab === 1 ||
+              activeTab === 2 ||
+              activeTab === 3 ||
+              activeTab === 4
+            }
+          >
+            Clear Filters
+          </Button>
 
           {/* --- Three dots menu for filters --- */}
           <IconButton size="small" onClick={handleMoreOpen}>
@@ -1104,11 +1160,14 @@ export const DemandProjectMonth = () => {
         value={activeTab}
         onChange={(e, newValue) => {
           setActiveTab(newValue);
-          
-                setDateRange({
-        startDate: format(subMonths(new Date("2024-12-01"), 6), "yyyy-MM-dd"),
-        endDate: format(addMonths(new Date("2025-12-31"), 6), "yyyy-MM-dd"),
-      });
+
+          setDateRange({
+            startDate: format(
+              subMonths(new Date("2024-12-01"), 6),
+              "yyyy-MM-dd"
+            ),
+            endDate: format(addMonths(new Date("2025-12-31"), 6), "yyyy-MM-dd"),
+          });
 
           // Reset all filter selections when switching to restricted tabs
           if (
@@ -1191,6 +1250,7 @@ export const DemandProjectMonth = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}></Box>
         </Box>
       )}
+
       <Box sx={{ bgcolor: "#EFF6FF", minHeight: "100vh", py: 0 }}>
         <Box sx={{ flexGrow: 1, overflow: "auto" }}>
           {activeTab === 1 ? (
@@ -1366,6 +1426,7 @@ export const DemandProjectMonth = () => {
             </Box>
           </Box>
         )}
+
         <Dialog
           open={isChatBotOpen}
           onClose={handleCloseChatBot}

@@ -16,12 +16,15 @@ import {
   VolumeUp as VolumeUpIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import chatbot from "../assets/chatbot.png";
+import chatbot from "../assets/chatbot1.png";
 
 const ChatBot = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [hasPrefilledFirst, setHasPrefilledFirst] = useState(false);
+
+  const fullMessages = [
     {
       id: 1,
       text: "Hello..! Supreeth, how can I help you?",
@@ -52,31 +55,74 @@ const ChatBot = ({ onClose }) => {
       isBot: true,
       timestamp: new Date(),
     },
-  ]);
+  ];
 
-  // Handle loading screen timeout
+  const [visibleMessages, setVisibleMessages] = useState([fullMessages[0]]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
-
     return () => clearTimeout(timer);
   }, []);
 
   const handleSendMessage = () => {
+    // First click: prefill the textbox with the first scripted user message
+    if (!hasPrefilledFirst) {
+      setMessage(fullMessages[1].text);
+      setHasPrefilledFirst(true);
+      return;
+    }
+
+    // Second click: send the prefilled message
+    if (hasPrefilledFirst && currentIndex === 0) {
+      const userMessage = {
+        ...fullMessages[1],
+        text: message, // Use the text from the input (which should be the prefilled text)
+      };
+      
+      setVisibleMessages((prev) => [...prev, userMessage]);
+      setMessage("");
+      setCurrentIndex(1);
+
+      // Auto-show bot reply after delay
+      setTimeout(() => {
+        setVisibleMessages((prev) => [...prev, fullMessages[2]]);
+        setCurrentIndex(2);
+      }, 800);
+      return;
+    }
+
+    // Continue with the rest of the scripted messages
+    if (currentIndex < fullMessages.length - 1) {
+      // For subsequent user messages in the script, prefill first, then send on next click
+      const nextIndex = currentIndex + 1;
+      const nextMsg = fullMessages[nextIndex];
+
+      if (!nextMsg.isBot) {
+        // If it's a user message, prefill it
+        setMessage(nextMsg.text);
+        return;
+      } else {
+        // If it's a bot message, show it directly
+        setVisibleMessages((prev) => [...prev, nextMsg]);
+        setCurrentIndex(nextIndex);
+        return;
+      }
+    }
+
+    // After scripted flow ends, fall back to normal chat logic
     if (message.trim() === "") return;
 
     const newMessage = {
-      id: messages.length + 1,
+      id: visibleMessages.length + 1,
       text: message,
       isBot: false,
       timestamp: new Date(),
     };
-
-    setMessages([...messages, newMessage]);
+    setVisibleMessages([...visibleMessages, newMessage]);
     setMessage("");
 
-    // Simulate bot response with business-focused content
     setTimeout(() => {
       const responses = [
         "I'm analyzing the data to provide you with accurate demand forecasting insights...",
@@ -84,27 +130,70 @@ const ChatBot = ({ onClose }) => {
         "Let me process your request and generate relevant business insights for you...",
         "I'm accessing the latest market data to give you precise forecasting information...",
       ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
+      const randomResponse =
+        responses[Math.floor(Math.random() * responses.length)];
       const botResponse = {
-        id: messages.length + 2,
+        id: visibleMessages.length + 2,
         text: randomResponse,
         isBot: true,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, botResponse]);
+      setVisibleMessages((prev) => [...prev, botResponse]);
     }, 1000);
+  };
+
+  // Handle sending scripted user messages after they're prefilled
+  const handleSendPrefilledMessage = () => {
+    if (message.trim() === "") return;
+
+    // Find the next user message in the script based on current position
+    let userMessageIndex = -1;
+    for (let i = currentIndex; i < fullMessages.length; i++) {
+      if (!fullMessages[i].isBot) {
+        userMessageIndex = i;
+        break;
+      }
+    }
+
+    if (userMessageIndex !== -1) {
+      const userMessage = {
+        ...fullMessages[userMessageIndex],
+        text: message,
+      };
+      
+      setVisibleMessages((prev) => [...prev, userMessage]);
+      setMessage("");
+      setCurrentIndex(userMessageIndex);
+
+      // Show bot response if there is one
+      if (userMessageIndex + 1 < fullMessages.length) {
+        setTimeout(() => {
+          setVisibleMessages((prev) => [...prev, fullMessages[userMessageIndex + 1]]);
+          setCurrentIndex(userMessageIndex + 1);
+        }, 800);
+      }
+    }
   };
 
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
+      if (hasPrefilledFirst && message.trim() !== "" && currentIndex < fullMessages.length - 1) {
+        handleSendPrefilledMessage();
+      } else {
+        handleSendMessage();
+      }
+    }
+  };
+
+  const handleSendClick = () => {
+    if (hasPrefilledFirst && message.trim() !== "" && currentIndex < fullMessages.length - 1) {
+      handleSendPrefilledMessage();
+    } else {
       handleSendMessage();
     }
   };
 
-  // Loading Screen Component
   if (isLoading) {
     return (
       <Box
@@ -140,7 +229,6 @@ const ChatBot = ({ onClose }) => {
     );
   }
 
-  // Main ChatBot Interface - Planner Assistant
   return (
     <Box
       sx={{
@@ -154,7 +242,7 @@ const ChatBot = ({ onClose }) => {
         position: "relative",
       }}
     >
-      {/* Header - Planner Assistant Style */}
+      {/* Header */}
       <Box
         sx={{
           bgcolor: "white",
@@ -180,11 +268,9 @@ const ChatBot = ({ onClose }) => {
           >
             🤖
           </Avatar>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: "600", color: "#4285f4" }}>
-              Planner Assistant
-            </Typography>
-          </Box>
+          <Typography variant="h6" sx={{ fontWeight: "600", color: "#4285f4" }}>
+            Planner Assistant
+          </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton size="small" sx={{ color: "#666" }}>
@@ -196,7 +282,7 @@ const ChatBot = ({ onClose }) => {
         </Box>
       </Box>
 
-      {/* Messages Area - Business Focused */}
+      {/* Messages */}
       <Box
         sx={{
           flex: 1,
@@ -207,7 +293,7 @@ const ChatBot = ({ onClose }) => {
           gap: 3,
         }}
       >
-        {messages.map((msg) => (
+        {visibleMessages.map((msg) => (
           <Box
             key={msg.id}
             sx={{
@@ -242,7 +328,9 @@ const ChatBot = ({ onClose }) => {
                   : "20px 0 20px 20px",
                 fontSize: "14px",
                 lineHeight: 1.4,
-                boxShadow: msg.isBot ? "none" : "0 2px 10px rgba(66, 133, 244, 0.3)",
+                boxShadow: msg.isBot
+                  ? "none"
+                  : "0 2px 10px rgba(66, 133, 244, 0.3)",
               }}
             >
               <Typography variant="body2" sx={{ fontSize: "14px" }}>
@@ -253,7 +341,7 @@ const ChatBot = ({ onClose }) => {
         ))}
       </Box>
 
-      {/* Input Area - Professional Style */}
+      {/* Input */}
       <Box
         sx={{
           p: 3,
@@ -282,13 +370,12 @@ const ChatBot = ({ onClose }) => {
                 </IconButton>
                 <IconButton
                   size="small"
-                  onClick={handleSendMessage}
-                  disabled={message.trim() === ""}
+                  onClick={handleSendClick}
                   sx={{
-                    bgcolor: message.trim() === "" ? "#e0e0e0" : "#4285f4",
-                    color: message.trim() === "" ? "#999" : "white",
+                    bgcolor: "#4285f4",
+                    color: "white",
                     "&:hover": {
-                      bgcolor: message.trim() === "" ? "#e0e0e0" : "#3367d6",
+                      bgcolor: "#3367d6",
                     },
                     ml: 1,
                   }}
@@ -318,3 +405,4 @@ const ChatBot = ({ onClose }) => {
 };
 
 export default ChatBot;
+

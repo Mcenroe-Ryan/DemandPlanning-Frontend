@@ -771,6 +771,7 @@ export default function ModelComparisonSection() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        gap: 1, // Added gap for spacing between icon and text
                         bgcolor: shouldBeBlue ? "#1976d2" : "#CBD5E1",
                         borderBottom: "1px solid",
                         borderColor: "divider",
@@ -782,6 +783,13 @@ export default function ModelComparisonSection() {
                         setExplain({ id: model.id, name: model.name })
                       }
                     >
+                      <i 
+                        className="bi bi-eye" 
+                        style={{ 
+                          fontSize: 14, 
+                          color: shouldBeBlue ? "#fff" : "#475569" 
+                        }} 
+                      />
                       <Typography
                         variant="body2"
                         color={shouldBeBlue ? "#fff" : "text.primary"}

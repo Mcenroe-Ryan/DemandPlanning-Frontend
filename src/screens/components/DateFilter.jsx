@@ -71,11 +71,21 @@ export default function DateFilter({ onDateChange, disabled = false }) {
     }
   };
 
+  //This is to show month number after selection
+  // const getLabel = () => {
+  //   if (!hasUserSelected) return "Date Filter";
+  //   return `${format(range[0].startDate, "MM/dd/yyyy")} - ${format(
+  //     range[0].endDate,
+  //     "MM/dd/yyyy"
+  //   )}`;
+  // };
+
+  //This is to show month name after selection
   const getLabel = () => {
     if (!hasUserSelected) return "Date Filter";
-    return `${format(range[0].startDate, "MM/dd/yyyy")} - ${format(
+    return `${format(range[0].startDate, "MMM dd, yyyy")} - ${format(
       range[0].endDate,
-      "MM/dd/yyyy"
+    "MMM dd, yyyy"
     )}`;
   };
 
@@ -89,7 +99,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
           minWidth: 110,
           px: 2,
           fontSize: "13px",
-          bgcolor: disabled ? "grey.100" : "common.white", 
+          bgcolor: disabled ? "grey.100" : "common.white",
           textTransform: "none",
           borderRadius: 1,
           display: "inline-flex",
@@ -98,7 +108,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
-          opacity: 1, 
+          opacity: 1,
           cursor: disabled ? "not-allowed" : "pointer",
           borderColor: disabled ? "grey.300" : "primary.main",
           "&:hover": {
