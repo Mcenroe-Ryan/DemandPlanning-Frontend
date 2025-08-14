@@ -738,19 +738,43 @@ export const DemandProjectMonth = () => {
     setSelectedChannels([]);
   }, [selectedSKUs]);
 
+  // useEffect(() => {
+  //   setLoadingChannels(true);
+  //   axios
+  //     .get(`${API_BASE_URL}/getAllChannels`)
+  //     .then((res) => {
+  //       setFiltersData((prev) => ({
+  //         ...prev,
+  //         channels: Array.isArray(res.data) ? res.data : [],
+  //       }));
+  //     })
+  //     .catch(() => setFiltersData((prev) => ({ ...prev, channels: [] })))
+  //     .finally(() => setLoadingChannels(false));
+  // }, []);
   useEffect(() => {
-    setLoadingChannels(true);
-    axios
-      .get(`${API_BASE_URL}/getAllChannels`)
-      .then((res) => {
-        setFiltersData((prev) => ({
-          ...prev,
-          channels: Array.isArray(res.data) ? res.data : [],
-        }));
-      })
-      .catch(() => setFiltersData((prev) => ({ ...prev, channels: [] })))
-      .finally(() => setLoadingChannels(false));
-  }, []);
+  setLoadingChannels(true);
+  axios
+    .get(`${API_BASE_URL}/getAllChannels`, {
+      // Add cache-busting headers
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      // Add cache-busting query parameter
+      params: {
+        _: Date.now() // Unique timestamp parameter
+      }
+    })
+    .then((res) => {
+      setFiltersData((prev) => ({
+        ...prev,
+        channels: Array.isArray(res.data) ? res.data : [],
+      }));
+    })
+    .catch(() => setFiltersData((prev) => ({ ...prev, channels: [] })))
+    .finally(() => setLoadingChannels(false));
+}, []);
 
   return (
     <Box>

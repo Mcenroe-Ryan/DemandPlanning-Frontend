@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import AuthPages from "./screens/Login";
+import ScenarioDashboard from "./screens/components/ScenarioSection";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import "@fontsource/poppins"; // Loads Poppins font locally
@@ -17,6 +18,7 @@ createRoot(document.getElementById("app")).render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthPages />
+      {/* <ScenarioDashboard /> */}
     </ThemeProvider>
   </StrictMode>
 );

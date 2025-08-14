@@ -478,6 +478,9 @@ export default function ForecastTable({
     message: "",
   });
   const [highlightEditableCells, setHighlightEditableCells] = useState(false);
+  
+  // Add swap state
+  const [isSwapped, setIsSwapped] = useState(false);
 
   const months = useMemo(() => {
     if (
@@ -606,6 +609,7 @@ export default function ForecastTable({
       setHighlightEditableCells(false);
     }
   }, [highlightTrigger, canEditConsensus]);
+  
   useEffect(() => {
     if (!canEditConsensus) {
       setHighlightEditableCells(false);
@@ -740,13 +744,17 @@ export default function ForecastTable({
   const allRows = reorderRows();
 
   // Add New menu handlers
-  // const handleAddRowsClick = (event) => setAnchorEl(event.currentTarget);
   const handleAddRowsClick = (event) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
-  // const handleMenuClose = () => setAnchorEl(null);
+  
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  // Add swap handler
+  const handleSwapClick = () => {
+    setIsSwapped(prev => !prev);
   };
 
   const handleConfirmationClose = () => {
@@ -797,6 +805,322 @@ export default function ForecastTable({
       setCanEditConsensus(false);
     }
   };
+
+  // Extract table rendering into helper function
+  const renderForecastTable = () => (
+    <Box
+      sx={{
+        p: 3,
+        pt: 0,
+        mx: 1,
+        bgcolor: "common.white",
+        padding: 0,
+        borderRadius: 0,
+        boxShadow: 1,
+        border: "1px solid",
+        borderColor: "grey.200",
+        overflowX: "auto",
+        fontFamily: "'Poppins', sans-serif !important",
+      }}
+    >
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "separate",
+          borderSpacing: 0,
+          minWidth: 900,
+          fontFamily: "'Poppins', sans-serif !important",
+        }}
+      >
+        <thead>
+          <tr>
+            <th
+              style={{
+                position: "sticky",
+                left: 0,
+                background: "#DEE2E6",
+                zIndex: Z_INDEX_LAYERS.STICKY_HEADER_COLUMN,
+                fontWeight: 700,
+                fontSize: 14,
+                textAlign: "left",
+                padding: "8px 16px",
+                borderRight: "1px solid #e0e7ef",
+                borderBottom: "2px solid #e0e7ef",
+                color: "#3c4257",
+                minWidth: 240,
+              }}
+            ></th>
+            {visibleMonths.map((m) => (
+              <th
+                key={m}
+                style={{
+                  background: "#DEE2E6",
+                  zIndex: Z_INDEX_LAYERS.STICKY_HEADER,
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 500,
+                  fontSize: "14px",
+                  fontStyle: "normal",
+                  lineHeight: "100%",
+                  letterSpacing: "0.1px",
+                  textAlign: "right",
+                  verticalAlign: "middle",
+                  padding: "8px 12px",
+                  borderBottom: "2px solid #e0e7ef",
+                  color: "#334155",
+                  minWidth: 90,
+                }}
+              >
+                {m}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {allRows.map((label, idx) => (
+            <tr
+              key={label}
+              style={{
+                background: idx % 2 === 1 ? "#f7fafd" : "#fff",
+              }}
+            >
+              {/* ONLY paddingLeft for left label cell for Sales and Promotions row */}
+              <td
+                style={{
+                  position: "sticky",
+                  left: 0,
+                  background: "#F1F5F9",
+                  zIndex: Z_INDEX_LAYERS.STICKY_COLUMN,
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: label === "Consensus" ? 600 : 400,
+                  fontSize: "14px",
+                  lineHeight: "100%",
+                  letterSpacing: "0.1px",
+                  textAlign: "left",
+                  padding: "8px 16px",
+                  ...(label === "Sales" || label === "Promotion / Marketing"
+                    ? { paddingLeft: "36px" }
+                    : {}),
+                  borderRight: "1px solid #e0e7ef",
+                  borderBottom: "1px solid #e0e7ef",
+                  color: "#3c4257",
+                  minWidth: 140,
+                  verticalAlign: "middle",
+                }}
+              >
+                {label}
+              </td>
+              {visibleMonths.map((m) => {
+                const value = data?.[m]?.[label];
+                const isConsensusRow = label === "Consensus";
+                const isEditing =
+                  editingCell.month === m && editingCell.row === label;
+                const isUpdating =
+                  updatingCell.month === m && updatingCell.row === label;
+                const locked = isConsensusRow && isMonthLocked(m);
+                const isAllowedMonth =
+                  new Date(getMonthDate(m)).getTime() ===
+                  new Date(getMonthDate(firstFutureMonth)).getTime();
+
+                const isEditableCell =
+                  isConsensusRow && isAllowedMonth && !locked;
+                const shouldHighlight = canEditConsensus && isEditableCell;
+
+                const displayValue =
+                  value === undefined || value === null
+                    ? "-"
+                    : formatNumberByCountry(value, selectedCountry);
+
+                return (
+                  <td
+                    key={m}
+                    style={{
+                      background: isEditing
+                        ? "#ffffff"
+                        : shouldHighlight
+                        ? "rgba(251, 251, 251, 1)"
+                        : futureMonthSet.has(m)
+                        ? "#e9f0f7"
+                        : undefined,
+                      boxShadow: isEditing
+                        ? "0 0 0 2px #2563EB, 0 2px 8px rgba(37, 99, 235, 0.15)"
+                        : shouldHighlight
+                        ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)"
+                        : undefined,
+                      padding: "8px 12px",
+                      borderBottom: "1px solid #e0e7ef",
+                      textAlign: "right",
+                      fontSize: 14,
+                      fontWeight: 400,
+                      color: "#64748B",
+                      minWidth: 90,
+                      cursor: isConsensusRow ? "pointer" : "default",
+                      position: "relative",
+                      zIndex: getCellZIndex(
+                        false,
+                        shouldHighlight,
+                        isEditing
+                      ),
+                      transition: "all 0.3s ease-in-out",
+                    }}
+                    onClick={(e) => {
+                      if (
+                        isConsensusRow &&
+                        canEditConsensus &&
+                        !locked &&
+                        !isEditing &&
+                        !isUpdating &&
+                        isAllowedMonth
+                      ) {
+                        if (validateSingleSKUSelection()) {
+                          setEditingCell({ month: m, row: label });
+                          setEditValue(value === "-" ? "" : value);
+                          setHighlightEditableCells(false);
+                        }
+                      } else if (
+                        isConsensusRow &&
+                        locked &&
+                        value &&
+                        value !== "-"
+                      ) {
+                        setLockComment({
+                          open: true,
+                          anchor: e.currentTarget,
+                        });
+                      }
+                    }}
+                  >
+                    {label === "Consensus" && value !== "-" && (
+                      <RedTriangleIcon visible={true} />
+                    )}
+                    {shouldHighlight && (
+                      <>
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 4,
+                            left: 4,
+                            width: 12,
+                            height: 12,
+                            zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
+                            animation: "pulse 1s infinite",
+                            "@keyframes pulse": {
+                              "0%": {
+                                opacity: 1,
+                                transform: "scale(1)",
+                              },
+                              "50%": {
+                                opacity: 0.5,
+                                transform: "scale(1.3)",
+                              },
+                              "100%": {
+                                opacity: 1,
+                                transform: "scale(1)",
+                              },
+                            },
+                          }}
+                        />
+                      </>
+                    )}
+                    {isConsensusRow ? (
+                      locked ? (
+                        <span
+                          style={{
+                            color: "#aaa",
+                            display: "flex",
+                            alignItems: "center",
+                            textAlign: "right",
+                            justifyContent: "end",
+                            gap: 4,
+                          }}
+                        >
+                          <LockIcon style={{ fontSize: 14 }} />
+                          {displayValue}
+                        </span>
+                      ) : isEditing && isAllowedMonth ? (
+                        <input
+                          type="number"
+                          value={editValue}
+                          style={{
+                            width: "70px",
+                            fontSize: 14,
+                            padding: "2px 4px",
+                            border: "1px solid #2563EB",
+                            borderRadius: 4,
+                            background: "#fff",
+                            outline: "none",
+                            zIndex: Z_INDEX_LAYERS.EDITING_CELL,
+                          }}
+                          autoFocus
+                          disabled={isUpdating}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={async () => {
+                            const targetDate = getMonthDate(m);
+                            const payload = {
+                              country_name: Array.isArray(selectedCountry)
+                                ? selectedCountry
+                                : [selectedCountry],
+                              state_name: Array.isArray(selectedState)
+                                ? selectedState
+                                : [selectedState],
+                              city_name: Array.isArray(selectedCities)
+                                ? selectedCities
+                                : [selectedCities],
+                              plant_name: Array.isArray(selectedPlants)
+                                ? selectedPlants
+                                : [selectedPlants],
+                              category_name: Array.isArray(selectedCategories)
+                                ? selectedCategories
+                                : [selectedCategories],
+                              sku_code: Array.isArray(selectedSKUs)
+                                ? selectedSKUs
+                                : [selectedSKUs],
+                              channel_name: Array.isArray(selectedChannels)
+                                ? selectedChannels
+                                : [selectedChannels],
+                              start_date: startDate,
+                              end_date: endDate,
+                              consensus_forecast: editValue,
+                              target_month: targetDate,
+                              model_name: modelName,
+                            };
+                            setConfirmationDialog({
+                              open: true,
+                              month: m,
+                              row: label,
+                              value: editValue,
+                              pendingPayload: payload,
+                            });
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.target.blur();
+                            } else if (e.key === "Escape") {
+                              setEditingCell({ month: null, row: null });
+                            }
+                          }}
+                        />
+                      ) : isAllowedMonth ? (
+                        <span style={{ color: "#1976d2", fontWeight: 500 }}>
+                          {displayValue}
+                        </span>
+                      ) : (
+                        "-"
+                      )
+                    ) : value === undefined || value === null ? (
+                      "-"
+                    ) : (
+                      formatNumberByCountry(value, selectedCountry)
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Box>
+  );
+
   return (
     <>
       {/* Header Bar */}
@@ -874,69 +1198,34 @@ export default function ForecastTable({
           </Stack>
         </Stack>
         <Stack direction="row" spacing={1.5} alignItems="center">
-          {/* <IconButton size="small" onClick={handleAddRowsClick}>
-            <AddBoxOutlinedIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            anchorOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "left",
-            }}
-            PaperProps={{
-              style: { minWidth: 200 },
-            }}
-          >
-            <OptionalParamsMenu
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              selected={optionalRows}
-              onChange={setOptionalRows}
-            />
-          </Menu> */}
-
-          {/* <Box sx={{ position: "relative" }}>
+          <Box sx={{ position: "relative" }}>
             <IconButton size="small" onClick={handleAddRowsClick}>
               <AddBoxOutlinedIcon
                 sx={{ width: 20, height: 20, color: "text.secondary" }}
               />
             </IconButton>
-
+            
             <OptionalParamsMenu
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
               selected={optionalRows}
               onChange={setOptionalRows}
             />
-          </Box> */} 
-          <Box sx={{ position: "relative" }}>
-  <IconButton size="small" onClick={handleAddRowsClick}>
-    <AddBoxOutlinedIcon
-      sx={{ width: 20, height: 20, color: "text.secondary" }}
-    />
-  </IconButton>
-  
-  <OptionalParamsMenu
-    open={Boolean(anchorEl)}
-    onClose={handleMenuClose}
-    selected={optionalRows}
-    onChange={setOptionalRows}
-  />
-</Box>
+          </Box>
 
-          <IconButton size="small">
+          {/* Updated Swap Button with click handler */}
+          <IconButton size="small" onClick={handleSwapClick}>
             <SwapVertIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
+              sx={{
+                width: 20,
+                height: 20,
+                color: "text.secondary",
+                transform: isSwapped ? "rotate(180deg)" : "none",
+                transition: "transform 0.3s ease"
+              }}
             />
           </IconButton>
+          
           <IconButton size="small">
             <ShareIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
@@ -954,318 +1243,52 @@ export default function ForecastTable({
           </IconButton>
         </Stack>
       </Box>
-      {/* TABLE */}
-      <Box
-        sx={{
-          p: 3,
-          pt: 0,
-          mx: 1,
-          bgcolor: "common.white",
-          padding: 0,
-          borderRadius: 0,
-          boxShadow: 1,
-          border: "1px solid",
-          borderColor: "grey.200",
-          overflowX: "auto",
-          fontFamily: "'Poppins', sans-serif !important",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "separate",
-            borderSpacing: 0,
-            minWidth: 900,
-            fontFamily: "'Poppins', sans-serif !important",
-          }}
-        >
-          <thead>
-            <tr>
-              <th
-                style={{
-                  position: "sticky",
-                  left: 0,
-                  background: "#DEE2E6",
-                  zIndex: Z_INDEX_LAYERS.STICKY_HEADER_COLUMN,
-                  fontWeight: 700,
-                  fontSize: 14,
-                  textAlign: "left",
-                  padding: "8px 16px",
-                  borderRight: "1px solid #e0e7ef",
-                  borderBottom: "2px solid #e0e7ef",
-                  color: "#3c4257",
-                  minWidth: 240,
-                }}
-              ></th>
-              {visibleMonths.map((m) => (
-                <th
-                  key={m}
-                  style={{
-                    background: "#DEE2E6",
-                    zIndex: Z_INDEX_LAYERS.STICKY_HEADER,
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    fontStyle: "normal",
-                    lineHeight: "100%",
-                    letterSpacing: "0.1px",
-                    textAlign: "right",
-                    verticalAlign: "middle",
-                    padding: "8px 12px",
-                    borderBottom: "2px solid #e0e7ef",
-                    color: "#334155",
-                    minWidth: 90,
-                  }}
-                >
-                  {m}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {allRows.map((label, idx) => (
-              <tr
-                key={label}
-                style={{
-                  background: idx % 2 === 1 ? "#f7fafd" : "#fff",
-                }}
-              >
-                {/* ONLY paddingLeft for left label cell for Sales and Promotions row */}
-                <td
-                  style={{
-                    position: "sticky",
-                    left: 0,
-                    background: "#F1F5F9",
-                    zIndex: Z_INDEX_LAYERS.STICKY_COLUMN,
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: label === "Consensus" ? 600 : 400,
-                    fontSize: "14px",
-                    lineHeight: "100%",
-                    letterSpacing: "0.1px",
-                    textAlign: "left",
-                    padding: "8px 16px",
-                    ...(label === "Sales" || label === "Promotion / Marketing"
-                      ? { paddingLeft: "36px" }
-                      : {}),
-                    borderRight: "1px solid #e0e7ef",
-                    borderBottom: "1px solid #e0e7ef",
-                    color: "#3c4257",
-                    minWidth: 140,
-                    verticalAlign: "middle",
-                  }}
-                >
-                  {label}
-                </td>
-                {visibleMonths.map((m) => {
-                  const value = data?.[m]?.[label];
-                  const isConsensusRow = label === "Consensus";
-                  const isEditing =
-                    editingCell.month === m && editingCell.row === label;
-                  const isUpdating =
-                    updatingCell.month === m && updatingCell.row === label;
-                  const locked = isConsensusRow && isMonthLocked(m);
-                  const isAllowedMonth =
-                    new Date(getMonthDate(m)).getTime() ===
-                    new Date(getMonthDate(firstFutureMonth)).getTime();
 
-                  const isEditableCell =
-                    isConsensusRow && isAllowedMonth && !locked;
-                  const shouldHighlight = canEditConsensus && isEditableCell;
+      {/* Conditional rendering based on swap state */}
+      {isSwapped ? (
+        <>
+          {/* Chart First (when swapped) */}
+          {data && (
+            <ForecastChart
+              months={visibleMonths}
+              data={data}
+              modelName={modelName}
+              setModelName={setModelName}
+              models={models}
+              loadingModels={loadingModels}
+              avgMapeData={avgMape}
+              countryName={selectedCountry}
+              showForecast={showForecast}
+              setErrorSnackbar={setErrorSnackbar}
+            />
+          )}
 
-                  const displayValue =
-                    value === undefined || value === null
-                      ? "-"
-                      : formatNumberByCountry(value, selectedCountry);
+          {/* Table Second (when swapped) */}
+          {renderForecastTable()}
+        </>
+      ) : (
+        <>
+          {/* Table First (default order) */}
+          {renderForecastTable()}
 
-                  return (
-                    <td
-                      key={m}
-                      style={{
-                        background: isEditing
-                          ? "#ffffff"
-                          : shouldHighlight
-                          ? "rgba(251, 251, 251, 1)"
-                          : futureMonthSet.has(m)
-                          ? "#e9f0f7"
-                          : undefined,
-                        boxShadow: isEditing
-                          ? "0 0 0 2px #2563EB, 0 2px 8px rgba(37, 99, 235, 0.15)"
-                          : shouldHighlight
-                          ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)"
-                          : undefined,
-                        padding: "8px 12px",
-                        borderBottom: "1px solid #e0e7ef",
-                        textAlign: "right",
-                        fontSize: 14,
-                        fontWeight: 400,
-                        color: "#64748B",
-                        minWidth: 90,
-                        cursor: isConsensusRow ? "pointer" : "default",
-                        position: "relative",
-                        zIndex: getCellZIndex(
-                          false,
-                          shouldHighlight,
-                          isEditing
-                        ),
-                        transition: "all 0.3s ease-in-out",
-                      }}
-                      onClick={(e) => {
-                        if (
-                          isConsensusRow &&
-                          canEditConsensus &&
-                          !locked &&
-                          !isEditing &&
-                          !isUpdating &&
-                          isAllowedMonth
-                        ) {
-                          if (validateSingleSKUSelection()) {
-                            setEditingCell({ month: m, row: label });
-                            setEditValue(value === "-" ? "" : value);
-                            setHighlightEditableCells(false);
-                          }
-                        } else if (
-                          isConsensusRow &&
-                          locked &&
-                          value &&
-                          value !== "-"
-                        ) {
-                          setLockComment({
-                            open: true,
-                            anchor: e.currentTarget,
-                          });
-                        }
-                      }}
-                    >
-                      {label === "Consensus" && value !== "-" && (
-                        <RedTriangleIcon visible={true} />
-                      )}
-                      {shouldHighlight && (
-                        <>
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              top: 4,
-                              left: 4,
-                              width: 12,
-                              height: 12,
-                              zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
-                              animation: "pulse 1s infinite",
-                              "@keyframes pulse": {
-                                "0%": {
-                                  opacity: 1,
-                                  transform: "scale(1)",
-                                },
-                                "50%": {
-                                  opacity: 0.5,
-                                  transform: "scale(1.3)",
-                                },
-                                "100%": {
-                                  opacity: 1,
-                                  transform: "scale(1)",
-                                },
-                              },
-                            }}
-                          />
-                        </>
-                      )}
-                      {isConsensusRow ? (
-                        locked ? (
-                          <span
-                            style={{
-                              color: "#aaa",
-                              display: "flex",
-                              alignItems: "center",
-                              textAlign: "right",
-                              justifyContent: "end",
-                              gap: 4,
-                            }}
-                          >
-                            <LockIcon style={{ fontSize: 14 }} />
-                            {displayValue}
-                          </span>
-                        ) : isEditing && isAllowedMonth ? (
-                          <input
-                            type="number"
-                            value={editValue}
-                            style={{
-                              width: "70px",
-                              fontSize: 14,
-                              padding: "2px 4px",
-                              border: "1px solid #2563EB",
-                              borderRadius: 4,
-                              background: "#fff",
-                              outline: "none",
-                              zIndex: Z_INDEX_LAYERS.EDITING_CELL,
-                            }}
-                            autoFocus
-                            disabled={isUpdating}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={async () => {
-                              const targetDate = getMonthDate(m);
-                              const payload = {
-                                country_name: Array.isArray(selectedCountry)
-                                  ? selectedCountry
-                                  : [selectedCountry],
-                                state_name: Array.isArray(selectedState)
-                                  ? selectedState
-                                  : [selectedState],
-                                city_name: Array.isArray(selectedCities)
-                                  ? selectedCities
-                                  : [selectedCities],
-                                plant_name: Array.isArray(selectedPlants)
-                                  ? selectedPlants
-                                  : [selectedPlants],
-                                category_name: Array.isArray(selectedCategories)
-                                  ? selectedCategories
-                                  : [selectedCategories],
-                                sku_code: Array.isArray(selectedSKUs)
-                                  ? selectedSKUs
-                                  : [selectedSKUs],
-                                channel_name: Array.isArray(selectedChannels)
-                                  ? selectedChannels
-                                  : [selectedChannels],
-                                start_date: startDate,
-                                end_date: endDate,
-                                consensus_forecast: editValue,
-                                target_month: targetDate,
-                                model_name: modelName,
-                              };
-                              setConfirmationDialog({
-                                open: true,
-                                month: m,
-                                row: label,
-                                value: editValue,
-                                pendingPayload: payload,
-                              });
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.target.blur();
-                              } else if (e.key === "Escape") {
-                                setEditingCell({ month: null, row: null });
-                              }
-                            }}
-                          />
-                        ) : isAllowedMonth ? (
-                          <span style={{ color: "#1976d2", fontWeight: 500 }}>
-                            {displayValue}
-                          </span>
-                        ) : (
-                          "-"
-                        )
-                      ) : value === undefined || value === null ? (
-                        "-"
-                      ) : (
-                        formatNumberByCountry(value, selectedCountry)
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Box>
+          {/* Chart Second (default order) */}
+          {data && (
+            <ForecastChart
+              months={visibleMonths}
+              data={data}
+              modelName={modelName}
+              setModelName={setModelName}
+              models={models}
+              loadingModels={loadingModels}
+              avgMapeData={avgMape}
+              countryName={selectedCountry}
+              showForecast={showForecast}
+              setErrorSnackbar={setErrorSnackbar}
+            />
+          )}
+        </>
+      )}
+
       {/* Error Snackbar */}
       <Snackbar
         open={errorSnackbar.open}
@@ -1281,25 +1304,13 @@ export default function ForecastTable({
           {errorSnackbar.message}
         </Alert>
       </Snackbar>
+      
       <LockCommentPopover
         open={lockComment.open}
         anchorEl={lockComment.anchor}
         onClose={() => setLockComment({ ...lockComment, open: false })}
       />
-      {data && (
-        <ForecastChart
-          months={visibleMonths}
-          data={data}
-          modelName={modelName}
-          setModelName={setModelName}
-          models={models}
-          loadingModels={loadingModels}
-          avgMapeData={avgMape}
-          countryName={selectedCountry}
-          showForecast={showForecast}
-          setErrorSnackbar={setErrorSnackbar}
-        />
-      )}
+      
       <ConfirmationDialog
         open={confirmationDialog.open}
         onClose={handleConfirmationClose}

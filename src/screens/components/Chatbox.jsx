@@ -23,6 +23,8 @@ const ChatBot = ({ onClose }) => {
   const [message, setMessage] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasPrefilledFirst, setHasPrefilledFirst] = useState(false);
+  const [scriptFinished, setScriptFinished] = useState(false);
+  const [botIsTyping, setBotIsTyping] = useState(false); // ✅ NEW lock
 
   const fullMessages = [
     {
@@ -66,52 +68,54 @@ const ChatBot = ({ onClose }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  const isSendBlocked = scriptFinished && message.trim() === "";
+
   const handleSendMessage = () => {
-    // First click: prefill the textbox with the first scripted user message
+    if (isSendBlocked || botIsTyping) return;
+
     if (!hasPrefilledFirst) {
       setMessage(fullMessages[1].text);
       setHasPrefilledFirst(true);
       return;
     }
 
-    // Second click: send the prefilled message
     if (hasPrefilledFirst && currentIndex === 0) {
       const userMessage = {
         ...fullMessages[1],
-        text: message, // Use the text from the input (which should be the prefilled text)
+        text: message,
       };
-      
       setVisibleMessages((prev) => [...prev, userMessage]);
       setMessage("");
       setCurrentIndex(1);
 
-      // Auto-show bot reply after delay
+      setBotIsTyping(true);
       setTimeout(() => {
         setVisibleMessages((prev) => [...prev, fullMessages[2]]);
         setCurrentIndex(2);
+        setBotIsTyping(false);
       }, 800);
       return;
     }
 
-    // Continue with the rest of the scripted messages
     if (currentIndex < fullMessages.length - 1) {
-      // For subsequent user messages in the script, prefill first, then send on next click
       const nextIndex = currentIndex + 1;
       const nextMsg = fullMessages[nextIndex];
 
       if (!nextMsg.isBot) {
-        // If it's a user message, prefill it
         setMessage(nextMsg.text);
         return;
       } else {
-        // If it's a bot message, show it directly
+        setBotIsTyping(true);
         setVisibleMessages((prev) => [...prev, nextMsg]);
         setCurrentIndex(nextIndex);
+        if (nextIndex === fullMessages.length - 1) {
+          setScriptFinished(true);
+        }
+        setBotIsTyping(false);
         return;
       }
     }
 
-    // After scripted flow ends, fall back to normal chat logic
     if (message.trim() === "") return;
 
     const newMessage = {
@@ -123,6 +127,7 @@ const ChatBot = ({ onClose }) => {
     setVisibleMessages([...visibleMessages, newMessage]);
     setMessage("");
 
+    setBotIsTyping(true);
     setTimeout(() => {
       const responses = [
         "I'm analyzing the data to provide you with accurate demand forecasting insights...",
@@ -139,14 +144,13 @@ const ChatBot = ({ onClose }) => {
         timestamp: new Date(),
       };
       setVisibleMessages((prev) => [...prev, botResponse]);
+      setBotIsTyping(false);
     }, 1000);
   };
 
-  // Handle sending scripted user messages after they're prefilled
   const handleSendPrefilledMessage = () => {
-    if (message.trim() === "") return;
+    if (isSendBlocked || botIsTyping || message.trim() === "") return;
 
-    // Find the next user message in the script based on current position
     let userMessageIndex = -1;
     for (let i = currentIndex; i < fullMessages.length; i++) {
       if (!fullMessages[i].isBot) {
@@ -160,17 +164,25 @@ const ChatBot = ({ onClose }) => {
         ...fullMessages[userMessageIndex],
         text: message,
       };
-      
       setVisibleMessages((prev) => [...prev, userMessage]);
       setMessage("");
       setCurrentIndex(userMessageIndex);
 
-      // Show bot response if there is one
       if (userMessageIndex + 1 < fullMessages.length) {
+        setBotIsTyping(true);
         setTimeout(() => {
-          setVisibleMessages((prev) => [...prev, fullMessages[userMessageIndex + 1]]);
+          setVisibleMessages((prev) => [
+            ...prev,
+            fullMessages[userMessageIndex + 1],
+          ]);
           setCurrentIndex(userMessageIndex + 1);
+          if (userMessageIndex + 1 === fullMessages.length - 1) {
+            setScriptFinished(true);
+          }
+          setBotIsTyping(false);
         }, 800);
+      } else {
+        setScriptFinished(true);
       }
     }
   };
@@ -178,7 +190,12 @@ const ChatBot = ({ onClose }) => {
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      if (hasPrefilledFirst && message.trim() !== "" && currentIndex < fullMessages.length - 1) {
+      if (isSendBlocked || botIsTyping) return;
+      if (
+        hasPrefilledFirst &&
+        message.trim() !== "" &&
+        currentIndex < fullMessages.length - 1
+      ) {
         handleSendPrefilledMessage();
       } else {
         handleSendMessage();
@@ -187,7 +204,12 @@ const ChatBot = ({ onClose }) => {
   };
 
   const handleSendClick = () => {
-    if (hasPrefilledFirst && message.trim() !== "" && currentIndex < fullMessages.length - 1) {
+    if (isSendBlocked || botIsTyping) return;
+    if (
+      hasPrefilledFirst &&
+      message.trim() !== "" &&
+      currentIndex < fullMessages.length - 1
+    ) {
       handleSendPrefilledMessage();
     } else {
       handleSendMessage();
@@ -405,4 +427,3 @@ const ChatBot = ({ onClose }) => {
 };
 
 export default ChatBot;
-

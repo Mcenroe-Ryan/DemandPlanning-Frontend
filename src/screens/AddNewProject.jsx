@@ -73,7 +73,7 @@ const dataSources = [
     imageType: "image",
   },
   {
-    name: "SAP B1",
+    name: "SAP",
     image: "https://c.animaapp.com/2RAj5tP5/img/brand-logos-2@2x.png",
     imageType: "image",
   },
