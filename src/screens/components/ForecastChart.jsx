@@ -325,7 +325,6 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
     {LEGEND_CONFIG.filter(({ key }) => {
       if (!showForecast) {
-        // Hide forecast-related legends when showForecast is false
         return ![
           "baseline_forecast",
           "ml_forecast",
@@ -333,8 +332,7 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
         ].includes(key);
       }
       return true;
-    }).map(({ key, label, color, dash }) => {
-      // Check if this is a forecast item that should have dashed indicator
+    }).map(({ key, label, color }) => {
       const isForecast = [
         "baseline_forecast",
         "ml_forecast",
@@ -342,26 +340,6 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
       ].includes(key);
 
       return (
-        // <Box
-        //   key={key}
-        //   onClick={(e) => {
-        //     e.preventDefault();
-        //     e.stopPropagation();
-        //     onToggle(key);
-        //   }}
-        //   sx={{
-        //     display: "flex",
-        //     alignItems: "center",
-        //     cursor: "pointer",
-        //     opacity: activeKeys.includes(key) ? 1 : 0.5,
-        //     borderRadius: 1,
-        //     border: "1px solid",
-        //     borderColor: "#CBD5E1",
-        //     px: 1,
-        //     userSelect: "none",
-        //     "&:hover": { opacity: 0.8 },
-        //   }}
-        // >
         <Box
           key={key}
           onClick={(e) => {
@@ -386,12 +364,10 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
             "&:hover": { opacity: 0.8 },
           }}
         >
-          {/* Conditional indicator based on whether it's a forecast item */}
           {isForecast ? (
-            // Longer dashed line indicator for forecast items
             <Box
               sx={{
-                width: 16, // Increased from 12px to 16px
+                width: 16,
                 height: 12,
                 mr: 1,
                 display: "flex",
@@ -409,12 +385,11 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
                     ${color} 4px,
                     transparent 4px,
                     transparent 6px
-                  )`, // Increased dash segments from 2px to 4px, gaps from 4px to 6px
+                  )`,
                 }}
               />
             </Box>
           ) : (
-            // Solid dot indicator for non-forecast items
             <Box
               sx={{
                 width: 12,
@@ -576,31 +551,20 @@ export default function ForecastChart({
           from: fromPos,
           to: fromPos + wid,
           color: holiday ? "#DCFCE7" : "#FFEDD5",
-
-          // Inside createPlotBands, in the events.mouseover function:
           events: {
             mouseover: function (mouseEvt) {
               const ch = chartRef.current?.chart;
               if (!ch) return;
               if (ch.customTooltip) ch.customTooltip.destroy();
 
-              // Gather all country names: selected filter + event's own country
               const names = [];
-              if (Array.isArray(countryName)) {
-                names.push(...countryName);
-              } else if (typeof countryName === "string") {
-                names.push(countryName);
-              }
-              if (ev.country_name) {
-                names.push(ev.country_name);
-              }
+              if (Array.isArray(countryName)) names.push(...countryName);
+              else if (typeof countryName === "string") names.push(countryName);
+              if (ev.country_name) names.push(ev.country_name);
               const all = names.map((t) => t.toLowerCase());
 
-              // Helper to match any substring
               const matchAny = (text, keys) =>
                 keys.some((k) => text.includes(k));
-
-              // Detect USA vs India
               const isUSA = all.some((t) =>
                 matchAny(t, [
                   "usa",
@@ -612,10 +576,8 @@ export default function ForecastChart({
               );
               const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
 
-              // Date formatting - prioritize USA format when both are selected
               const formatDate = (date) => {
                 if (isUSA && isIndia) {
-                  // Both USA and India selected - use MM/DD/YYYY format
                   return date.toLocaleDateString("en-US", {
                     month: "2-digit",
                     day: "2-digit",
@@ -634,7 +596,7 @@ export default function ForecastChart({
                     year: "numeric",
                   });
                 }
-                return date.toLocaleDateString(); // fallback
+                return date.toLocaleDateString();
               };
 
               const s = new Date(ev.start_date);
@@ -682,43 +644,69 @@ export default function ForecastChart({
     []
   );
 
-  const todayIdx = months.indexOf(
-    new Date().toLocaleString("default", { month: "short", year: "2-digit" })
-  );
+  /* ---------- SAFE split index (prevents -1 issues) ---------- */
+  const todayLabel = new Date().toLocaleString("default", {
+    month: "short",
+    year: "2-digit",
+  });
+  const rawTodayIdx = months.indexOf(todayLabel);
+  const safeTodayIdx =
+    rawTodayIdx === -1 ? (months.length ? months.length - 1 : -1) : rawTodayIdx;
 
-  const join = (hist, fc) => {
-    const out = [...fc];
-    for (let i = 1; i < out.length; i++) {
-      if (out[i] != null && out[i - 1] == null) {
-        out[i - 1] = hist[todayIdx];
-        break;
-      }
-    }
-    return out;
-  };
-  const firstFutureOnly = (arr) => {
-    let found = false;
-    return arr.map((v, i) => {
-      if (i > todayIdx && v != null && !found) {
-        found = true;
-        return v;
-      }
-      return null;
-    });
-  };
-
+  /* ---------- Series helpers using safeTodayIdx ---------- */
   const seriesData = useMemo(() => {
+    if (!months || !months.length) {
+      return {
+        actual: [],
+        baseline: [],
+        baseline_forecast: [],
+        ml: [],
+        ml_forecast: [],
+        consensus: [],
+        consensus_forecast: [],
+      };
+    }
+
     const getRow = (row) =>
       months.map((m) => {
         const v = data?.[m]?.[row];
         return v == null || v === "-" ? null : +v;
       });
+
     const baselineFull = getRow("Baseline Forecast");
     const mlFull = getRow("ML Forecast");
     const consFull = getRow("Consensus");
     const actual = getRow("Actual");
-    const hist = (arr) => arr.map((v, i) => (i <= todayIdx ? v : null));
-    const fut = (arr) => arr.map((v, i) => (i > todayIdx ? v : null));
+
+    const hist = (arr) => arr.map((v, i) => (i <= safeTodayIdx ? v : null));
+    const fut = (arr) => arr.map((v, i) => (i > safeTodayIdx ? v : null));
+
+    const join = (histArr, futArr) => {
+      const out = [...futArr];
+      for (let i = 1; i < out.length; i++) {
+        if (out[i] != null && out[i - 1] == null) {
+          const bridgeIdx = Math.min(
+            Math.max(safeTodayIdx, 0),
+            histArr.length - 1
+          );
+          const bridgeVal = bridgeIdx >= 0 ? histArr[bridgeIdx] : null;
+          out[i - 1] = bridgeVal;
+          break;
+        }
+      }
+      return out;
+    };
+
+    const firstFutureOnly = (arr) => {
+      let found = false;
+      return arr.map((v, i) => {
+        if (i > safeTodayIdx && v != null && !found) {
+          found = true;
+          return v;
+        }
+        return null;
+      });
+    };
 
     return {
       actual,
@@ -729,7 +717,7 @@ export default function ForecastChart({
       consensus: hist(consFull),
       consensus_forecast: join(hist(consFull), firstFutureOnly(consFull)),
     };
-  }, [months, data, todayIdx]);
+  }, [months, data, safeTodayIdx]);
 
   const options = useMemo(
     () => ({
@@ -856,12 +844,11 @@ export default function ForecastChart({
       const cfg = LEGEND_CONFIG.find((i) => i.key === key);
       if (!cfg) return;
 
-      // Add country validation for holidays and promotions
       if (
         (key === "holidays" || key === "promotions") &&
         !validateCountrySelection()
       ) {
-        return; // Stop execution if validation fails
+        return;
       }
 
       const ch = chartRef.current?.chart;
@@ -879,11 +866,12 @@ export default function ForecastChart({
         });
       } else {
         const s = ch.series[cfg.seriesIndex];
+        if (!s) return; // safety guard
         s.visible ? s.hide() : s.show();
         setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
       }
     },
-    [createPlotBands, filteredEvents, months, validateCountrySelection] // Add validateCountrySelection to dependencies
+    [createPlotBands, filteredEvents, months, validateCountrySelection]
   );
 
   useEffect(() => {
@@ -937,7 +925,7 @@ export default function ForecastChart({
         borderRadius: 1,
         boxShadow: 1,
         position: "relative",
-        border: "1px solid #CBD5E1", // <-- Adds border to all sides
+        border: "1px solid #CBD5E1",
       }}
     >
       {/* Header */}

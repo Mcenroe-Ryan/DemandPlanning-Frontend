@@ -16,12 +16,6 @@ import {
   DialogContentText,
   Alert,
   Snackbar,
-  FormControl,
-  InputLabel,
-  Select,
-  OutlinedInput,
-  MenuItem,
-  ListItemText,
 } from "@mui/material";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
@@ -33,6 +27,9 @@ import LockIcon from "@mui/icons-material/Lock";
 import OptionalParamsMenu from "./OptionalParamsMenu";
 import ForecastChart from "./ForecastChart";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -119,23 +116,13 @@ function buildMonthLabelsBetween(startDate, endDate) {
 }
 
 function getMonthDate(label) {
-  // Avoid calling split() on null/undefined/non-string
-  if (!label || typeof label !== "string") {
-    return null; // or return a default date string if you prefer
-  }
-
+  if (!label || typeof label !== "string") return null;
   const parts = label.split(" ");
-  if (parts.length !== 2) {
-    return null;
-  }
-
+  if (parts.length !== 2) return null;
   const [mon, yr] = parts;
   const yearNum = 2000 + parseInt(yr, 10);
   const monthIdx = MONTH_MAP[mon.toUpperCase()];
-  if (isNaN(yearNum) || monthIdx === undefined) {
-    return null;
-  }
-
+  if (isNaN(yearNum) || monthIdx === undefined) return null;
   return `${yearNum}-${(monthIdx + 1).toString().padStart(2, "0")}-01`;
 }
 
@@ -192,6 +179,37 @@ function isMonthLocked(monthLabel) {
     yearNum < now.getFullYear() ||
     (yearNum === now.getFullYear() && monthIdx <= now.getMonth())
   );
+}
+
+/** NEW: difference (in months) between label and current month.
+ *  0 = current month, -1 = one month earlier, -2 = two months earlier, etc.
+ */
+function monthDiffFromCurrent(label) {
+  if (!label) return null;
+  const [mon, yr] = label.split(" ");
+  const monthIdx = MONTH_MAP[mon.toUpperCase()];
+  if (monthIdx === undefined) return null;
+  const yearNum = 2000 + parseInt(yr, 10);
+  const now = new Date();
+  return (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth());
+}
+
+/** NEW: message for locked "Consensus" cells based on relative month */
+function getConsensusNoteForLockedCell(label) {
+  const diff = monthDiffFromCurrent(label);
+  if (diff === 0) {
+    return "Consensus reached on festive season uplift assumption of +20% for Sept–Oct, based on last 3 years’ trend and marketing campaign details.";
+  }
+  if (diff === -1) {
+    return "Aligned with sales and marketing on promotional uplift for Q3. Adjusted forecast upward by 8%.";
+  }
+  if (diff === -2) {
+    return "Reduced forecast by 5% due to confirmed order cancellations from key accounts.";
+  }
+  if (diff <= -3) {
+    return "Incorporated distributor feedback—demand spike expected in Tier 2 cities; revised forecast accordingly.";
+  }
+  return "";
 }
 
 // Red triangle for consensus cells (left as per your code)
@@ -349,7 +367,83 @@ function ConfirmationDialog({
   );
 }
 
-function LockCommentPopover({ open, anchorEl, onClose }) {
+// function LockCommentPopover({ open, anchorEl, onClose, message }) {
+//   return (
+//     <Popover
+//       open={open}
+//       anchorEl={anchorEl}
+//       onClose={onClose}
+//       anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+//       transformOrigin={{ vertical: "top", horizontal: "left" }}
+//       PaperProps={{
+//         sx: {
+//           width: 240,
+//           height: 180,
+//           borderRadius: "5px",
+//           border: "1px solid",
+//           borderColor: "divider",
+//           opacity: 1,
+//           transform: "rotate(0deg)",
+//           p: 1,                       // tighter padding
+//           display: "flex",
+//           flexDirection: "column",
+//           boxSizing: "border-box",
+//         },
+//       }}
+//     >
+//       <div
+//         style={{
+//           display: "flex",
+//           justifyContent: "space-between",
+//           alignItems: "center",
+//           width: "100%",
+//           marginBottom: 4,
+//         }}
+//       >
+//         <Avatar
+//           src="https://randomuser.me/api/portraits/men/32.jpg"
+//           sx={{ width: 22, height: 22 }}
+//         />
+//         <div style={{ textAlign: "right", flexGrow: 1 }}>
+//           <div style={{ fontWeight: 600, fontSize: 12 }}>Supreeth P</div>
+//           <div style={{ fontSize: 11, color: "#888" }}>4 days ago</div>
+//         </div>
+//       </div>
+
+//       <div
+//         style={{
+//           fontSize: 12,
+//           marginBottom: 4,
+//           flex: 1,
+//           overflow: "auto",
+//           lineHeight: 1.25,
+//         }}
+//       >
+//         {message || "—"}
+//       </div>
+
+//       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+//         <Avatar
+//           src="https://randomuser.me/api/portraits/men/32.jpg"
+//           sx={{ width: 20, height: 20 }}
+//         />
+//         <input
+//           style={{
+//             width: "100%",
+//             fontSize: 12,
+//             padding: "4px 6px",
+//             borderRadius: 6,
+//             border: "1px solid #ddd",
+//             marginTop: 2,
+//           }}
+//           placeholder="Reply"
+//           disabled
+//         />
+//       </div>
+//     </Popover>
+//   );
+// }
+function LockCommentPopover({ open, anchorEl, onClose, message }) {
   return (
     <Popover
       open={open}
@@ -357,53 +451,124 @@ function LockCommentPopover({ open, anchorEl, onClose }) {
       onClose={onClose}
       anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       transformOrigin={{ vertical: "top", horizontal: "left" }}
-      PaperProps={{ style: { minWidth: 270, padding: 16 } }}
+      PaperProps={{
+        sx: {
+          width: 240,
+          height: 180,
+          borderRadius: 2,                // 8px pill-like corners
+          border: "1px solid #E5E7EB",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+          p: 1,
+          display: "flex",
+          flexDirection: "column",
+          boxSizing: "border-box",
+        },
+      }}
     >
-      <div>
-        <div
+      {/* Header: "Comment" + ... + X */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 0.5,
+        }}
+      >
+        <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>
+          Comment
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+          <IconButton size="small" sx={{ p: 0.25 }}>
+            <MoreHorizRoundedIcon sx={{ fontSize: 16, color: "#64748B" }} />
+          </IconButton>
+          <IconButton size="small" sx={{ p: 0.25 }} onClick={onClose}>
+            <CloseRoundedIcon sx={{ fontSize: 16, color: "#64748B" }} />
+          </IconButton>
+        </Box>
+      </Box>
+
+      {/* Name + time */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 0.75,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Avatar
+            src="https://randomuser.me/api/portraits/men/32.jpg"
+            sx={{ width: 22, height: 22 }}
+          />
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#0F172A" }}>
+            John
+          </Typography>
+        </Box>
+        <Typography sx={{ fontSize: 11, color: "#94A3B8" }}>
+          4 days ago
+        </Typography>
+      </Box>
+
+      {/* Message body (uses your dynamic message prop) */}
+      <Typography
+        sx={{
+          fontSize: 12,
+          lineHeight: 1.35,
+          color: "#334155",
+          mb: 1,
+          flex: 1,
+          overflow: "auto",
+        }}
+      >
+        {message || "—"}
+      </Typography>
+
+      {/* Reply pill */}
+      <Box
+        sx={{
+          mt: "auto",
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          bgcolor: "#F1F5F9",
+          borderRadius: 999,
+          px: 1,
+          py: 0.5,
+          border: "1px solid #E2E8F0",
+        }}
+      >
+        <Avatar
+          src="https://randomuser.me/api/portraits/men/32.jpg"
+          sx={{ width: 18, height: 18 }}
+        />
+        <input
+          disabled
+          placeholder="Replay"
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "100%",
-            marginBottom: 8,
+            flex: 1,
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            fontSize: 12,
+            color: "#64748B",
+          }}
+        />
+        <IconButton
+          size="small"
+          disabled
+          sx={{
+            width: 22,
+            height: 22,
+            bgcolor: "#E2E8F0",
+            color: "#64748B",
+            borderRadius: "50%",
+            p: 0,
           }}
         >
-          <Avatar
-            src="https://randomuser.me/api/portraits/men/32.jpg"
-            sx={{ width: 28, height: 28 }}
-          />
-          <div style={{ textAlign: "right", flexGrow: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Supreeth P</div>
-            <div style={{ fontSize: 14, color: "#888" }}>4 days ago</div>
-          </div>
-        </div>
-        <div style={{ fontSize: 14, marginBottom: 8 }}>
-          Edited The correct option is B. 24.
-          <br />
-          Demand of Company B
-          <br />
-          Demand of Company
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Avatar
-            src="https://randomuser.me/api/portraits/men/32.jpg"
-            sx={{ width: 28, height: 28 }}
-          />
-          <input
-            style={{
-              width: "100%",
-              fontSize: 14,
-              padding: "6px 8px",
-              borderRadius: 6,
-              border: "1px solid #ddd",
-              marginTop: 4,
-            }}
-            placeholder="Reply"
-            disabled
-          />
-        </div>
-      </div>
+          <ArrowUpwardRoundedIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+      </Box>
     </Popover>
   );
 }
@@ -465,6 +630,7 @@ export default function ForecastTable({
   const [lockComment, setLockComment] = useState({
     open: false,
     anchor: null,
+    message: "",
   });
   const [confirmationDialog, setConfirmationDialog] = useState({
     open: false,
@@ -478,7 +644,7 @@ export default function ForecastTable({
     message: "",
   });
   const [highlightEditableCells, setHighlightEditableCells] = useState(false);
-  
+
   // Add swap state
   const [isSwapped, setIsSwapped] = useState(false);
 
@@ -590,9 +756,7 @@ export default function ForecastTable({
     return true;
   };
   const handleErrorSnackbarClose = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
+    if (reason === "clickaway") return;
     setErrorSnackbar({ open: false, message: "" });
   };
 
@@ -609,11 +773,9 @@ export default function ForecastTable({
       setHighlightEditableCells(false);
     }
   }, [highlightTrigger, canEditConsensus]);
-  
+
   useEffect(() => {
-    if (!canEditConsensus) {
-      setHighlightEditableCells(false);
-    }
+    if (!canEditConsensus) setHighlightEditableCells(false);
   }, [canEditConsensus]);
 
   const fetchForecastData = () => {
@@ -747,14 +909,14 @@ export default function ForecastTable({
   const handleAddRowsClick = (event) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
-  
+
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
   // Add swap handler
   const handleSwapClick = () => {
-    setIsSwapped(prev => !prev);
+    setIsSwapped((prev) => !prev);
   };
 
   const handleConfirmationClose = () => {
@@ -883,7 +1045,6 @@ export default function ForecastTable({
                 background: idx % 2 === 1 ? "#f7fafd" : "#fff",
               }}
             >
-              {/* ONLY paddingLeft for left label cell for Sales and Promotions row */}
               <td
                 style={{
                   position: "sticky",
@@ -974,7 +1135,6 @@ export default function ForecastTable({
                         if (validateSingleSKUSelection()) {
                           setEditingCell({ month: m, row: label });
                           setEditValue(value === "-" ? "" : value);
-                          setHighlightEditableCells(false);
                         }
                       } else if (
                         isConsensusRow &&
@@ -982,9 +1142,11 @@ export default function ForecastTable({
                         value &&
                         value !== "-"
                       ) {
+                        // NEW: show dynamic message for locked consensus months
                         setLockComment({
                           open: true,
                           anchor: e.currentTarget,
+                          message: getConsensusNoteForLockedCell(m),
                         });
                       }
                     }}
@@ -993,33 +1155,22 @@ export default function ForecastTable({
                       <RedTriangleIcon visible={true} />
                     )}
                     {shouldHighlight && (
-                      <>
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: 4,
-                            left: 4,
-                            width: 12,
-                            height: 12,
-                            zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
-                            animation: "pulse 1s infinite",
-                            "@keyframes pulse": {
-                              "0%": {
-                                opacity: 1,
-                                transform: "scale(1)",
-                              },
-                              "50%": {
-                                opacity: 0.5,
-                                transform: "scale(1.3)",
-                              },
-                              "100%": {
-                                opacity: 1,
-                                transform: "scale(1)",
-                              },
-                            },
-                          }}
-                        />
-                      </>
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 4,
+                          left: 4,
+                          width: 12,
+                          height: 12,
+                          zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
+                          animation: "pulse 1s infinite",
+                          "@keyframes pulse": {
+                            "0%": { opacity: 1, transform: "scale(1)" },
+                            "50%": { opacity: 0.5, transform: "scale(1.3)" },
+                            "100%": { opacity: 1, transform: "scale(1)" },
+                          },
+                        }}
+                      />
                     )}
                     {isConsensusRow ? (
                       locked ? (
@@ -1139,7 +1290,7 @@ export default function ForecastTable({
       >
         <Stack direction="row" spacing={5} alignItems="center">
           <Stack direction="row" spacing={1}>
-            {periodOptions.map((label) => (
+            {["M", "W"].map((label) => (
               <Button
                 key={label}
                 variant="outlined"
@@ -1204,7 +1355,7 @@ export default function ForecastTable({
                 sx={{ width: 20, height: 20, color: "text.secondary" }}
               />
             </IconButton>
-            
+
             <OptionalParamsMenu
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
@@ -1221,11 +1372,11 @@ export default function ForecastTable({
                 height: 20,
                 color: "text.secondary",
                 transform: isSwapped ? "rotate(180deg)" : "none",
-                transition: "transform 0.3s ease"
+                transition: "transform 0.3s ease",
               }}
             />
           </IconButton>
-          
+
           <IconButton size="small">
             <ShareIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
@@ -1304,13 +1455,14 @@ export default function ForecastTable({
           {errorSnackbar.message}
         </Alert>
       </Snackbar>
-      
+
       <LockCommentPopover
         open={lockComment.open}
         anchorEl={lockComment.anchor}
         onClose={() => setLockComment({ ...lockComment, open: false })}
+        message={lockComment.message}
       />
-      
+
       <ConfirmationDialog
         open={confirmationDialog.open}
         onClose={handleConfirmationClose}

@@ -72,20 +72,11 @@ export default function DateFilter({ onDateChange, disabled = false }) {
   };
 
   //This is to show month number after selection
-  // const getLabel = () => {
-  //   if (!hasUserSelected) return "Date Filter";
-  //   return `${format(range[0].startDate, "MM/dd/yyyy")} - ${format(
-  //     range[0].endDate,
-  //     "MM/dd/yyyy"
-  //   )}`;
-  // };
-
-  //This is to show month name after selection
   const getLabel = () => {
     if (!hasUserSelected) return "Date Filter";
     return `${format(range[0].startDate, "MMM dd, yyyy")} - ${format(
       range[0].endDate,
-    "MMM dd, yyyy"
+      "MMM dd, yyyy"
     )}`;
   };
 
