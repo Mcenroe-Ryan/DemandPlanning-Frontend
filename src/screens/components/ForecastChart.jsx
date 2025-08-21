@@ -488,12 +488,90 @@ export default function ForecastChart({
     ];
   }, [models, loadingModels]);
 
+  //simple fetch for /events
+  // useEffect(() => {
+  //   fetch(`${API_BASE_URL}/events`)
+  //     .then((r) => r.json())
+  //     .then(setEvents)
+  //     .catch(() => setEvents([]));
+  // }, []);
+   
   useEffect(() => {
-    fetch(`${API_BASE_URL}/events`)
-      .then((r) => r.json())
-      .then(setEvents)
-      .catch(() => setEvents([]));
-  }, []);
+  let alive = true;
+  const controller = new AbortController();
+
+  const fetchEvents = async () => {
+    const url = `${API_BASE_URL}/events?_=${Date.now()}`;
+    const opts = {
+      method: "GET",
+      signal: controller.signal,
+      // prevent serving a stale cached response
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    };
+
+    // simple timeout helper
+    const withTimeout = (p, ms = 8000) =>
+      Promise.race([
+        p,
+        new Promise((_, rej) =>
+          setTimeout(() => rej(new Error("timeout")), ms)
+        ),
+      ]);
+
+    const tryOnce = async () => {
+      const res = await withTimeout(fetch(url, opts));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // Some backends return 204 or 200 with empty body
+      const text = await res.text();
+      if (!text) return [];
+
+      // If Content-Type is wrong (e.g., text/html), guard parse
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        // attempt safe parse anyway (some gateways mislabel)
+        try {
+          return JSON.parse(text);
+        } catch {
+          throw new Error("non-json body");
+        }
+      }
+
+      // normal path
+      return JSON.parse(text);
+    };
+
+    // one retry with small backoff
+    const load = async () => {
+      try {
+        let data = await tryOnce();
+        if (!Array.isArray(data)) data = [];
+        if (alive) setEvents(data);
+      } catch (e1) {
+        try {
+          await new Promise((r) => setTimeout(r, 500));
+          let data = await tryOnce();
+          if (!Array.isArray(data)) data = [];
+          if (alive) setEvents(data);
+        } catch (e2) {
+          if (alive) setEvents([]); // graceful fallback
+          // Optional: surface a non-blocking log
+          // console.warn("Failed to load /events:", e2);
+        }
+      }
+    };
+
+    load();
+  };
+
+  fetchEvents();
+
+  return () => {
+    alive = false;
+    controller.abort();
+  };
+}, []);
 
   const filteredEvents = useMemo(() => {
     if (!events.length) return [];

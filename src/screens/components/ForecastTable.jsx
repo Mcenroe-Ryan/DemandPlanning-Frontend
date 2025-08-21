@@ -181,7 +181,7 @@ function isMonthLocked(monthLabel) {
   );
 }
 
-/** NEW: difference (in months) between label and current month.
+/** difference (in months) between label and current month.
  *  0 = current month, -1 = one month earlier, -2 = two months earlier, etc.
  */
 function monthDiffFromCurrent(label) {
@@ -194,7 +194,7 @@ function monthDiffFromCurrent(label) {
   return (yearNum - now.getFullYear()) * 12 + (monthIdx - now.getMonth());
 }
 
-/** NEW: message for locked "Consensus" cells based on relative month */
+/** message for locked "Consensus" cells based on relative month */
 function getConsensusNoteForLockedCell(label) {
   const diff = monthDiffFromCurrent(label);
   if (diff === 0) {
@@ -455,7 +455,7 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
         sx: {
           width: 240,
           height: 180,
-          borderRadius: 2,                // 8px pill-like corners
+          borderRadius: 2, // 8px pill-like corners
           border: "1px solid #E5E7EB",
           boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           p: 1,
@@ -1116,11 +1116,7 @@ export default function ForecastTable({
                       minWidth: 90,
                       cursor: isConsensusRow ? "pointer" : "default",
                       position: "relative",
-                      zIndex: getCellZIndex(
-                        false,
-                        shouldHighlight,
-                        isEditing
-                      ),
+                      zIndex: getCellZIndex(false, shouldHighlight, isEditing),
                       transition: "all 0.3s ease-in-out",
                     }}
                     onClick={(e) => {
@@ -1142,7 +1138,7 @@ export default function ForecastTable({
                         value &&
                         value !== "-"
                       ) {
-                        // NEW: show dynamic message for locked consensus months
+                        // show dynamic message for locked consensus months
                         setLockComment({
                           open: true,
                           anchor: e.currentTarget,

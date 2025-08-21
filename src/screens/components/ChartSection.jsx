@@ -469,7 +469,7 @@ export const ChartSection = () => {
     }
   };
 
-  // ✅ API function to update is_checked status
+  //  API function to update is_checked status
   const updateCheckedStatus = async (id, newValue) => {
     try {
       const res = await fetch(`${API_BASE_URL}/forecast-error/${id}`, {
@@ -486,7 +486,7 @@ export const ChartSection = () => {
     }
   };
 
-  // ✅ MODIFIED: Updated useEffect to respect is_checked from API
+  // selected alert + default error message for landing chart
   useEffect(() => {
     (async () => {
       try {
@@ -495,6 +495,7 @@ export const ChartSection = () => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const alerts = await res.json();
         setRawAlertsData(alerts);
+
         const rows = alerts
           .sort(
             (a, b) =>
@@ -503,17 +504,18 @@ export const ChartSection = () => {
           .map(toAlertRow);
 
         setAlertsData(rows);
-        // ✅ CHANGED: Use is_checked from API instead of defaulting to false
+
+        // Use is_checked from API
         setCheckedItems(
           Object.fromEntries(alerts.map((a) => [a.id, !!a.is_checked]))
         );
 
-        if (alerts.length) {
-          const oldest = alerts.reduce((o, c) =>
-            new Date(c.error_start_date) < new Date(o.error_start_date) ? c : o
-          );
-          setSelectedAlertId(oldest.id);
-          await fetchForecastData(oldest);
+        // the first (oldest) row as default, set BOTH selection and error message
+        if (rows.length) {
+          const defaultRow = rows[0];
+          setSelectedAlertId(defaultRow.id);
+          setErrorMessage(defaultRow.message); // <-- NEW: show default error on landing
+          await fetchForecastData(defaultRow.rawData);
         }
       } catch (err) {
         setError(err.message);
@@ -543,7 +545,6 @@ export const ChartSection = () => {
 
   const onAlertSelect = async (row) => {
     setSelectedAlertId(row.id);
-    // setSingleCheck(row.id);
     setErrorMessage(row.message);
     await fetchForecastData(row.rawData);
   };

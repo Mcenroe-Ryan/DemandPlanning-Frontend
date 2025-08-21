@@ -300,6 +300,8 @@ export const DemandProjectMonth = () => {
   const navigate = useNavigate();
   const [alertCount, setAlertCount] = useState(null);
   const [alertCountLoading, setAlertCountLoading] = useState(true);
+  // top-level state
+  const [dateFilterKey, setDateFilterKey] = useState(0);
 
   useEffect(() => {
     const fetchAlertCount = async () => {
@@ -466,6 +468,8 @@ export const DemandProjectMonth = () => {
       skus: [],
       channels: [],
     });
+    // DateFilter to clear its internal selection label
+    setDateFilterKey((k) => k + 1);
   };
 
   // Add this useEffect to fetch models on component mount
@@ -752,29 +756,29 @@ export const DemandProjectMonth = () => {
   //     .finally(() => setLoadingChannels(false));
   // }, []);
   useEffect(() => {
-  setLoadingChannels(true);
-  axios
-    .get(`${API_BASE_URL}/getAllChannels`, {
-      // Add cache-busting headers
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      },
-      // Add cache-busting query parameter
-      params: {
-        _: Date.now() // Unique timestamp parameter
-      }
-    })
-    .then((res) => {
-      setFiltersData((prev) => ({
-        ...prev,
-        channels: Array.isArray(res.data) ? res.data : [],
-      }));
-    })
-    .catch(() => setFiltersData((prev) => ({ ...prev, channels: [] })))
-    .finally(() => setLoadingChannels(false));
-}, []);
+    setLoadingChannels(true);
+    axios
+      .get(`${API_BASE_URL}/getAllChannels`, {
+        // Add cache-busting headers
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+        // Add cache-busting query parameter
+        params: {
+          _: Date.now(), // Unique timestamp parameter
+        },
+      })
+      .then((res) => {
+        setFiltersData((prev) => ({
+          ...prev,
+          channels: Array.isArray(res.data) ? res.data : [],
+        }));
+      })
+      .catch(() => setFiltersData((prev) => ({ ...prev, channels: [] })))
+      .finally(() => setLoadingChannels(false));
+  }, []);
 
   return (
     <Box>
@@ -968,6 +972,7 @@ export const DemandProjectMonth = () => {
 
         <Stack direction="row" spacing={1}>
           <DateFilter
+            key={dateFilterKey} 
             onDateChange={(range) => setDateRange(range)}
             disabled={
               activeTab === 1 ||

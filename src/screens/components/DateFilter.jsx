@@ -139,13 +139,13 @@ export default function DateFilter({ onDateChange, disabled = false }) {
       >
         {/* Start & End Date Input Row */}
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-          <Box sx={{ flex: 0.3, minWidth: 100 }}>
+          <Box sx={{ flex: 0.5, minWidth: 100 }}>
             <Typography
               variant="caption"
               color="text.secondary"
               sx={{ mb: 0.25 }}
             >
-              Start date
+              Start date (mm/dd/yy)
             </Typography>
             <TextField
               size="small"
@@ -165,13 +165,13 @@ export default function DateFilter({ onDateChange, disabled = false }) {
               disabled={disabled}
             />
           </Box>
-          <Box sx={{ flex: 0.3, minWidth: 100 }}>
+          <Box sx={{ flex: 0.5, minWidth: 100 }}>
             <Typography
               variant="caption"
               color="text.secondary"
               sx={{ mb: 0.25 }}
             >
-              End date
+              End date (mm/dd/yy)
             </Typography>
             <TextField
               size="small"
