@@ -7,6 +7,23 @@ import React, {
 } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+
+// --- Highcharts modules (init safely across ESM/CJS) ---
+import exportingInit from "highcharts/modules/exporting";
+import exportDataInit from "highcharts/modules/export-data";
+import offlineExportingInit from "highcharts/modules/offline-exporting";
+
+// initialize modules (handles both function export and { default } export)
+const initHCModule = (mod) => {
+  if (!mod) return;
+  if (typeof mod === "function") mod(Highcharts);
+  else if (mod.default && typeof mod.default === "function")
+    mod.default(Highcharts);
+};
+initHCModule(exportingInit);
+initHCModule(exportDataInit);
+initHCModule(offlineExportingInit);
+
 import {
   Box,
   Typography,
@@ -460,7 +477,7 @@ export default function ForecastChart({
           starred: m.model_name === "XGBoost",
         })),
       },
-      // {
+       // {
       //   id: 2,
       //   title: "External Factors",
       //   disabled: true,
@@ -488,90 +505,71 @@ export default function ForecastChart({
     ];
   }, [models, loadingModels]);
 
-  //simple fetch for /events
-  // useEffect(() => {
-  //   fetch(`${API_BASE_URL}/events`)
-  //     .then((r) => r.json())
-  //     .then(setEvents)
-  //     .catch(() => setEvents([]));
-  // }, []);
-   
+  // resilient /events fetch
   useEffect(() => {
-  let alive = true;
-  const controller = new AbortController();
+    let alive = true;
+    const controller = new AbortController();
 
-  const fetchEvents = async () => {
-    const url = `${API_BASE_URL}/events?_=${Date.now()}`;
-    const opts = {
-      method: "GET",
-      signal: controller.signal,
-      // prevent serving a stale cached response
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    };
+    const fetchEvents = async () => {
+      const url = `${API_BASE_URL}/events?_=${Date.now()}`;
+      const opts = {
+        method: "GET",
+        signal: controller.signal,
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      };
 
-    // simple timeout helper
-    const withTimeout = (p, ms = 8000) =>
-      Promise.race([
-        p,
-        new Promise((_, rej) =>
-          setTimeout(() => rej(new Error("timeout")), ms)
-        ),
-      ]);
+      const withTimeout = (p, ms = 8000) =>
+        Promise.race([
+          p,
+          new Promise((_, rej) =>
+            setTimeout(() => rej(new Error("timeout")), ms)
+          ),
+        ]);
 
-    const tryOnce = async () => {
-      const res = await withTimeout(fetch(url, opts));
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      // Some backends return 204 or 200 with empty body
-      const text = await res.text();
-      if (!text) return [];
-
-      // If Content-Type is wrong (e.g., text/html), guard parse
-      const ct = res.headers.get("content-type") || "";
-      if (!ct.includes("application/json")) {
-        // attempt safe parse anyway (some gateways mislabel)
-        try {
-          return JSON.parse(text);
-        } catch {
-          throw new Error("non-json body");
+      const tryOnce = async () => {
+        const res = await withTimeout(fetch(url, opts));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        if (!text) return [];
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.includes("application/json")) {
+          try {
+            return JSON.parse(text);
+          } catch {
+            throw new Error("non-json body");
+          }
         }
-      }
+        return JSON.parse(text);
+      };
 
-      // normal path
-      return JSON.parse(text);
-    };
-
-    // one retry with small backoff
-    const load = async () => {
-      try {
-        let data = await tryOnce();
-        if (!Array.isArray(data)) data = [];
-        if (alive) setEvents(data);
-      } catch (e1) {
+      const load = async () => {
         try {
-          await new Promise((r) => setTimeout(r, 500));
           let data = await tryOnce();
           if (!Array.isArray(data)) data = [];
           if (alive) setEvents(data);
-        } catch (e2) {
-          if (alive) setEvents([]); // graceful fallback
-          // Optional: surface a non-blocking log
-          // console.warn("Failed to load /events:", e2);
+        } catch {
+          try {
+            await new Promise((r) => setTimeout(r, 500));
+            let data = await tryOnce();
+            if (!Array.isArray(data)) data = [];
+            if (alive) setEvents(data);
+          } catch {
+            if (alive) setEvents([]);
+          }
         }
-      }
+      };
+
+      load();
     };
 
-    load();
-  };
+    fetchEvents();
 
-  fetchEvents();
-
-  return () => {
-    alive = false;
-    controller.abort();
-  };
-}, []);
+    return () => {
+      alive = false;
+      controller.abort();
+    };
+  }, []);
 
   const filteredEvents = useMemo(() => {
     if (!events.length) return [];
@@ -797,6 +795,51 @@ export default function ForecastChart({
     };
   }, [months, data, safeTodayIdx]);
 
+  /* ----------------------- PDF download handler ----------------------- */
+  const handleDownloadPdf = useCallback(() => {
+    const ch = chartRef.current?.chart;
+    if (!ch) {
+      setErrorSnackbar?.({
+        open: true,
+        message: "Chart not ready yet. Try again in a moment.",
+      });
+      return;
+    }
+
+    try {
+      if (ch.customTooltip) {
+        ch.customTooltip.destroy();
+        ch.customTooltip = null;
+      }
+
+      const filename = `demand_forecast_${new Date()
+        .toISOString()
+        .slice(0, 10)}`;
+
+      const exportOpts = {
+        type: "application/pdf",
+        filename,
+        scale: 2,
+        sourceWidth: ch.chartWidth,
+        sourceHeight: ch.chartHeight,
+      };
+
+      if (typeof ch.exportChartLocal === "function") {
+        ch.exportChartLocal(exportOpts);
+      } else if (typeof ch.exportChart === "function") {
+        ch.exportChart(exportOpts);
+      } else {
+        throw new Error("Highcharts exporting module not loaded");
+      }
+    } catch {
+      setErrorSnackbar?.({
+        open: true,
+        message:
+          "Unable to export PDF. Make sure exporting modules are loaded and try again.",
+      });
+    }
+  }, [setErrorSnackbar]);
+
   const options = useMemo(
     () => ({
       chart: {
@@ -833,6 +876,10 @@ export default function ForecastChart({
       tooltip: { shared: true },
       legend: { enabled: false },
       credits: { enabled: false },
+      exporting: {
+        enabled: false, // we use our own button
+        fallbackToExportServer: true,
+      },
       series: [
         {
           name: "Actual",
@@ -898,7 +945,7 @@ export default function ForecastChart({
     ]
   );
 
-  // Add this validation function inside ForecastChart component, before handleLegendClick
+  // country check for overlays
   const validateCountrySelection = useCallback(() => {
     if (
       !countryName ||
@@ -944,7 +991,7 @@ export default function ForecastChart({
         });
       } else {
         const s = ch.series[cfg.seriesIndex];
-        if (!s) return; // safety guard
+        if (!s) return;
         s.visible ? s.hide() : s.show();
         setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
       }
@@ -1069,7 +1116,7 @@ export default function ForecastChart({
           {/* <IconButton size="small">
             <ChatBubbleOutlineIcon fontSize="small" />
           </IconButton> */}
-          <IconButton size="small">
+          <IconButton size="small" onClick={handleDownloadPdf}>
             <DownloadIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
             />

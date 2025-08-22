@@ -367,82 +367,6 @@ function ConfirmationDialog({
   );
 }
 
-// function LockCommentPopover({ open, anchorEl, onClose, message }) {
-//   return (
-//     <Popover
-//       open={open}
-//       anchorEl={anchorEl}
-//       onClose={onClose}
-//       anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-//       transformOrigin={{ vertical: "top", horizontal: "left" }}
-//       PaperProps={{
-//         sx: {
-//           width: 240,
-//           height: 180,
-//           borderRadius: "5px",
-//           border: "1px solid",
-//           borderColor: "divider",
-//           opacity: 1,
-//           transform: "rotate(0deg)",
-//           p: 1,                       // tighter padding
-//           display: "flex",
-//           flexDirection: "column",
-//           boxSizing: "border-box",
-//         },
-//       }}
-//     >
-//       <div
-//         style={{
-//           display: "flex",
-//           justifyContent: "space-between",
-//           alignItems: "center",
-//           width: "100%",
-//           marginBottom: 4,
-//         }}
-//       >
-//         <Avatar
-//           src="https://randomuser.me/api/portraits/men/32.jpg"
-//           sx={{ width: 22, height: 22 }}
-//         />
-//         <div style={{ textAlign: "right", flexGrow: 1 }}>
-//           <div style={{ fontWeight: 600, fontSize: 12 }}>Supreeth P</div>
-//           <div style={{ fontSize: 11, color: "#888" }}>4 days ago</div>
-//         </div>
-//       </div>
-
-//       <div
-//         style={{
-//           fontSize: 12,
-//           marginBottom: 4,
-//           flex: 1,
-//           overflow: "auto",
-//           lineHeight: 1.25,
-//         }}
-//       >
-//         {message || "—"}
-//       </div>
-
-//       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-//         <Avatar
-//           src="https://randomuser.me/api/portraits/men/32.jpg"
-//           sx={{ width: 20, height: 20 }}
-//         />
-//         <input
-//           style={{
-//             width: "100%",
-//             fontSize: 12,
-//             padding: "4px 6px",
-//             borderRadius: 6,
-//             border: "1px solid #ddd",
-//             marginTop: 2,
-//           }}
-//           placeholder="Reply"
-//           disabled
-//         />
-//       </div>
-//     </Popover>
-//   );
-// }
 function LockCommentPopover({ open, anchorEl, onClose, message }) {
   return (
     <Popover
@@ -968,7 +892,63 @@ export default function ForecastTable({
     }
   };
 
-  // Extract table rendering into helper function
+  /* ----------------------------- CSV DOWNLOAD ----------------------------- */
+
+  // Escape and quote CSV values safely
+  const toCSVValue = (val) => {
+    if (val === null || val === undefined) return "";
+    const s = String(val);
+    if (s.includes('"') || s.includes(",") || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  };
+
+  const buildCSV = () => {
+    if (!data || !visibleMonths?.length || !allRows?.length) return null;
+
+    const header = ["Metric", ...visibleMonths];
+    const lines = [header];
+
+    for (const label of allRows) {
+      const row = [label];
+      for (const m of visibleMonths) {
+        const v = data?.[m]?.[label];
+        // export raw value or '-' (no locale formatting)
+        row.push(v === undefined || v === null ? "-" : v);
+      }
+      lines.push(row);
+    }
+
+    return lines.map((r) => r.map(toCSVValue).join(",")).join("\n");
+  };
+
+  const handleDownloadTable = () => {
+    const csv = buildCSV();
+    if (!csv) {
+      setErrorSnackbar({
+        open: true,
+        message: "Nothing to download — no table data available.",
+      });
+      return;
+    }
+    // Add BOM for Excel compatibility
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ts = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `forecast_table_${ts}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  /* --------------------------- TABLE RENDERING ---------------------------- */
+
   const renderForecastTable = () => (
     <Box
       sx={{
@@ -1378,11 +1358,14 @@ export default function ForecastTable({
               sx={{ width: 20, height: 20, color: "text.secondary" }}
             />
           </IconButton>
-          <IconButton size="small">
+
+          {/* DOWNLOAD: exports visible table to CSV */}
+          <IconButton size="small" onClick={handleDownloadTable}>
             <DownloadIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
             />
           </IconButton>
+
           <IconButton size="small">
             <OpenInFullIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
