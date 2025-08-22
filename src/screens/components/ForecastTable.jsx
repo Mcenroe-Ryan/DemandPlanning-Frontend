@@ -1340,7 +1340,7 @@ export default function ForecastTable({
             />
           </Box>
 
-          {/* Updated Swap Button with click handler */}
+          {/* Swap Button with click handler */}
           <IconButton size="small" onClick={handleSwapClick}>
             <SwapVertIcon
               sx={{

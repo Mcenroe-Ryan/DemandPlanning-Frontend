@@ -35,7 +35,7 @@ import {
   Search as SearchIcon,
 } from "@mui/icons-material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { format, addMonths, subMonths, parseISO } from "date-fns";
+import { format, addMonths, subMonths } from "date-fns";
 import DateFilter from "./components/DateFilter";
 import ModelComparisonSection from "./components/RecommendedModelsSection";
 import ForecastTable from "./components/ForecastTable";
@@ -133,7 +133,7 @@ const DATA_ROW_OPTIONS = [
   { key: "onhand", label: "On Hand" },
 ];
 
-// --- UPDATED MultiSelectWithCheckboxes with Right-Justified Icons ---
+// --- MultiSelectWithCheckboxes supports single-select mode ---
 function MultiSelectWithCheckboxes({
   label,
   options = [],
@@ -146,6 +146,7 @@ function MultiSelectWithCheckboxes({
   loading = false,
   disabled = false,
   onOpen,
+  single = false, // <--- NEW
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [search, setSearch] = useState("");
@@ -162,8 +163,9 @@ function MultiSelectWithCheckboxes({
     );
   });
 
+  // "All" only makes sense for multi-select
   const isAllSelected =
-    safeOptions.length > 0 && selected.length === safeOptions.length;
+    !single && safeOptions.length > 0 && selected.length === safeOptions.length;
 
   const handleOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -178,10 +180,25 @@ function MultiSelectWithCheckboxes({
   }, [anchorEl]);
 
   const handleSelectAll = () => {
+    if (single) return; // ignore in single mode
     setSelected(isAllSelected ? [] : safeOptions.map((opt) => opt[optionKey]));
   };
 
   const handleToggle = (value) => {
+    if (single) {
+      // Single-select behavior:
+      // - If nothing selected, select this
+      // - If clicking same item again, deselect it
+      // - If another is already selected, do nothing (others are disabled anyway)
+      if (selected.length === 0) {
+        setSelected([value]);
+      } else if (selected[0] === value) {
+        setSelected([]);
+      }
+      return;
+    }
+
+    // Multi-select behavior (unchanged)
     setSelected((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
@@ -222,14 +239,14 @@ function MultiSelectWithCheckboxes({
         }}
         disabled={disabled}
       >
-        {/* **Button content structure with text on left** */}
+        {/* text left */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
           {getButtonLabel()}
         </Box>
 
-        {/* **Icon container on right** */}
+        {/* icons right */}
         <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
-          {selected.length > 0 && (
+          {!single && selected.length > 0 && (
             <Chip
               label={selected.length}
               size="small"
@@ -264,24 +281,37 @@ function MultiSelectWithCheckboxes({
           </MenuItem>
         ) : filteredOptions.length > 0 ? (
           [
-            <MenuItem onClick={handleSelectAll} key="all">
-              <Checkbox
-                checked={isAllSelected}
-                indeterminate={selected.length > 0 && !isAllSelected}
-              />
-              <ListItemText primary="All" />
-            </MenuItem>,
-            ...filteredOptions.map((option) => (
-              <MenuItem
-                key={option[optionKey]}
-                onClick={() => handleToggle(option[optionKey])}
-                dense
-              >
-                <Checkbox checked={selected.includes(option[optionKey])} />
-                <ListItemText primary={option[displayKey || optionKey]} />
+            !single && (
+              <MenuItem onClick={handleSelectAll} key="all">
+                <Checkbox
+                  checked={isAllSelected}
+                  indeterminate={selected.length > 0 && !isAllSelected}
+                />
+                <ListItemText primary="All" />
               </MenuItem>
-            )),
-          ]
+            ),
+            ...filteredOptions.map((option) => {
+              const val = option[optionKey];
+              const isSelected = selected.includes(val);
+              const isInactive = single && selected.length === 1 && !isSelected; // disable others
+
+              return (
+                <MenuItem
+                  key={val}
+                  onClick={() => handleToggle(val)}
+                  dense
+                  disabled={isInactive}
+                  sx={{
+                    opacity: isInactive ? 0.5 : 1,
+                    cursor: isInactive ? "not-allowed" : "pointer",
+                  }}
+                >
+                  <Checkbox checked={isSelected} disabled={isInactive} />
+                  <ListItemText primary={option[displayKey || optionKey]} />
+                </MenuItem>
+              );
+            }),
+          ].filter(Boolean)
         ) : (
           <MenuItem disabled>
             <ListItemText primary="None" />
@@ -742,32 +772,17 @@ export const DemandProjectMonth = () => {
     setSelectedChannels([]);
   }, [selectedSKUs]);
 
-  // useEffect(() => {
-  //   setLoadingChannels(true);
-  //   axios
-  //     .get(`${API_BASE_URL}/getAllChannels`)
-  //     .then((res) => {
-  //       setFiltersData((prev) => ({
-  //         ...prev,
-  //         channels: Array.isArray(res.data) ? res.data : [],
-  //       }));
-  //     })
-  //     .catch(() => setFiltersData((prev) => ({ ...prev, channels: [] })))
-  //     .finally(() => setLoadingChannels(false));
-  // }, []);
   useEffect(() => {
     setLoadingChannels(true);
     axios
       .get(`${API_BASE_URL}/getAllChannels`, {
-        // Add cache-busting headers
         headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
           Expires: "0",
         },
-        // Add cache-busting query parameter
         params: {
-          _: Date.now(), // Unique timestamp parameter
+          _: Date.now(),
         },
       })
       .then((res) => {
@@ -972,7 +987,7 @@ export const DemandProjectMonth = () => {
 
         <Stack direction="row" spacing={1}>
           <DateFilter
-            key={dateFilterKey} 
+            key={dateFilterKey}
             onDateChange={(range) => setDateRange(range)}
             disabled={
               activeTab === 1 ||
@@ -982,6 +997,7 @@ export const DemandProjectMonth = () => {
             }
           />
 
+          {/* COUNTRY — single-select mode */}
           <MultiSelectWithCheckboxes
             label="Country"
             options={filtersData.countries}
@@ -993,6 +1009,7 @@ export const DemandProjectMonth = () => {
             loading={loadingCountries}
             onOpen={fetchCountries}
             width={110}
+            single // <--- enforce single choice & disable others after pick
             disabled={
               activeTab === 1 ||
               activeTab === 2 ||
@@ -1099,7 +1116,7 @@ export const DemandProjectMonth = () => {
             width={110}
           />
 
-          {/* Channel Filter - Assuming it has channel_id and channel_name/channel_code */}
+          {/* Channel Filter */}
           <MultiSelectWithCheckboxes
             label="Channel"
             options={filtersData.channels}

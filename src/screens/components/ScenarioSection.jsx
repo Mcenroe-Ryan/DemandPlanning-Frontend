@@ -124,7 +124,7 @@ const forecastData = [
   },
 ];
 
-// Updated Chart data to match screenshot patterns
+// Chart data to match screenshot patterns
 const chartData = [
   { name: "Apr 2024", actual: 7.6, baseline: 8.6, ml: 7.7, consensus: 7.6 },
   { name: "May 2024", actual: null, baseline: 8.4, ml: 7.3, consensus: 7.8 },
