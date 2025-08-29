@@ -948,7 +948,6 @@ export default function ForecastTable({
   };
 
   /* --------------------------- TABLE RENDERING ---------------------------- */
-
   const renderForecastTable = () => (
     <Box
       sx={{

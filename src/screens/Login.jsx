@@ -25,15 +25,26 @@ import { DemandProjectMonth } from "./DemandPlanning";
 import Layout from "./components/Layout";
 import { ImportProfilesData } from "./ImportProfile";
 import { AddNewProjectSpreadsheet } from "./AddProjectSpreadsheet";
+import PermissionConsentDialog from "./components/SSO";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [consentOpen, setConsentOpen] = useState(false);
+
   const loginData = {
     title: "Enter Into Play Ground",
     description:
       "All your Demand Forecast, Supply, Sales, Finance, Inventory, and Promotion in one place.",
     copyright: "© Copyright Cloud BC Labs. All Rights Reserved",
   };
+
+  const handleSsoSignIn = () => setConsentOpen(true);
+  const handleConsentAccept = () => {
+    setConsentOpen(false);
+    // TODO: replace with your real SSO flow/redirect
+    navigate("/dashboard");
+  };
+  const handleConsentCancel = () => setConsentOpen(false);
 
   return (
     <Box
@@ -85,8 +96,10 @@ const Login = () => {
           backdropFilter: "blur(17.5px)",
           display: "flex",
           position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* Left card */}
         <Paper
           elevation={0}
           sx={{
@@ -122,91 +135,134 @@ const Login = () => {
           </Stack>
         </Paper>
 
-        <Stack
-          spacing={3}
+        {/* Right side form */}
+        <Box
           sx={{
-            p: 4,
-            width: 297,
-            position: "absolute",
-            right: "30%",
-            top: "20%",
+            flex: 1,
+            pr: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transform: "translateY(-32px)", // lift the form up a bit
           }}
         >
-          <Typography variant="h6" fontWeight={600} color="#FFFFFF">
-            Signin
-          </Typography>
-          <Stack spacing={1.5}>
-            <Typography variant="body1" fontWeight={600} color="#FFFFFF">
-              Account Number
+          <Stack spacing={3} sx={{ width: 360, maxWidth: "90%" }}>
+            <Typography variant="h6" fontWeight={600} color="#FFFFFF">
+              Signin
             </Typography>
-            <TextField
+
+            <Stack spacing={1.5}>
+              <Typography variant="body1" fontWeight={600} color="#FFFFFF">
+                Account Number
+              </Typography>
+              <TextField
+                fullWidth
+                placeholder="Ex. 0000 9999 XXXX"
+                variant="outlined"
+                size="small"
+                sx={{ backgroundColor: "#FFFFFF", borderRadius: 1 }}
+              />
+            </Stack>
+
+            <Stack spacing={1.5}>
+              <Typography variant="body1" fontWeight={600} color="#FFFFFF">
+                Password
+              </Typography>
+              <TextField
+                fullWidth
+                type="password"
+                placeholder="**********"
+                variant="outlined"
+                size="small"
+                sx={{ backgroundColor: "#FFFFFF", borderRadius: 1 }}
+              />
+            </Stack>
+
+            <Button
+              variant="contained"
               fullWidth
-              placeholder="Ex. 0000 9999 XXXX"
-              variant="outlined"
-              size="small"
-              sx={{ backgroundColor: "#FFFFFF", borderRadius: 1 }}
-            />
-          </Stack>
-          <Stack spacing={1.5}>
-            <Typography variant="body1" fontWeight={600} color="#FFFFFF">
-              Password
-            </Typography>
-            <TextField
-              fullWidth
-              type="password"
-              placeholder="**********"
-              variant="outlined"
-              size="small"
-              sx={{ backgroundColor: "#FFFFFF", borderRadius: 1 }}
-            />
-          </Stack>
-          <Button
-            variant="contained"
-            fullWidth
-            sx={{
-              backgroundColor: "primary.main",
-              borderRadius: 1,
-              py: 1.5,
-              textTransform: "none",
-            }}
-            onClick={() => navigate("/dashboard")}
-          >
-            Sign in
-          </Button>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              width: "100%",
-            }}
-          >
-            <Link href="#" underline="always" color="#FFFFFF" variant="caption">
-              Forgot your password?
-            </Link>
-            <Link
-              component="button"
-              underline="always"
-              color="#FFFFFF"
-              variant="caption"
-              onClick={() => navigate("/signup")}
+              sx={{
+                backgroundColor: "primary.main",
+                borderRadius: 1,
+                py: 1.5,
+                textTransform: "none",
+              }}
+              onClick={() => navigate("/dashboard")}
             >
-              Signup now
-            </Link>
-          </Box>
-        </Stack>
+              Sign in
+            </Button>
+
+            {/* OR separator */}
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Box
+                flex={1}
+                height={1}
+                sx={{ bgcolor: "rgba(255,255,255,0.5)" }}
+              />
+              <Typography variant="caption" color="#FFFFFF">
+                Or
+              </Typography>
+              <Box
+                flex={1}
+                height={1}
+                sx={{ bgcolor: "rgba(255,255,255,0.5)" }}
+              />
+            </Stack>
+
+            {/* Sign in with SSO */}
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ borderRadius: 1, py: 1.5, textTransform: "none" }}
+              onClick={handleSsoSignIn}
+            >
+              Sign in with SSO
+            </Button>
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <Link
+                href="#"
+                underline="always"
+                color="#FFFFFF"
+                variant="caption"
+              >
+                Forgot your password?
+              </Link>
+              <Link
+                component="button"
+                underline="always"
+                color="#FFFFFF"
+                variant="caption"
+                onClick={() => navigate("/signup")}
+              >
+                Signup now
+              </Link>
+            </Box>
+          </Stack>
+        </Box>
       </Paper>
-      <Typography
-        variant="caption"
-        color="#FFFFFF"
-        sx={{ position: "absolute", bottom: 20 }}
-      >
-        {loginData.copyright}
-      </Typography>
+
+      {/* Consent dialog for Login */}
+      <PermissionConsentDialog
+        open={consentOpen}
+        appName="SSO for Demand Planning"
+        onAccept={handleConsentAccept}
+        onCancel={handleConsentCancel}
+      />
     </Box>
   );
 };
 
 const LoginSignUp = () => {
+  const navigate = useNavigate();
+  const [consentOpen, setConsentOpen] = useState(false);
+
   const industryTypes = [
     "Manufacturing",
     "Retail",
@@ -214,6 +270,14 @@ const LoginSignUp = () => {
     "Healthcare",
     "Finance",
   ];
+
+  const handleSsoSignUp = () => setConsentOpen(true);
+  const handleConsentAccept = () => {
+    setConsentOpen(false);
+    // TODO: replace with your real SSO flow/redirect
+    navigate("/verify");
+  };
+  const handleConsentCancel = () => setConsentOpen(false);
 
   return (
     <Box
@@ -273,7 +337,7 @@ const LoginSignUp = () => {
             backgroundColor: "rgba(255, 255, 255, 0.15)",
           }}
         >
-          {/* Left Section (Illustration) */}
+          {/* Left Section */}
           <Paper
             elevation={0}
             sx={{
@@ -411,6 +475,33 @@ const LoginSignUp = () => {
                 Sign up
               </Button>
 
+              {/* OR separator */}
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Box
+                  flex={1}
+                  height={1}
+                  sx={{ bgcolor: "rgba(255,255,255,0.5)" }}
+                />
+                <Typography variant="caption" color="#FFFFFF">
+                  Or
+                </Typography>
+                <Box
+                  flex={1}
+                  height={1}
+                  sx={{ bgcolor: "rgba(255,255,255,0.5)" }}
+                />
+              </Stack>
+
+              {/* Sign up with SSO */}
+              <Button
+                variant="contained"
+                fullWidth
+                sx={{ py: 1.5, textTransform: "none", borderRadius: 1 }}
+                onClick={handleSsoSignUp}
+              >
+                Sign up with SSO
+              </Button>
+
               <Typography variant="caption" color="#FFFFFF" textAlign="center">
                 Already have an account?{" "}
                 <Link href="/" underline="always" color="#FFFFFF">
@@ -421,29 +512,51 @@ const LoginSignUp = () => {
           </Box>
         </Paper>
 
+        {/* Footer centered under the paper */}
         <Typography
           variant="caption"
           color="#FFFFFF"
-          sx={{ mt: 2, textAlign: "center" }}
+          sx={{
+            position: "absolute",
+            bottom: -28,
+            width: "100%",
+            textAlign: "center",
+          }}
         >
           © Copyright Cloud BC Labs. All Rights Reserved
         </Typography>
       </Container>
+
+      {/* Consent dialog for Signup */}
+      <PermissionConsentDialog
+        open={consentOpen}
+        appName="SSO for Demand Planning"
+        onAccept={handleConsentAccept}
+        onCancel={handleConsentCancel}
+      />
     </Box>
   );
 };
-
 const LoginVerify = () => {
   const [otpValues, setOtpValues] = useState(["", "", "", ""]);
+  const navigate = useNavigate();
 
   const handleOtpChange = (index, value) => {
     if (value.length <= 1) {
-      const newOtp = [...otpValues];
-      newOtp[index] = value;
-      setOtpValues(newOtp);
-      if (value && index < 3)
+      const next = [...otpValues];
+      next[index] = value.replace(/\D/g, ""); // digits only
+      setOtpValues(next);
+
+      // auto-focus next input
+      if (value && index < otpValues.length - 1) {
         document.getElementById(`otp-input-${index + 1}`)?.focus();
+      }
     }
+  };
+
+  const handleVerify = () => {
+    // TODO: Add real OTP validation here if needed
+    navigate("/dashboard");
   };
 
   return (
@@ -459,6 +572,7 @@ const LoginVerify = () => {
         position: "relative",
       }}
     >
+      {/* Clouds */}
       <Box sx={{ position: "absolute", top: 0, left: 0 }}>
         <img
           src="https://c.animaapp.com/VnOr3e3w/img/image-1.png"
@@ -487,6 +601,7 @@ const LoginVerify = () => {
             padding: 4,
           }}
         >
+          {/* Left panel */}
           <Box
             sx={{
               width: 411,
@@ -529,6 +644,7 @@ const LoginVerify = () => {
             </Stack>
           </Box>
 
+          {/* Right panel */}
           <Box
             sx={{
               width: 409,
@@ -546,6 +662,8 @@ const LoginVerify = () => {
                 We've just sent a text message with your security code on the
                 number +91 ********26
               </Typography>
+
+              {/* OTP inputs */}
               <Stack direction="row" spacing={2} width="200px">
                 {otpValues.map((val, idx) => (
                   <TextField
@@ -556,6 +674,7 @@ const LoginVerify = () => {
                     variant="outlined"
                     inputProps={{
                       maxLength: 1,
+                      inputMode: "numeric",
                       style: { textAlign: "center", padding: 8 },
                     }}
                     sx={{
@@ -566,15 +685,21 @@ const LoginVerify = () => {
                         height: 38,
                       },
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleVerify();
+                    }}
                   />
                 ))}
               </Stack>
+
               <Button
                 variant="contained"
                 sx={{ textTransform: "none", borderRadius: 1, py: 1.2 }}
+                onClick={handleVerify}
               >
                 Verify
               </Button>
+
               <Link
                 component="button"
                 variant="body2"
@@ -588,14 +713,16 @@ const LoginVerify = () => {
             </Stack>
           </Box>
         </Box>
+
+        {/* Footer centered at bottom */}
         <Typography
           variant="caption"
           color="#FFFFFF"
           sx={{
             position: "absolute",
-            bottom: -60,
-            left: "50%",
-            transform: "translateX(-50%)",
+            bottom: 20,
+            width: "100%",
+            textAlign: "center",
           }}
         >
           © Copyright Cloud BC Labs. All Rights Reserved

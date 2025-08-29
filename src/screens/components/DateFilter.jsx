@@ -8,7 +8,7 @@ import {
   Typography,
   Stack,
 } from "@mui/material";
-import { addDays, format, parse, addMonths, subMonths } from "date-fns";
+import { format, parse, addMonths, subMonths } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 
@@ -16,7 +16,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
   const defaultRange = [
     {
       startDate: subMonths(new Date(), 6), // 6 months historical
-      endDate: addMonths(new Date(), 6), // 6 months forecast
+      endDate: addMonths(new Date(), 6),   // 6 months forecast
       key: "selection",
     },
   ];
@@ -24,13 +24,11 @@ export default function DateFilter({ onDateChange, disabled = false }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [range, setRange] = useState(defaultRange);
   const [tempRange, setTempRange] = useState(defaultRange);
+
+  // NEW: start with empty inputs so placeholder shows
   const [hasUserSelected, setHasUserSelected] = useState(false);
-  const [startInput, setStartInput] = useState(
-    format(defaultRange[0].startDate, "MM/dd/yyyy")
-  );
-  const [endInput, setEndInput] = useState(
-    format(defaultRange[0].endDate, "MM/dd/yyyy")
-  );
+  const [startInput, setStartInput] = useState(""); // show "--/--/--" placeholder
+  const [endInput, setEndInput] = useState("");     // show "--/--/--" placeholder
 
   const handleOpen = (event) => {
     if (disabled) return;
@@ -39,8 +37,14 @@ export default function DateFilter({ onDateChange, disabled = false }) {
 
   const handleCancel = () => {
     setTempRange(range);
-    setStartInput(format(range[0].startDate, "MM/dd/yyyy"));
-    setEndInput(format(range[0].endDate, "MM/dd/yyyy"));
+    // If no confirmed selection yet, keep placeholders; otherwise reflect saved range
+    if (hasUserSelected) {
+      setStartInput(format(range[0].startDate, "MM/dd/yyyy"));
+      setEndInput(format(range[0].endDate, "MM/dd/yyyy"));
+    } else {
+      setStartInput("");
+      setEndInput("");
+    }
     setAnchorEl(null);
   };
 
@@ -71,7 +75,6 @@ export default function DateFilter({ onDateChange, disabled = false }) {
     }
   };
 
-  //This is to show month number after selection
   const getLabel = () => {
     if (!hasUserSelected) return "Date Filter";
     return `${format(range[0].startDate, "MMM dd, yyyy")} - ${format(
@@ -102,19 +105,14 @@ export default function DateFilter({ onDateChange, disabled = false }) {
           opacity: 1,
           cursor: disabled ? "not-allowed" : "pointer",
           borderColor: disabled ? "grey.300" : "primary.main",
-          "&:hover": {
-            bgcolor: disabled ? "grey.100" : "grey.100",
-          },
+          "&:hover": { bgcolor: disabled ? "grey.100" : "grey.100" },
         }}
         onClick={handleOpen}
         disabled={disabled}
       >
         <Typography
           variant="body2"
-          sx={{
-            fontSize: "13px",
-            color: disabled ? "grey.500" : "primary.main",
-          }}
+          sx={{ fontSize: "13px", color: disabled ? "grey.500" : "primary.main" }}
         >
           {getLabel()}
         </Typography>
@@ -140,11 +138,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
         {/* Start & End Date Input Row */}
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
           <Box sx={{ flex: 0.5, minWidth: 100 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 0.25 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25 }}>
               Start date (mm/dd/yy)
             </Typography>
             <TextField
@@ -152,25 +146,17 @@ export default function DateFilter({ onDateChange, disabled = false }) {
               variant="outlined"
               value={startInput}
               onChange={handleStartChange}
+              placeholder="--/--/--"  // <— shows mask
               sx={{
-                "& .MuiOutlinedInput-root": {
-                  height: 30,
-                },
-                "& input": {
-                  padding: "4px 6px",
-                  fontSize: 12,
-                },
+                "& .MuiOutlinedInput-root": { height: 30 },
+                "& input": { padding: "4px 6px", fontSize: 12 },
               }}
               fullWidth
               disabled={disabled}
             />
           </Box>
           <Box sx={{ flex: 0.5, minWidth: 100 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 0.25 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25 }}>
               End date (mm/dd/yy)
             </Typography>
             <TextField
@@ -178,14 +164,10 @@ export default function DateFilter({ onDateChange, disabled = false }) {
               variant="outlined"
               value={endInput}
               onChange={handleEndChange}
+              placeholder="--/--/--"  // <— shows mask
               sx={{
-                "& .MuiOutlinedInput-root": {
-                  height: 30,
-                },
-                "& input": {
-                  padding: "4px 6px",
-                  fontSize: 12,
-                },
+                "& .MuiOutlinedInput-root": { height: 30 },
+                "& input": { padding: "4px 6px", fontSize: 12 },
               }}
               fullWidth
               disabled={disabled}
@@ -195,7 +177,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
 
         {/* Calendar */}
         <DateRange
-          editableDateInputs={true}
+          editableDateInputs
           onChange={(item) => {
             setTempRange([item.selection]);
             setStartInput(format(item.selection.startDate, "MM/dd/yyyy"));
@@ -209,15 +191,8 @@ export default function DateFilter({ onDateChange, disabled = false }) {
         />
 
         {/* Footer Buttons */}
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
-        >
-          <Button
-            size="small"
-            onClick={handleCancel}
-            sx={{ textTransform: "uppercase" }}
-            disabled={false}
-          >
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+          <Button size="small" onClick={handleCancel} sx={{ textTransform: "uppercase" }}>
             Cancel
           </Button>
           <Button

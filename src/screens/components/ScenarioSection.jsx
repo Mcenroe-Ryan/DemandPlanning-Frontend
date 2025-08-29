@@ -1,740 +1,753 @@
-import React, { useState } from "react";
+import Add from "@mui/icons-material/Add";
+import CheckCircle from "@mui/icons-material/CheckCircle";
+import HelpOutline from "@mui/icons-material/HelpOutline";
+import MoreVert from "@mui/icons-material/MoreVert";
+import Search from "@mui/icons-material/Search";
+import TrendingUp from "@mui/icons-material/TrendingUp";
+import Warning from "@mui/icons-material/Warning";
+import CircleIcon from "@mui/icons-material/FiberManualRecord";
+import LineIcon from "@mui/icons-material/Remove";
 import {
+  Autocomplete,
   Box,
-  Card,
-  Chip,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  Stack,
   Button,
-  Slider,
-  FormControl,
-  Select,
-  MenuItem,
-  TextField,
-  List,
-  ListItem,
-  ListItemButton,
-  Divider,
+  Checkbox,
+  Chip,
   Paper,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
 } from "@mui/material";
-import {
-  TrendingUp,
-  MoreVert,
-  Search,
-  Add,
-  HelpOutline,
-  KeyboardArrowDown,
-  Lock,
-  LockOpen,
-} from "@mui/icons-material";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import React, { useState } from "react";
 
-// Sample data for the table
-const forecastData = [
-  {
-    forecastType: "Actual",
-    apr24: 7842,
-    may24: 8819,
-    jun24: "-",
-    jul24: "-",
-    aug24: "-",
-    sep24: "-",
-    oct24: "-",
-    nov24: "-",
-    dec24: "-",
-    jan25: "-",
-    feb25: "-",
-    mar25: "-",
-  },
-  {
-    forecastType: "Baseline Forecast",
-    apr24: 7845,
-    may24: 8200,
-    jun24: 8878,
-    jul24: 8900,
-    aug24: 8542,
-    sep24: 10174,
-    oct24: 12240,
-    nov24: 12284,
-    dec24: 7844,
-    jan25: 7750,
-    feb25: 8245,
-    mar25: 8508,
-  },
-  {
-    forecastType: "ML Forecast",
-    apr24: 7812,
-    may24: 7700,
-    jun24: 9080,
-    jul24: 8305,
-    aug24: 9118,
-    sep24: 11504,
-    oct24: 12180,
-    nov24: 7480,
-    dec24: 7854,
-    jan25: 8105,
-    feb25: 8545,
-    mar25: 8362,
-  },
-  {
-    forecastType: "Consensus",
-    apr24: 7850,
-    may24: 7850,
-    jun24: 7840,
-    jul24: 8480,
-    aug24: 9550,
-    sep24: 11850,
-    oct24: 12205,
-    nov24: 7150,
-    dec24: 8105,
-    jan25: 8245,
-    feb25: 8845,
-    mar25: 8962,
-    locked: true,
-  },
-  {
-    forecastType: "Revenue Forecast",
-    apr24: 4300,
-    may24: 3500,
-    jun24: 3300,
-    jul24: 518,
-    aug24: 13834,
-    sep24: 13834,
-    oct24: 12284,
-    nov24: 6889,
-    dec24: 6941,
-    jan25: 2748,
-    feb25: 5892,
-    mar25: 2038,
-  },
+/* ---------- data ---------- */
+const scenariosData = [
+  { id: 1, title: "Sudden Spike in Demand", description: "30% increase due to marketing campaign", category: "Demand", impact: "+30%", duration: "3 Months", isSelected: true },
+  { id: 2, title: "Sudden Drop in Demand", description: "20% drop due to economic slowdown", category: "Demand", impact: "-20%", duration: "6 Months", isSelected: false },
+  { id: 3, title: "New Market Expansion", description: "Launch in new region with 40% uplift", category: "Demand", impact: "+40%", duration: "12 Months", isSelected: false },
+  { id: 4, title: "Supplier Disruption", description: "Unfulfilled demand due to raw material shortage", category: "Supply", impact: "-15%", duration: "4 Months", isSelected: false },
+  { id: 5, title: "Price Change Impact", description: "10% price increase affects demand", category: "Price", impact: "-12%", duration: "6 Months", isSelected: false },
+  { id: 6, title: "New Product Introduction", description: "25% cannibalization + 35% new demand", category: "Product", impact: "+10%", duration: "9 Months", isSelected: false },
+  { id: 7, title: "Promotions & Discount", description: "Flash sale increases demand by 50%", category: "Demand", impact: "+50%", duration: "1 Months", isSelected: false },
+  { id: 8, title: "Change in Lead Time", description: "Lead time increase affects availability", category: "Supply", impact: "-8%", duration: "8 Months", isSelected: false },
+  { id: 9, title: "Production Constraints", description: "30% capacity reduction", category: "Supply", impact: "-30%", duration: "2 Months", isSelected: false },
 ];
 
-// Chart data to match screenshot patterns
-const chartData = [
-  { name: "Apr 2024", actual: 7.6, baseline: 8.6, ml: 7.7, consensus: 7.6 },
-  { name: "May 2024", actual: null, baseline: 8.4, ml: 7.3, consensus: 7.8 },
-  { name: "Jun 2024", actual: null, baseline: 7.7, ml: 8.9, consensus: 8.5 },
-  { name: "Jul 2024", actual: null, baseline: 7.6, ml: 8.7, consensus: 8.3 },
-  { name: "Aug 2024", actual: null, baseline: 7.8, ml: 8.4, consensus: 9.0 },
-  { name: "Sep 2024", actual: null, baseline: 9.1, ml: 9.5, consensus: 9.2 },
-  { name: "Oct 2024", actual: null, baseline: 12.2, ml: 11.6, consensus: 12.0 },
-  { name: "Nov 2024", actual: null, baseline: 12.3, ml: 11.9, consensus: 12.1 },
-  { name: "Dec 2024", actual: null, baseline: 7.8, ml: 7.5, consensus: 8.1 },
-  { name: "Jan 2025", actual: null, baseline: 7.8, ml: 8.1, consensus: 8.2 },
-];
-
-// Scenario data
-const scenarioData = [
+const disruptionData = [
   {
     id: 1,
-    title: "Sudden Spike in Demand",
-    description: "30% increase due to marketing campaign",
-    category: "Demand",
-    categoryColor: "info",
-    impact: "+30%",
-    duration: "3 Months",
-    selected: true,
+    date: "22 Aug, 2025 12:34PM",
+    location: "Hyderabad (HYD543)",
+    product: "Sweet Mixes (C5240200A)",
+    description: "Unexpected regional event.",
+    isCompleted: false,
   },
   {
     id: 2,
-    title: "Sudden Drop in Demand",
-    description: "20% drop due to economic slowdown",
-    category: "Demand",
-    categoryColor: "info",
-    impact: "-20%",
-    duration: "6 Months",
-    selected: false,
-  },
-  {
-    id: 3,
-    title: "New Market Expansion",
-    description: "Launch in new region with 40% uplift",
-    category: "Demand",
-    categoryColor: "info",
-    impact: "+40%",
-    duration: "12 Months",
-    selected: false,
-  },
-  {
-    id: 4,
-    title: "Supplier Disruption",
-    description: "Unfulfilled demand due to raw material shortage",
-    category: "Supply",
-    categoryColor: "error",
-    impact: "-15%",
-    duration: "4 Months",
-    selected: false,
-  },
-  {
-    id: 5,
-    title: "Price Change Impact",
-    description: "10% price increase affects demand",
-    category: "Price",
-    categoryColor: "success",
-    impact: "-12%",
-    duration: "6 Months",
-    selected: false,
-  },
-  {
-    id: 6,
-    title: "New Product Introduction",
-    description: "25% cannibalization + 35% new demand",
-    category: "Product",
-    categoryColor: "primary",
-    impact: "+10%",
-    duration: "9 Months",
-    selected: false,
-  },
-  {
-    id: 7,
-    title: "Promotions & Discount",
-    description: "Flash sale increases demand by 50%",
-    category: "Demand",
-    categoryColor: "info",
-    impact: "+50%",
-    duration: "1 Months",
-    selected: false,
+    date: "18 Jul, 2025 04:30PM",
+    location: "Hyderabad (HYD543)",
+    product: "RTE - Soup Pack (Veg) (C4660200B)",
+    description: "Weather event.",
+    isCompleted: true,
   },
 ];
 
-// Left Sidebar Component
-const ScenarioSidebar = ({ selectedScenario, onScenarioSelect }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sliderValue, setSliderValue] = useState(30);
-  const [timeFrame, setTimeFrame] = useState("3 Months");
+const chartData = {
+  yAxisLabels: [30, 25, 20, 15, 10, 5, 0],
+  xAxisLabels: ["Week 1","Week 2","Week 3","Week 4","Week 5","Week 6","Week 7","Week 8"],
+  regions: [
+    { name: "Region 1", color: "#0891b2", data: [6, 8, 10, 17, 12, 7, 9, 15] },
+    { name: "Region 2", color: "#f87171", data: [12, 9, 6, 13, 10, 16, 14, 17] },
+    { name: "Region 3", color: "#22c55e", data: [15, 13, 11, 9, 12, 11, 18, 20] },
+  ],
+};
 
-  const filteredScenarios = scenarioData.filter(scenario =>
-    scenario.title.toLowerCase().includes(searchTerm.toLowerCase())
+/* ---------- helpers ---------- */
+const getCategoryColor = (category) => {
+  switch (category) {
+    case "Demand": return { bg: "#e0f7fa", color: "#00695c" };
+    case "Supply": return { bg: "#ffebee", color: "#c62828" };
+    case "Price":  return { bg: "#e8f5e8", color: "#2e7d32" };
+    case "Product":return { bg: "#e3f2fd", color: "#1565c0" };
+    default:       return { bg: "#f5f5f5", color: "#424242" };
+  }
+};
+
+/* ============================================================
+   MonthGraph — responsive, pure SVG version of your first graph
+   ============================================================ */
+const MonthGraph = ({ viewMode, setViewMode }) => {
+  // Axes & ticks
+  const yMax = 35;
+  const yTicks = [35, 30, 25, 20, 15, 10, 5, 0];
+  const xLabels = ["Week 1","Week 2","Week 3","Week 4","Week 5","Week 6","Week 7","Week 8"];
+
+  // Demo data (customize with real series later)
+  const actual = [6, 8, 12, 17, 14, 11, 13, 15];
+  const forecast = [14, 13, 12, 13, 14, 16, 15, 14];
+
+  // SVG metrics
+  const W = 860;
+  const H = 340;
+  const margin = { top: 10, right: 16, bottom: 40, left: 56 };
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const x = (i) => (i / (xLabels.length - 1)) * iw;
+  const y = (val) => ih - (val / yMax) * ih;
+
+  const toPath = (arr) =>
+    arr
+      .map((v, i) => `${i === 0 ? "M" : "L"} ${margin.left + x(i)} ${margin.top + y(v)}`)
+      .join(" ");
+
+  const actualPath = toPath(actual);
+  const forecastPath = toPath(forecast);
+
+  // Pink band around middle (between week 4 and week 5)
+  const bandX = margin.left + x(4) - iw * 0.012; // ~1.2% width offset
+  const bandW = iw * 0.025; // ~2.5% width
+
+  return (
+    <Paper
+      sx={{
+        width: "100%",
+        border: "1px solid #9CA3AF",
+        borderTop: "none",
+        p: 1.5,
+      }}
+    >
+      {/* Legend & toggles */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Stack direction="row" spacing={2} flexWrap="wrap" rowGap={1}>
+          <Chip
+            icon={<CircleIcon sx={{ color: "#0E7490", fontSize: 12 }} />}
+            label="Actual"
+            variant="outlined"
+            sx={{
+              bgcolor: "#EFF6FF",
+              borderColor: "#9CA3AF",
+              "& .MuiChip-label": { fontSize: 14, color: "#4B5563" },
+            }}
+          />
+          <Chip
+            icon={<LineIcon sx={{ color: "#2563EB", fontSize: 16 }} />}
+            label="Forecast"
+            variant="outlined"
+            sx={{
+              bgcolor: "#EFF6FF",
+              borderColor: "#9CA3AF",
+              "& .MuiChip-label": { fontSize: 14, color: "#4B5563" },
+            }}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant={viewMode === "M" ? "contained" : "outlined"}
+            onClick={() => setViewMode("M")}
+            sx={{
+              minWidth: 38, width: 38, height: 38, borderRadius: "50px",
+              borderColor: "#2563EB",
+              color: viewMode === "M" ? "white" : "#1F2937",
+              bgcolor: viewMode === "M" ? "#2563EB" : "transparent",
+              fontSize: 12, fontWeight: 600,
+              "&:hover": { bgcolor: viewMode === "M" ? "#1D4ED8" : "#EFF6FF" },
+            }}
+          >
+            M
+          </Button>
+          <Button
+            variant={viewMode === "W" ? "contained" : "outlined"}
+            onClick={() => setViewMode("W")}
+            sx={{
+              minWidth: 38, width: 38, height: 38, borderRadius: "50px",
+              borderColor: "#2563EB",
+              color: viewMode === "W" ? "white" : "#1F2937",
+              bgcolor: viewMode === "W" ? "#2563EB" : "transparent",
+              fontSize: 12, fontWeight: 600,
+              "&:hover": { bgcolor: viewMode === "W" ? "#1D4ED8" : "#EFF6FF" },
+            }}
+          >
+            W
+          </Button>
+        </Stack>
+      </Stack>
+
+      {/* Responsive SVG area */}
+      <Box sx={{ width: "100%", aspectRatio: { xs: "4 / 3", md: "16 / 7" } }}>
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%">
+          {/* grid background */}
+          <defs>
+            <pattern id="grid" width={iw / 8} height={ih / 7} patternUnits="userSpaceOnUse">
+              <path d={`M ${iw / 8} 0 L 0 0 0 ${ih / 7}`} fill="none" stroke="#E5E7EB" strokeWidth="1" />
+            </pattern>
+          </defs>
+
+          {/* plot area background */}
+          <rect
+            x={margin.left}
+            y={margin.top}
+            width={iw}
+            height={ih}
+            fill="url(#grid)"
+          />
+
+          {/* pink band */}
+          <rect x={bandX} y={margin.top} width={bandW} height={ih} fill="rgba(255, 167, 167, 0.49)" />
+
+          {/* axes lines */}
+          <line
+            x1={margin.left}
+            y1={margin.top + ih}
+            x2={margin.left + iw}
+            y2={margin.top + ih}
+            stroke="#9CA3AF"
+            strokeWidth="1"
+          />
+          <line
+            x1={margin.left}
+            y1={margin.top}
+            x2={margin.left}
+            y2={margin.top + ih}
+            stroke="#9CA3AF"
+            strokeWidth="1"
+          />
+
+          {/* y tick labels */}
+          {yTicks.map((t) => (
+            <text
+              key={t}
+              x={margin.left - 8}
+              y={margin.top + y(t)}
+              textAnchor="end"
+              dominantBaseline="middle"
+              style={{ fontSize: 12, fontWeight: 600, fill: "#6B7280" }}
+            >
+              {t}
+            </text>
+          ))}
+
+          {/* x tick labels */}
+          {xLabels.map((lbl, i) => (
+            <text
+              key={lbl}
+              x={margin.left + x(i)}
+              y={margin.top + ih + 24}
+              textAnchor="middle"
+              style={{ fontSize: 12, fontWeight: 600, fill: "#6B7280" }}
+            >
+              {lbl}
+            </text>
+          ))}
+
+          {/* y axis title */}
+          <text
+            x={margin.left - 48}
+            y={margin.top + ih / 2}
+            transform={`rotate(-90 ${margin.left - 48} ${margin.top + ih / 2})`}
+            textAnchor="middle"
+            style={{ fontSize: 14, fill: "#4B5563" }}
+          >
+            Units (in thousands)
+          </text>
+
+          {/* series */}
+          <path d={actualPath} fill="none" stroke="#0E7490" strokeWidth="2.5" />
+          <path d={forecastPath} fill="none" stroke="#2563EB" strokeWidth="2" strokeDasharray="6,6" />
+        </svg>
+      </Box>
+    </Paper>
   );
+};
+
+/* ============================================================
+   RegionChart (unchanged from your version except minor polish)
+   ============================================================ */
+const RegionChart = ({ viewMode, setViewMode }) => {
+  return (
+    <Paper
+      sx={{
+        width: "100%",
+        border: "1px solid #cbd5e1",
+        borderRadius: 0,
+        p: 1.5,
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Stack direction="row" spacing={2} flexWrap="wrap" rowGap={1}>
+            {chartData.regions.map((region, index) => (
+              <Chip
+                key={index}
+                icon={<Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: region.color, ml: 1 }} />}
+                label={region.name}
+                variant="outlined"
+                sx={{
+                  bgcolor: "#eff6ff",
+                  borderColor: "#cbd5e1",
+                  "& .MuiChip-label": { fontSize: 14, color: "#64748b" },
+                }}
+              />
+            ))}
+          </Stack>
+
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant={viewMode === "M" ? "contained" : "outlined"}
+              onClick={() => setViewMode("M")}
+              sx={{
+                minWidth: 38, width: 38, height: 32, borderRadius: "50px",
+                fontSize: 12, fontWeight: 600,
+                color: viewMode === "M" ? "white" : "#1e293b",
+                bgcolor: viewMode === "M" ? "#2563eb" : "transparent",
+                borderColor: "#2563eb",
+                "&:hover": { bgcolor: viewMode === "M" ? "#1d4ed8" : "#f1f5f9" },
+              }}
+            >
+              M
+            </Button>
+            <Button
+              variant={viewMode === "W" ? "contained" : "outlined"}
+              onClick={() => setViewMode("W")}
+              sx={{
+                minWidth: 38, width: 38, height: 32, borderRadius: "50px",
+                fontSize: 12, fontWeight: 600,
+                color: viewMode === "W" ? "white" : "#1e293b",
+                bgcolor: viewMode === "W" ? "#2563eb" : "transparent",
+                borderColor: "#2563eb",
+                "&:hover": { bgcolor: viewMode === "W" ? "#1d4ed8" : "#f1f5f9" },
+              }}
+            >
+              W
+            </Button>
+          </Stack>
+        </Stack>
+
+        <Box sx={{ position: "relative", flex: 1, minHeight: 280 }}>
+          <Stack direction="row" sx={{ height: "100%" }}>
+            <Stack spacing={5.125} sx={{ width: 60, justifyContent: "space-between", pt: 2 }}>
+              <Typography
+                sx={{
+                  transform: "rotate(-90deg)",
+                  transformOrigin: "center",
+                  fontSize: 14,
+                  color: "#64748b",
+                  position: "absolute",
+                  left: -60,
+                  top: "50%",
+                  width: 144,
+                  textAlign: "center",
+                }}
+              >
+                Units (in thousands)
+              </Typography>
+              {chartData.yAxisLabels.map((label, index) => (
+                <Typography
+                  key={index}
+                  sx={{ fontSize: 12, color: "#64748b", textAlign: "right", fontWeight: 600, width: 34 }}
+                >
+                  {label}
+                </Typography>
+              ))}
+            </Stack>
+
+            <Box sx={{ flex: 1, position: "relative", ml: 2 }}>
+              <svg width="100%" height="280" viewBox="0 0 774 280" preserveAspectRatio="none">
+                <defs>
+                  <pattern id="grid2" width="96.75" height="41" patternUnits="userSpaceOnUse">
+                    <path d="M 96.75 0 L 0 0 0 41" fill="none" stroke="#e2e8f0" strokeWidth="1" />
+                  </pattern>
+                </defs>
+
+                <rect width="100%" height="100%" fill="url(#grid2)" />
+
+                {chartData.regions.map((region, regionIndex) => {
+                  const pathData = region.data
+                    .map((value, index) => {
+                      const x = (index * 774) / 7;
+                      const y = 280 - (value / 30) * 280;
+                      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
+                    })
+                    .join(" ");
+
+                  return (
+                    <g key={regionIndex}>
+                      <path
+                        d={pathData}
+                        fill="none"
+                        stroke={region.color}
+                        strokeWidth="2"
+                        strokeDasharray={regionIndex === 1 ? "5,5" : "0"}
+                      />
+                      {region.data.map((value, index) => {
+                        const x = (index * 774) / 7;
+                        const y = 280 - (value / 30) * 280;
+                        return <circle key={index} cx={x} cy={y} r="3" fill={region.color} />;
+                      })}
+                    </g>
+                  );
+                })}
+              </svg>
+
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                sx={{ position: "absolute", bottom: -26, left: 0, right: 0, px: 2 }}
+              >
+                {chartData.xAxisLabels.map((label, index) => (
+                  <Typography key={index} sx={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
+                    {label}
+                  </Typography>
+                ))}
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
+      </Stack>
+    </Paper>
+  );
+};
+
+/* ---------- top nav ---------- */
+const AnalyticsSection = () => {
+  const [activeTab, setActiveTab] = useState("Scenarios");
+  const navigationItems = [
+    { label: "Demand", hasAlert: false, alertCount: 0 },
+    { label: "Alerts for Forecast Error", hasAlert: true, alertCount: 2 },
+    { label: "Compare Model", hasAlert: false, alertCount: 0 },
+    { label: "Analytics", hasAlert: false, alertCount: 0 },
+    { label: "Scenarios", hasAlert: false, alertCount: 0 },
+  ];
 
   return (
     <Box
       sx={{
-        width: 280,
-        bgcolor: "background.paper",
-        borderRight: 1,
-        borderColor: "grey.200",
         display: "flex",
-        flexDirection: "column",
-        height: "100vh",
+        alignItems: "center",
+        width: "100%",
+        bgcolor: "white",
+        border: 1,
+        borderColor: "grey.300",
+        overflowX: "auto",
       }}
     >
-      {/* Header */}
-      <Box sx={{ p: 2, bgcolor: "grey.50", borderBottom: 1, borderColor: "grey.200" }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-          <HelpOutline sx={{ width: 16, height: 16, color: "grey.600" }} />
-          <Typography variant="subtitle2" color="grey.700" fontWeight={600} sx={{ fontSize: 12 }}>
-            What-If Scenarios?
-          </Typography>
-        </Stack>
-        <Typography variant="caption" color="grey.500" sx={{ fontSize: 10 }}>
-          Select a scenario to analyze its impact on demand planning.
-        </Typography>
-      </Box>
-
-      {/* Search */}
-      <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "grey.200" }}>
+      {navigationItems.map((item) => (
         <Box
+          key={item.label}
+          onClick={() => setActiveTab(item.label)}
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1,
-            p: 0.75,
-            bgcolor: "grey.50",
-            borderRadius: 1,
-            border: 1,
-            borderColor: "grey.200",
+            justifyContent: "center",
+            gap: 0.5,
+            px: 1.25,
+            py: 0.625,
+            cursor: "pointer",
+            backgroundColor: activeTab === item.label ? "blue.50" : "transparent",
+            borderBottom: activeTab === item.label ? 2 : 0,
+            borderBottomColor: activeTab === item.label ? "blue.500" : "transparent",
+            flexShrink: 0,
           }}
         >
-          <Search sx={{ width: 14, height: 14, color: "grey.500" }} />
-          <TextField
-            placeholder="Search scenarios"
-            variant="standard"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{
-              flex: 1,
-              "& .MuiInput-underline": {
-                "&:before": { display: "none" },
-                "&:after": { display: "none" },
-              },
-              "& input": { fontSize: 11, color: "grey.700", p: 0 },
-            }}
-          />
-          <IconButton size="small" sx={{ p: 0.25 }}>
-            <Add sx={{ width: 12, height: 12, color: "grey.500" }} />
-          </IconButton>
-        </Box>
-      </Box>
-
-      {/* Scenarios List */}
-      <Box sx={{ flex: 1, overflow: "auto" }}>
-        <List sx={{ p: 0 }}>
-          {filteredScenarios.map((scenario) => (
-            <ListItem key={scenario.id} sx={{ p: 0 }}>
-              <ListItemButton
-                onClick={() => onScenarioSelect(scenario.id)}
-                selected={selectedScenario === scenario.id}
-                sx={{
-                  p: 1.5,
-                  borderBottom: 1,
-                  borderColor: "grey.100",
-                  "&.Mui-selected": {
-                    bgcolor: "primary.50",
-                    borderLeft: "3px solid",
-                    borderLeftColor: "primary.main",
-                  },
-                }}
-              >
-                <Stack spacing={1} sx={{ width: "100%" }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Stack spacing={0.5} sx={{ flex: 1 }}>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <TrendingUp sx={{ width: 10, height: 10, color: "grey.600" }} />
-                        <Typography
-                          variant="body2"
-                          color="text.primary"
-                          fontWeight={selectedScenario === scenario.id ? 600 : 500}
-                          sx={{ fontSize: 11 }}
-                        >
-                          {scenario.title}
-                        </Typography>
-                      </Stack>
-                      <Typography
-                        variant="caption"
-                        color="grey.600"
-                        sx={{ fontSize: 9, lineHeight: 1.2, ml: 1.5 }}
-                      >
-                        {scenario.description}
-                      </Typography>
-                    </Stack>
-                    <IconButton size="small" sx={{ p: 0.25 }}>
-                      <MoreVert sx={{ width: 12, height: 12, color: "grey.500" }} />
-                    </IconButton>
-                  </Stack>
-
-                  <Stack direction="row" spacing={0.5} sx={{ ml: 1.5 }}>
-                    <Chip
-                      label={scenario.category}
-                      size="small"
-                      color={scenario.categoryColor}
-                      variant="outlined"
-                      sx={{ fontSize: 8, fontWeight: 600, height: 16, "& .MuiChip-label": { px: 0.5 } }}
-                    />
-                    <Chip
-                      label={scenario.impact}
-                      size="small"
-                      sx={{
-                        fontSize: 8,
-                        fontWeight: 600,
-                        height: 16,
-                        bgcolor: "grey.200",
-                        color: "grey.800",
-                        "& .MuiChip-label": { px: 0.5 },
-                      }}
-                    />
-                    <Chip
-                      label={scenario.duration}
-                      size="small"
-                      sx={{
-                        fontSize: 8,
-                        fontWeight: 600,
-                        height: 16,
-                        bgcolor: "grey.200",
-                        color: "grey.800",
-                        "& .MuiChip-label": { px: 0.5 },
-                      }}
-                    />
-                  </Stack>
-                </Stack>
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-
-      {/* Bottom Controls */}
-      <Box sx={{ p: 2, borderTop: 1, borderColor: "grey.200", bgcolor: "background.paper" }}>
-        <Stack spacing={2}>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: 11 }}>
-            Adjust Impact (%)
+          <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 400, color: "grey.700", textAlign: "center" }}>
+            {item.label}
           </Typography>
-          
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" sx={{ fontSize: 10 }}>
-              {timeFrame}
-            </Typography>
-            <FormControl size="small">
-              <Select
-                value={timeFrame}
-                onChange={(e) => setTimeFrame(e.target.value)}
-                IconComponent={KeyboardArrowDown}
-                sx={{
-                  bgcolor: "grey.100",
-                  fontSize: 10,
-                  height: 24,
-                  "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-                }}
-              >
-                <MenuItem value="3 Months" sx={{ fontSize: 10 }}>3 Months</MenuItem>
-                <MenuItem value="6 Months" sx={{ fontSize: 10 }}>6 Months</MenuItem>
-                <MenuItem value="12 Months" sx={{ fontSize: 10 }}>12 Months</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-
-          <Box>
-            <Slider
-              value={sliderValue}
-              onChange={(e, newValue) => setSliderValue(newValue)}
-              min={-50}
-              max={100}
+          {item.hasAlert && (
+            <Chip
+              label={item.alertCount}
+              size="small"
               sx={{
-                color: "primary.main",
-                height: 6,
-                "& .MuiSlider-thumb": { height: 16, width: 16 },
+                bgcolor: "red",
+                color: "white",
+                height: 20,
+                fontSize: 12,
+                fontWeight: 600,
+                "& .MuiChip-label": { px: 0.75, py: 0 },
               }}
             />
-            <Stack direction="row" justifyContent="space-between">
-              <Typography variant="caption" sx={{ fontSize: 9 }}>-50%</Typography>
-              <Typography variant="caption" color="primary" fontWeight={600} sx={{ fontSize: 9 }}>
-                {sliderValue}%
+          )}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+/* ---------- main content ---------- */
+const ScenariosSection = () => {
+  const [selectedScenario, setSelectedScenario] = useState(1);
+  const [chartTab, setChartTab] = useState(0);
+  const [disruptionTab, setDisruptionTab] = useState(0);
+  const [viewMode, setViewMode] = useState("W");
+
+  const handleScenarioClick = (scenarioId) => setSelectedScenario(scenarioId);
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+      {/* Main content area */}
+      <Stack direction="row" spacing={0.5} sx={{ height: "100%", border: 1, borderColor: "grey.300", flex: 1, minHeight: 0 }}>
+        {/* Left sidebar - Scenarios */}
+        <Box sx={{ width: 305, bgcolor: "background.paper", borderRight: 1, borderColor: "grey.300", minHeight: 0 }}>
+          <Stack sx={{ height: "100%" }}>
+            <Box sx={{ p: 1.25, bgcolor: "grey.200", borderBottom: 1, borderColor: "grey.300" }}>
+              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 1 }}>
+                <HelpOutline sx={{ fontSize: 16 }} />
+                <Typography variant="body2" color="text.secondary">What-If Scenarios?</Typography>
+              </Stack>
+              <Typography variant="caption" color="text.disabled">
+                Select a scenario to analyze its impact on demand planning.
               </Typography>
-              <Typography variant="caption" sx={{ fontSize: 9 }}>+100%</Typography>
+            </Box>
+
+            <Box sx={{ height: 50, borderBottom: 1, borderColor: "grey.300" }}>
+              <Autocomplete
+                options={[]}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Search scenarios"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 0,
+                        height: 50,
+                        "& fieldset": { border: "none" },
+                      },
+                    }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: <Search sx={{ fontSize: 16, mr: 1 }} />,
+                      endAdornment: <Add sx={{ fontSize: 16 }} />,
+                    }}
+                  />
+                )}
+              />
+            </Box>
+
+            <Box sx={{ flex: 1, overflow: "auto" }}>
+              <Stack>
+                {scenariosData.map((scenario) => (
+                  <Paper
+                    key={scenario.id}
+                    onClick={() => handleScenarioClick(scenario.id)}
+                    sx={{
+                      p: 1.25,
+                      m: 0,
+                      borderRadius: 0,
+                      border: "none",
+                      borderBottom: 1,
+                      borderColor: "grey.300",
+                      borderLeft: scenario.isSelected ? 4 : 0,
+                      borderLeftColor: scenario.isSelected ? "info.main" : "transparent",
+                      bgcolor: scenario.isSelected ? "info.50" : "background.paper",
+                      cursor: "pointer",
+                      "&:hover": { bgcolor: scenario.isSelected ? "info.50" : "grey.50" },
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                      <Stack spacing={0.5} sx={{ flex: 1 }}>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <TrendingUp sx={{ fontSize: 12 }} />
+                          <Typography variant="body2" color="text.primary" sx={{ fontSize: 13, fontWeight: 500 }}>
+                            {scenario.title}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+                          {scenario.description}
+                        </Typography>
+                      </Stack>
+                      <MoreVert sx={{ fontSize: 16 }} />
+                    </Stack>
+
+                    <Stack direction="row" spacing={0.5} sx={{ mt: 1 }}>
+                      <Chip
+                        label={scenario.category}
+                        size="small"
+                        sx={{
+                          bgcolor: getCategoryColor(scenario.category).bg,
+                          color: getCategoryColor(scenario.category).color,
+                          fontSize: 9,
+                          height: 18,
+                          "& .MuiChip-label": { px: 0.5 },
+                        }}
+                      />
+                      <Chip
+                        label={scenario.impact}
+                        size="small"
+                        sx={{
+                          bgcolor: "grey.200",
+                          color: "grey.800",
+                          fontSize: 9,
+                          height: 18,
+                          "& .MuiChip-label": { px: 0.5 },
+                        }}
+                      />
+                      <Chip
+                        label={scenario.duration}
+                        size="small"
+                        sx={{
+                          bgcolor: "grey.200",
+                          color: "grey.800",
+                          fontSize: 9,
+                          height: 18,
+                          "& .MuiChip-label": { px: 0.5 },
+                        }}
+                      />
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
+
+        {/* Middle content - Charts */}
+        <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+          {/* Top chart - MonthGraph (responsive SVG) */}
+          <MonthGraph viewMode={viewMode} setViewMode={setViewMode} />
+
+          {/* Bottom chart with tabs - RegionChart */}
+          <Box sx={{ bgcolor: "background.paper", border: 1, borderColor: "grey.300" }}>
+            <Tabs
+              value={chartTab}
+              onChange={(e, newValue) => setChartTab(newValue)}
+              sx={{
+                bgcolor: "background.paper",
+                borderBottom: 1,
+                borderColor: "grey.300",
+                "& .MuiTab-root": { minHeight: 40, fontSize: 12 },
+              }}
+            >
+              <Tab label="Graph" />
+              <Tab label="Data Table" />
+            </Tabs>
+
+            <RegionChart viewMode={viewMode} setViewMode={setViewMode} />
+          </Box>
+        </Stack>
+
+        {/* Right sidebar - Disruption */}
+        <Box sx={{ width: 320, bgcolor: "background.paper", border: 1, borderColor: "grey.300", minWidth: 0 }}>
+          <Tabs
+            value={disruptionTab}
+            onChange={(e, newValue) => setDisruptionTab(newValue)}
+            sx={{
+              bgcolor: "background.paper",
+              borderBottom: 1,
+              borderColor: "grey.300",
+              "& .MuiTab-root": { minHeight: 40, fontSize: 12 },
+            }}
+          >
+            <Tab label="Disruption" />
+            <Tab label="Tracking" />
+          </Tabs>
+
+          <Box sx={{ p: 1.5, bgcolor: "grey.50", height: "calc(100% - 48px)", overflow: "auto" }}>
+            <Stack spacing={2}>
+              {disruptionData.map((disruption) => (
+                <Stack key={disruption.id} direction="row" spacing={1} alignItems="flex-start">
+                  <Checkbox checked={disruption.isCompleted} size="small" sx={{ mt: -0.5 }} />
+
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="caption" color="text.primary" sx={{ fontWeight: 600, fontSize: 11 }}>
+                      {disruption.date}
+                    </Typography>
+
+                    <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mt: 0.5 }}>
+                      <Warning sx={{ fontSize: 12, color: "warning.main", mt: 0.25 }} />
+                      <Typography
+                        variant="caption"
+                        color="text.primary"
+                        sx={{
+                          fontSize: 11,
+                          textDecoration: disruption.isCompleted ? "line-through" : "none",
+                        }}
+                      >
+                        <strong>
+                          {disruption.location} - {disruption.product}:
+                        </strong>
+                        <br />
+                        {disruption.description}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Stack>
+              ))}
             </Stack>
           </Box>
+        </Box>
+      </Stack>
 
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ py: 0.75, fontSize: 10, textTransform: "none" }}
-            >
-              Apply Scenario
-            </Button>
-            <Button
-              variant="outlined"
-              sx={{ py: 0.75, px: 1.5, fontSize: 10, textTransform: "none" }}
-            >
-              Cancel
-            </Button>
-          </Stack>
-        </Stack>
+      {/* Bottom action buttons */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: 1,
+          p: 2,
+          bgcolor: "background.paper",
+          borderTop: 1,
+          borderColor: "grey.300",
+        }}
+      >
+        <Checkbox size="small" />
+        <Typography variant="body2" color="text.secondary" sx={{ mr: "auto" }}>
+          Save as Template
+        </Typography>
+        <Button variant="contained" color="primary" size="small">
+          Apply Scenario
+        </Button>
+        <Button variant="outlined" size="small">
+          Cancel
+        </Button>
       </Box>
     </Box>
   );
 };
 
-// Data Table Component
-const ForecastTable = () => {
-  const months = ["Apr 24", "May 24", "Jun 24", "Jul 24", "Aug 24", "Sep 24", "Oct 24", "Nov 24", "Dec 24", "Jan 25", "Feb 25", "Mar 25"];
-  
-  const getCellColor = (forecastType, value, monthIndex) => {
-    if (forecastType === "ML Forecast") {
-      // Highlight specific cells as shown in screenshot
-      if (monthIndex === 3 && value === 8305) return "#FFE0B2"; // Jul 24 - light orange
-      if (monthIndex === 4 && value === 9118) return "#FFCDD2"; // Aug 24 - light red
-      if (monthIndex === 5 && value === 11504) return "#FFE0B2"; // Sep 24 - light orange
-      if (monthIndex === 6 && value === 12180) return "#FFE0B2"; // Oct 24 - light orange
-    }
-    return "transparent";
-  };
-
-  const getCellContent = (forecastType, value, monthIndex) => {
-    if (forecastType === "Consensus" && monthIndex <= 6) {
-      return (
-        <Stack direction="row" alignItems="center" spacing={0.5} justifyContent="center">
-          <Lock sx={{ width: 10, height: 10, color: "grey.500" }} />
-          <Typography sx={{ fontSize: 10 }}>{value}</Typography>
-        </Stack>
-      );
-    }
-    return value;
-  };
-
+/* ---------- page shell ---------- */
+const WhatIfScenario = () => {
   return (
-    <Box sx={{ flex: 1, p: 2, display: "flex", flexDirection: "column" }}>
-      {/* Table Section */}
-      <TableContainer component={Paper} sx={{ mb: 3 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontSize: 11, fontWeight: 600, minWidth: 100, bgcolor: "grey.100" }}>Location</TableCell>
-              <TableCell sx={{ fontSize: 11, fontWeight: 600, minWidth: 100, bgcolor: "grey.100" }}>Factory</TableCell>
-              <TableCell sx={{ fontSize: 11, fontWeight: 600, minWidth: 140, bgcolor: "grey.100" }}>Category</TableCell>
-              <TableCell sx={{ fontSize: 11, fontWeight: 600, minWidth: 140, bgcolor: "grey.100" }}>Forecast Type</TableCell>
-              {months.map((month) => (
-                <TableCell key={month} align="center" sx={{ fontSize: 10, fontWeight: 600, minWidth: 80, bgcolor: "grey.100" }}>
-                  {month}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {forecastData.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
-                {/* Location cell - only show in first row, merge for others */}
-                {rowIndex === 0 && (
-                  <TableCell 
-                    rowSpan={forecastData.length} 
-                    sx={{ 
-                      fontSize: 11, 
-                      fontWeight: 500, 
-                      verticalAlign: "top",
-                      borderRight: 1,
-                      borderColor: "grey.300"
-                    }}
-                  >
-                    Bangalore
-                  </TableCell>
-                )}
-                
-                {/* Factory cell - only show in first row, merge for others */}
-                {rowIndex === 0 && (
-                  <TableCell 
-                    rowSpan={forecastData.length} 
-                    sx={{ 
-                      fontSize: 11, 
-                      fontWeight: 500, 
-                      verticalAlign: "top",
-                      borderRight: 1,
-                      borderColor: "grey.300"
-                    }}
-                  >
-                    Bommasandra
-                  </TableCell>
-                )}
-
-                {/* Category cell - only show in first row, merge for others */}
-                {rowIndex === 0 && (
-                  <TableCell 
-                    rowSpan={forecastData.length} 
-                    sx={{ 
-                      fontSize: 11, 
-                      fontWeight: 500, 
-                      verticalAlign: "top",
-                      borderRight: 1,
-                      borderColor: "grey.300"
-                    }}
-                  >
-                    <Chip 
-                      label="Sweet Mixes" 
-                      size="small" 
-                      color="info" 
-                      sx={{ fontSize: 8, height: 16 }} 
-                    />
-                  </TableCell>
-                )}
-
-                {/* Forecast Type cell */}
-                <TableCell sx={{ fontSize: 11, fontWeight: 500 }}>
-                  {row.forecastType}
-                </TableCell>
-
-                {/* Month data cells */}
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.apr24, 0) }}>
-                  {getCellContent(row.forecastType, row.apr24, 0)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.may24, 1) }}>
-                  {getCellContent(row.forecastType, row.may24, 1)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.jun24, 2) }}>
-                  {getCellContent(row.forecastType, row.jun24, 2)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.jul24, 3) }}>
-                  {getCellContent(row.forecastType, row.jul24, 3)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.aug24, 4) }}>
-                  {getCellContent(row.forecastType, row.aug24, 4)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.sep24, 5) }}>
-                  {getCellContent(row.forecastType, row.sep24, 5)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.oct24, 6) }}>
-                  {getCellContent(row.forecastType, row.oct24, 6)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.nov24, 7) }}>
-                  {getCellContent(row.forecastType, row.nov24, 7)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.dec24, 8) }}>
-                  {getCellContent(row.forecastType, row.dec24, 8)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.jan25, 9) }}>
-                  {getCellContent(row.forecastType, row.jan25, 9)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.feb25, 10) }}>
-                  {getCellContent(row.forecastType, row.feb25, 10)}
-                </TableCell>
-                <TableCell align="center" sx={{ fontSize: 10, bgcolor: getCellColor(row.forecastType, row.mar25, 11) }}>
-                  {getCellContent(row.forecastType, row.mar25, 11)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Chart Section - Now in a proper box */}
-      <Paper sx={{ p: 2, flex: 1, bgcolor: "background.paper" }}>
-        <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 600, mb: 2, color: "text.primary" }}>
-          Demand Forecast
-        </Typography>
-        
-        {/* Legend/Filter Chips */}
-        <Box sx={{ mb: 3 }}>
-          <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
-            {/* Colored Legend Chips */}
-            <Stack direction="row" spacing={1}>
-              <Chip 
-                label="● Actual" 
-                size="small" 
-                sx={{ 
-                  bgcolor: "transparent", 
-                  color: "#f44336", 
-                  fontSize: 11,
-                  fontWeight: 600,
-                  border: "none",
-                  "& .MuiChip-label": { px: 1 }
-                }} 
-              />
-              <Chip 
-                label="● Baseline" 
-                size="small" 
-                sx={{ 
-                  bgcolor: "transparent", 
-                  color: "#2196f3", 
-                  fontSize: 11,
-                  fontWeight: 600,
-                  border: "none",
-                  "& .MuiChip-label": { px: 1 }
-                }} 
-              />
-              <Chip 
-                label="● ML" 
-                size="small" 
-                sx={{ 
-                  bgcolor: "transparent", 
-                  color: "#ff9800", 
-                  fontSize: 11,
-                  fontWeight: 600,
-                  border: "none",
-                  "& .MuiChip-label": { px: 1 }
-                }} 
-              />
-              <Chip 
-                label="● Consensus" 
-                size="small" 
-                sx={{ 
-                  bgcolor: "transparent", 
-                  color: "#4caf50", 
-                  fontSize: 11,
-                  fontWeight: 600,
-                  border: "none",
-                  "& .MuiChip-label": { px: 1 }
-                }} 
-              />
-            </Stack>
-            
-            {/* Filter Chips */}
-            <Stack direction="row" spacing={1}>
-              <Chip label="Holidays" variant="outlined" size="small" sx={{ fontSize: 10, height: 24 }} />
-              <Chip label="Promotions" variant="outlined" size="small" sx={{ fontSize: 10, height: 24 }} />
-              <Chip label="Baseline Forecast" variant="outlined" size="small" sx={{ fontSize: 10, height: 24 }} />
-              <Chip label="ML Forecast" variant="outlined" size="small" sx={{ fontSize: 10, height: 24 }} />
-              <Chip label="Consensus Forecast" variant="outlined" size="small" sx={{ fontSize: 10, height: 24 }} />
-            </Stack>
+    <Box
+      sx={{
+        bgcolor: "grey.300",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        minHeight: "100vh",
+        width: "100%",
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "grey.200",
+          width: "100%",
+          maxWidth: 1920,
+          minHeight: "100vh",
+        }}
+      >
+        <Box
+          sx={{
+            mt: "92px",
+            p: 1.25,
+            height: "calc(100vh - 92px)",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          <Stack direction="column" spacing={1.25} sx={{ width: "100%", height: "100%", minHeight: 0 }}>
+            <AnalyticsSection />
+            <ScenariosSection />
           </Stack>
         </Box>
-
-        {/* Chart */}
-        <Box sx={{ height: 350, width: "100%" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart 
-              data={chartData}
-              margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis 
-                dataKey="name" 
-                tick={{ fontSize: 11, fill: "#666" }}
-                axisLine={{ stroke: "#e0e0e0" }}
-                tickLine={{ stroke: "#e0e0e0" }}
-              />
-              <YAxis 
-                label={{ value: 'Units (in thousands)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 11, fill: "#666" } }}
-                tick={{ fontSize: 11, fill: "#666" }}
-                axisLine={{ stroke: "#e0e0e0" }}
-                tickLine={{ stroke: "#e0e0e0" }}
-                domain={[6, 15]}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="actual" 
-                stroke="#f44336" 
-                strokeWidth={2.5} 
-                dot={{ r: 4, fill: "#f44336" }}
-                connectNulls={false}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="baseline" 
-                stroke="#2196f3" 
-                strokeWidth={2.5} 
-                dot={{ r: 3, fill: "#2196f3" }}
-                connectNulls={false}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="ml" 
-                stroke="#ff9800" 
-                strokeWidth={2.5} 
-                dot={{ r: 3, fill: "#ff9800" }}
-                connectNulls={false}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="consensus" 
-                stroke="#4caf50" 
-                strokeWidth={2.5} 
-                dot={{ r: 3, fill: "#4caf50" }}
-                connectNulls={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Box>
-      </Paper>
+      </Box>
     </Box>
   );
 };
 
-// Main Dashboard Component
-const ScenarioDashboard = () => {
-  const [selectedScenario, setSelectedScenario] = useState(1);
-
-  return (
-    <Box sx={{ display: "flex", height: "100vh", bgcolor: "#CBD5E1" }}>
-      <ScenarioSidebar 
-        selectedScenario={selectedScenario}
-        onScenarioSelect={setSelectedScenario}
-      />
-      <ForecastTable />
-    </Box>
-  );
-};
-
-export default ScenarioDashboard;
+export default WhatIfScenario;

@@ -108,9 +108,9 @@ const BlueCheckbox = (props) => (
 
 /* ---------- Legend meta data ---------- */
 const LEGEND_CONFIG = [
-  { key: "actual", label: "Actual", color: "#EF4444", seriesIndex: 0 },
+  { key: "actual", label: "Actual", color: "#4338CA", seriesIndex: 0 },
   { key: "baseline", label: "Baseline", color: "#60A5FA", seriesIndex: 1 },
-  { key: "ml", label: "ML", color: "#EAB308", seriesIndex: 2 },
+  { key: "ml", label: "ML", color: "#A16207", seriesIndex: 2 },
   { key: "consensus", label: "Consensus", color: "#0E7490", seriesIndex: 3 },
   {
     key: "baseline_forecast",
@@ -122,7 +122,7 @@ const LEGEND_CONFIG = [
   {
     key: "ml_forecast",
     label: "ML Forecast",
-    color: "#EAB308",
+    color: "#A16207",
     dash: "Dash",
     seriesIndex: 5,
   },
@@ -338,7 +338,12 @@ function TreeMenu({
   );
 }
 
-const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
+const CustomLegend = ({
+  activeKeys,
+  onToggle,
+  showForecast,
+  disableForecastLegend,
+}) => (
   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
     {LEGEND_CONFIG.filter(({ key }) => {
       if (!showForecast) {
@@ -356,10 +361,13 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
         "consensus_forecast",
       ].includes(key);
 
+      const disabled = isForecast && disableForecastLegend;
+
       return (
         <Box
           key={key}
           onClick={(e) => {
+            if (disabled) return;
             e.preventDefault();
             e.stopPropagation();
             onToggle(key);
@@ -372,14 +380,17 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast }) => (
             minWidth: 60,
             px: 1.1,
             py: 0.3,
-            cursor: "pointer",
-            opacity: activeKeys.includes(key) ? 1 : 0.5,
+            cursor: disabled ? "not-allowed" : "pointer",
+            opacity: disabled ? 0.4 : activeKeys.includes(key) ? 1 : 0.5,
             borderRadius: 1.2,
             border: "1px solid",
             borderColor: "#CBD5E1",
             userSelect: "none",
-            "&:hover": { opacity: 0.8 },
+            pointerEvents: disabled ? "none" : "auto",
+            "&:hover": { opacity: disabled ? 0.4 : 0.8 },
           }}
+          aria-disabled={disabled}
+          title={disabled ? "No forecast data available" : undefined}
         >
           {isForecast ? (
             <Box
@@ -477,7 +488,8 @@ export default function ForecastChart({
           starred: m.model_name === "XGBoost",
         })),
       },
-       // {
+      // (future sections hidden)
+      // {
       //   id: 2,
       //   title: "External Factors",
       //   disabled: true,
@@ -757,19 +769,41 @@ export default function ForecastChart({
     const hist = (arr) => arr.map((v, i) => (i <= safeTodayIdx ? v : null));
     const fut = (arr) => arr.map((v, i) => (i > safeTodayIdx ? v : null));
 
+    // const join = (histArr, futArr) => {
+    //   const out = [...futArr];
+    //   for (let i = 1; i < out.length; i++) {
+    //     if (out[i] != null && out[i - 1] == null) {
+    //       const bridgeIdx = Math.min(
+    //         Math.max(safeTodayIdx, 0),
+    //         histArr.length - 1
+    //       );
+    //       const bridgeVal = bridgeIdx >= 0 ? histArr[bridgeIdx] : null;
+    //       out[i - 1] = bridgeVal;
+    //       break;
+    //     }
+    //   }
+    //   return out;
+    // };
     const join = (histArr, futArr) => {
       const out = [...futArr];
+
+      // find the bridge position (first future point whose previous slot is empty)
+      let bridgePos = -1;
       for (let i = 1; i < out.length; i++) {
         if (out[i] != null && out[i - 1] == null) {
-          const bridgeIdx = Math.min(
-            Math.max(safeTodayIdx, 0),
-            histArr.length - 1
-          );
-          const bridgeVal = bridgeIdx >= 0 ? histArr[bridgeIdx] : null;
-          out[i - 1] = bridgeVal;
+          bridgePos = i - 1;
           break;
         }
       }
+
+      if (bridgePos >= 0) {
+        // put the last historical value into the FORECAST series at the bridge
+        out[bridgePos] = histArr?.[bridgePos] ?? null;
+
+        // hide the historical point at the bridge so only forecast shows there
+        if (Array.isArray(histArr)) histArr[bridgePos] = null;
+      }
+
       return out;
     };
 
@@ -794,6 +828,16 @@ export default function ForecastChart({
       consensus_forecast: join(hist(consFull), firstFutureOnly(consFull)),
     };
   }, [months, data, safeTodayIdx]);
+
+  // -------- Detect if any forecast data exists (to disable legend chips) --------
+  const hasBaselineFc = (seriesData.baseline_forecast || []).some(
+    (v) => v != null
+  );
+  const hasMlFc = (seriesData.ml_forecast || []).some((v) => v != null);
+  const hasConsFc = (seriesData.consensus_forecast || []).some(
+    (v) => v != null
+  );
+  const hasAnyForecastData = hasBaselineFc || hasMlFc || hasConsFc;
 
   /* ----------------------- PDF download handler ----------------------- */
   const handleDownloadPdf = useCallback(() => {
@@ -873,7 +917,46 @@ export default function ForecastChart({
         gridLineColor: "#e0e0e0",
         min: null,
       },
-      tooltip: { shared: true },
+
+      tooltip: {
+        shared: true,
+        useHTML: true,
+        formatter: function () {
+          const idx =
+            (this.points && this.points[0] && this.points[0].point.x) ??
+            (this.point && this.point.x);
+
+          // get month label from categories (months array)
+          const categories = this.points?.[0]?.series?.xAxis?.categories || [];
+          const header =
+            Number.isInteger(idx) && categories[idx] !== undefined
+              ? categories[idx]
+              : String(this.x);
+
+          let pts = this.points || [this];
+
+          // at join index, hide solid Baseline/ML/Consensus
+          if (idx === safeTodayIdx) {
+            const hideSolid = new Set(["Baseline", "ML", "Consensus"]);
+            pts = pts.filter((p) => !hideSolid.has(p.series.name));
+          }
+
+          // build tooltip
+          let html = `<div style="font-weight:600;margin-bottom:4px">${header}</div>`;
+          pts.forEach((p) => {
+            if (p.y == null) return;
+            const cleanName = p.series.name.replace(/\s*\(\d+\)\s*$/, "");
+            html += `<span style="color:${
+              p.color
+            }">●</span> ${cleanName}: <b>${Highcharts.numberFormat(
+              p.y,
+              0
+            )}</b><br/>`;
+          });
+          return html;
+        },
+      },
+
       legend: { enabled: false },
       credits: { enabled: false },
       exporting: {
@@ -884,7 +967,7 @@ export default function ForecastChart({
         {
           name: "Actual",
           data: seriesData.actual,
-          color: "#EF4444",
+          color: "#4338CA",
           marker: { enabled: false },
           visible: !hiddenSeries[0],
         },
@@ -898,7 +981,7 @@ export default function ForecastChart({
         {
           name: "ML",
           data: seriesData.ml,
-          color: "#EAB308",
+          color: "#A16207",
           marker: { enabled: false },
           visible: !hiddenSeries[2],
         },
@@ -920,7 +1003,7 @@ export default function ForecastChart({
         {
           name: "ML Forecast",
           data: seriesData.ml_forecast,
-          color: "#EAB308",
+          color: "#A16207",
           dashStyle: "Dash",
           marker: { enabled: false },
           visible: !hiddenSeries[5],
@@ -969,6 +1052,14 @@ export default function ForecastChart({
       const cfg = LEGEND_CONFIG.find((i) => i.key === key);
       if (!cfg) return;
 
+      // Ignore forecast toggles if there's no forecast data
+      const isForecastKey = [
+        "baseline_forecast",
+        "ml_forecast",
+        "consensus_forecast",
+      ].includes(key);
+      if (isForecastKey && !hasAnyForecastData) return;
+
       if (
         (key === "holidays" || key === "promotions") &&
         !validateCountrySelection()
@@ -996,7 +1087,13 @@ export default function ForecastChart({
         setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
       }
     },
-    [createPlotBands, filteredEvents, months, validateCountrySelection]
+    [
+      createPlotBands,
+      filteredEvents,
+      months,
+      validateCountrySelection,
+      hasAnyForecastData,
+    ]
   );
 
   useEffect(() => {
@@ -1135,6 +1232,7 @@ export default function ForecastChart({
         activeKeys={activeKeys}
         onToggle={handleLegendClick}
         showForecast={showForecast}
+        disableForecastLegend={!hasAnyForecastData}
       />
 
       {/* Chart */}
