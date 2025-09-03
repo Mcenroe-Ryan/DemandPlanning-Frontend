@@ -7,16 +7,21 @@ import {
   TextField,
   Typography,
   Stack,
+  Divider,
 } from "@mui/material";
-import { format, parse, addMonths, subMonths } from "date-fns";
+import { format, parse, addMonths, subMonths, isValid } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 
 export default function DateFilter({ onDateChange, disabled = false }) {
+  const now = new Date();
+  const sixMonthsBack = subMonths(now, 6);
+  const sixMonthsAhead = addMonths(now, 6);
+
   const defaultRange = [
     {
-      startDate: subMonths(new Date(), 6), // 6 months historical
-      endDate: addMonths(new Date(), 6),   // 6 months forecast
+      startDate: sixMonthsBack, // 6 months historical
+      endDate: sixMonthsAhead, // 6 months forecast
       key: "selection",
     },
   ];
@@ -25,10 +30,15 @@ export default function DateFilter({ onDateChange, disabled = false }) {
   const [range, setRange] = useState(defaultRange);
   const [tempRange, setTempRange] = useState(defaultRange);
 
-  // NEW: start with empty inputs so placeholder shows
+  // Inputs start empty so placeholders show
   const [hasUserSelected, setHasUserSelected] = useState(false);
-  const [startInput, setStartInput] = useState(""); // show "--/--/--" placeholder
-  const [endInput, setEndInput] = useState("");     // show "--/--/--" placeholder
+  const [startInput, setStartInput] = useState(""); // empty -> shows placeholder
+  const [endInput, setEndInput] = useState(""); // empty -> shows placeholder
+
+  // Dynamic placeholders + today's date
+  const placeholderStart = format(sixMonthsBack, "MM/dd/yyyy");
+  const placeholderEnd = format(sixMonthsAhead, "MM/dd/yyyy");
+  const placeholderToday = format(now, "MM/dd/yyyy");
 
   const handleOpen = (event) => {
     if (disabled) return;
@@ -37,7 +47,6 @@ export default function DateFilter({ onDateChange, disabled = false }) {
 
   const handleCancel = () => {
     setTempRange(range);
-    // If no confirmed selection yet, keep placeholders; otherwise reflect saved range
     if (hasUserSelected) {
       setStartInput(format(range[0].startDate, "MM/dd/yyyy"));
       setEndInput(format(range[0].endDate, "MM/dd/yyyy"));
@@ -54,14 +63,14 @@ export default function DateFilter({ onDateChange, disabled = false }) {
     setAnchorEl(null);
     const startDate = format(tempRange[0].startDate, "yyyy-MM-dd");
     const endDate = format(tempRange[0].endDate, "yyyy-MM-dd");
-    if (onDateChange) onDateChange({ startDate, endDate });
+    onDateChange?.({ startDate, endDate });
   };
 
   const handleStartChange = (e) => {
     const value = e.target.value;
     setStartInput(value);
     const parsed = parse(value, "MM/dd/yyyy", new Date());
-    if (!isNaN(parsed)) {
+    if (isValid(parsed)) {
       setTempRange([{ ...tempRange[0], startDate: parsed }]);
     }
   };
@@ -70,7 +79,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
     const value = e.target.value;
     setEndInput(value);
     const parsed = parse(value, "MM/dd/yyyy", new Date());
-    if (!isNaN(parsed)) {
+    if (isValid(parsed)) {
       setTempRange([{ ...tempRange[0], endDate: parsed }]);
     }
   };
@@ -112,7 +121,10 @@ export default function DateFilter({ onDateChange, disabled = false }) {
       >
         <Typography
           variant="body2"
-          sx={{ fontSize: "13px", color: disabled ? "grey.500" : "primary.main" }}
+          sx={{
+            fontSize: "13px",
+            color: disabled ? "grey.500" : "primary.main",
+          }}
         >
           {getLabel()}
         </Typography>
@@ -129,24 +141,41 @@ export default function DateFilter({ onDateChange, disabled = false }) {
             p: 2,
             borderRadius: 2,
             width: "fit-content",
-            maxWidth: 360,
+            maxWidth: 380,
             overflow: "hidden",
           },
         }}
         disableRestoreFocus
       >
+        {/* Context row: show dynamic hints incl. Today */}
+        <Stack spacing={0.25} sx={{ mb: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            {/* Today: <strong>{placeholderToday}</strong> */}
+            Today: {placeholderToday}
+          </Typography>
+          {/* <Typography variant="caption" color="text.secondary">
+            Default window: <strong>{placeholderStart}</strong> → <strong>{placeholderEnd}</strong>
+          </Typography> */}
+        </Stack>
+
+        {/* <Divider sx={{ mb: 1 }} /> */}
+
         {/* Start & End Date Input Row */}
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-          <Box sx={{ flex: 0.5, minWidth: 100 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25 }}>
-              Start date (mm/dd/yy)
+          <Box sx={{ flex: 0.5, minWidth: 120 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 0.25 }}
+            >
+              Start date (MM/DD/YYYY)
             </Typography>
             <TextField
               size="small"
               variant="outlined"
               value={startInput}
               onChange={handleStartChange}
-              placeholder="--/--/--"  // <— shows mask
+              placeholder={placeholderStart} // dynamic past 6 months
               sx={{
                 "& .MuiOutlinedInput-root": { height: 30 },
                 "& input": { padding: "4px 6px", fontSize: 12 },
@@ -155,16 +184,20 @@ export default function DateFilter({ onDateChange, disabled = false }) {
               disabled={disabled}
             />
           </Box>
-          <Box sx={{ flex: 0.5, minWidth: 100 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25 }}>
-              End date (mm/dd/yy)
+          <Box sx={{ flex: 0.5, minWidth: 120 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 0.25 }}
+            >
+              End date (MM/DD/YYYY)
             </Typography>
             <TextField
               size="small"
               variant="outlined"
               value={endInput}
               onChange={handleEndChange}
-              placeholder="--/--/--"  // <— shows mask
+              placeholder={placeholderEnd} // dynamic next 6 months
               sx={{
                 "& .MuiOutlinedInput-root": { height: 30 },
                 "& input": { padding: "4px 6px", fontSize: 12 },
@@ -191,8 +224,14 @@ export default function DateFilter({ onDateChange, disabled = false }) {
         />
 
         {/* Footer Buttons */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
-          <Button size="small" onClick={handleCancel} sx={{ textTransform: "uppercase" }}>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
+        >
+          <Button
+            size="small"
+            onClick={handleCancel}
+            sx={{ textTransform: "uppercase" }}
+          >
             Cancel
           </Button>
           <Button
