@@ -913,7 +913,7 @@ export const DemandProjectMonth = () => {
         </IconButton>
         <Divider orientation="vertical" flexItem sx={{ bgcolor: "grey.500" }} />
 
-        <IconButton
+        {/* <IconButton
           size="small"
           onClick={() => setCanEditConsensus((prev) => !prev)}
           sx={{
@@ -932,7 +932,7 @@ export const DemandProjectMonth = () => {
           aria-pressed={canEditConsensus}
         >
           <Edit sx={{ width: 20, height: 20 }} />
-        </IconButton>
+        </IconButton> */}
 
         <Box display="flex" alignItems="center" gap={2}>
           {/* Chat Icon with Dot */}

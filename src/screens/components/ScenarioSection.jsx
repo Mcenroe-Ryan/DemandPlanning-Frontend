@@ -24,15 +24,87 @@ import React, { useState } from "react";
 
 /* ---------- data ---------- */
 const scenariosData = [
-  { id: 1, title: "Sudden Spike in Demand", description: "30% increase due to marketing campaign", category: "Demand", impact: "+30%", duration: "3 Months", isSelected: true },
-  { id: 2, title: "Sudden Drop in Demand", description: "20% drop due to economic slowdown", category: "Demand", impact: "-20%", duration: "6 Months", isSelected: false },
-  { id: 3, title: "New Market Expansion", description: "Launch in new region with 40% uplift", category: "Demand", impact: "+40%", duration: "12 Months", isSelected: false },
-  { id: 4, title: "Supplier Disruption", description: "Unfulfilled demand due to raw material shortage", category: "Supply", impact: "-15%", duration: "4 Months", isSelected: false },
-  { id: 5, title: "Price Change Impact", description: "10% price increase affects demand", category: "Price", impact: "-12%", duration: "6 Months", isSelected: false },
-  { id: 6, title: "New Product Introduction", description: "25% cannibalization + 35% new demand", category: "Product", impact: "+10%", duration: "9 Months", isSelected: false },
-  { id: 7, title: "Promotions & Discount", description: "Flash sale increases demand by 50%", category: "Demand", impact: "+50%", duration: "1 Months", isSelected: false },
-  { id: 8, title: "Change in Lead Time", description: "Lead time increase affects availability", category: "Supply", impact: "-8%", duration: "8 Months", isSelected: false },
-  { id: 9, title: "Production Constraints", description: "30% capacity reduction", category: "Supply", impact: "-30%", duration: "2 Months", isSelected: false },
+  {
+    id: 1,
+    title: "Sudden Spike in Demand",
+    description: "30% increase due to marketing campaign",
+    category: "Demand",
+    impact: "+30%",
+    duration: "3 Months",
+    isSelected: true,
+  },
+  {
+    id: 2,
+    title: "Sudden Drop in Demand",
+    description: "20% drop due to economic slowdown",
+    category: "Demand",
+    impact: "-20%",
+    duration: "6 Months",
+    isSelected: false,
+  },
+  {
+    id: 3,
+    title: "New Market Expansion",
+    description: "Launch in new region with 40% uplift",
+    category: "Demand",
+    impact: "+40%",
+    duration: "12 Months",
+    isSelected: false,
+  },
+  {
+    id: 4,
+    title: "Supplier Disruption",
+    description: "Unfulfilled demand due to raw material shortage",
+    category: "Supply",
+    impact: "-15%",
+    duration: "4 Months",
+    isSelected: false,
+  },
+  {
+    id: 5,
+    title: "Price Change Impact",
+    description: "10% price increase affects demand",
+    category: "Price",
+    impact: "-12%",
+    duration: "6 Months",
+    isSelected: false,
+  },
+  {
+    id: 6,
+    title: "New Product Introduction",
+    description: "25% cannibalization + 35% new demand",
+    category: "Product",
+    impact: "+10%",
+    duration: "9 Months",
+    isSelected: false,
+  },
+  {
+    id: 7,
+    title: "Promotions & Discount",
+    description: "Flash sale increases demand by 50%",
+    category: "Demand",
+    impact: "+50%",
+    duration: "1 Months",
+    isSelected: false,
+  },
+  {
+    id: 8,
+    title: "Change in Lead Time",
+    description: "Lead time increase affects availability",
+    category: "Supply",
+    impact: "-8%",
+    duration: "8 Months",
+    isSelected: false,
+  },
+  {
+    id: 9,
+    title: "Production Constraints",
+    description: "30% capacity reduction",
+    category: "Supply",
+    impact: "-30%",
+    duration: "2 Months",
+    isSelected: false,
+  },
 ];
 
 const disruptionData = [
@@ -56,41 +128,70 @@ const disruptionData = [
 
 const chartData = {
   yAxisLabels: [30, 25, 20, 15, 10, 5, 0],
-  xAxisLabels: ["Week 1","Week 2","Week 3","Week 4","Week 5","Week 6","Week 7","Week 8"],
+  xAxisLabels: [
+    "Week 1",
+    "Week 2",
+    "Week 3",
+    "Week 4",
+    "Week 5",
+    "Week 6",
+    "Week 7",
+    "Week 8",
+  ],
   regions: [
     { name: "Region 1", color: "#0891b2", data: [6, 8, 10, 17, 12, 7, 9, 15] },
-    { name: "Region 2", color: "#f87171", data: [12, 9, 6, 13, 10, 16, 14, 17] },
-    { name: "Region 3", color: "#22c55e", data: [15, 13, 11, 9, 12, 11, 18, 20] },
+    {
+      name: "Region 2",
+      color: "#f87171",
+      data: [12, 9, 6, 13, 10, 16, 14, 17],
+    },
+    {
+      name: "Region 3",
+      color: "#22c55e",
+      data: [15, 13, 11, 9, 12, 11, 18, 20],
+    },
   ],
 };
 
 /* ---------- helpers ---------- */
 const getCategoryColor = (category) => {
   switch (category) {
-    case "Demand": return { bg: "#e0f7fa", color: "#00695c" };
-    case "Supply": return { bg: "#ffebee", color: "#c62828" };
-    case "Price":  return { bg: "#e8f5e8", color: "#2e7d32" };
-    case "Product":return { bg: "#e3f2fd", color: "#1565c0" };
-    default:       return { bg: "#f5f5f5", color: "#424242" };
+    case "Demand":
+      return { bg: "#e0f7fa", color: "#00695c" };
+    case "Supply":
+      return { bg: "#ffebee", color: "#c62828" };
+    case "Price":
+      return { bg: "#e8f5e8", color: "#2e7d32" };
+    case "Product":
+      return { bg: "#e3f2fd", color: "#1565c0" };
+    default:
+      return { bg: "#f5f5f5", color: "#424242" };
   }
 };
 
 /* ============================================================
    MonthGraph — responsive, pure SVG version of your first graph
+   (compact height)
    ============================================================ */
 const MonthGraph = ({ viewMode, setViewMode }) => {
-  // Axes & ticks
   const yMax = 35;
   const yTicks = [35, 30, 25, 20, 15, 10, 5, 0];
-  const xLabels = ["Week 1","Week 2","Week 3","Week 4","Week 5","Week 6","Week 7","Week 8"];
+  const xLabels = [
+    "Week 1",
+    "Week 2",
+    "Week 3",
+    "Week 4",
+    "Week 5",
+    "Week 6",
+    "Week 7",
+    "Week 8",
+  ];
 
-  // Demo data (customize with real series later)
   const actual = [6, 8, 12, 17, 14, 11, 13, 15];
   const forecast = [14, 13, 12, 13, 14, 16, 15, 14];
 
-  // SVG metrics
   const W = 860;
-  const H = 340;
+  const H = 280; // compact
   const margin = { top: 10, right: 16, bottom: 40, left: 56 };
   const iw = W - margin.left - margin.right;
   const ih = H - margin.top - margin.bottom;
@@ -100,15 +201,18 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
 
   const toPath = (arr) =>
     arr
-      .map((v, i) => `${i === 0 ? "M" : "L"} ${margin.left + x(i)} ${margin.top + y(v)}`)
+      .map(
+        (v, i) =>
+          `${i === 0 ? "M" : "L"} ${margin.left + x(i)} ${margin.top + y(v)}`
+      )
       .join(" ");
 
   const actualPath = toPath(actual);
   const forecastPath = toPath(forecast);
 
   // Pink band around middle (between week 4 and week 5)
-  const bandX = margin.left + x(4) - iw * 0.012; // ~1.2% width offset
-  const bandW = iw * 0.025; // ~2.5% width
+  const bandX = margin.left + x(4) - iw * 0.012;
+  const bandW = iw * 0.025;
 
   return (
     <Paper
@@ -120,7 +224,12 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
       }}
     >
       {/* Legend & toggles */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 1 }}
+      >
         <Stack direction="row" spacing={2} flexWrap="wrap" rowGap={1}>
           <Chip
             icon={<CircleIcon sx={{ color: "#0E7490", fontSize: 12 }} />}
@@ -149,11 +258,15 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
             variant={viewMode === "M" ? "contained" : "outlined"}
             onClick={() => setViewMode("M")}
             sx={{
-              minWidth: 38, width: 38, height: 38, borderRadius: "50px",
+              minWidth: 38,
+              width: 38,
+              height: 38,
+              borderRadius: "50px",
               borderColor: "#2563EB",
               color: viewMode === "M" ? "white" : "#1F2937",
               bgcolor: viewMode === "M" ? "#2563EB" : "transparent",
-              fontSize: 12, fontWeight: 600,
+              fontSize: 12,
+              fontWeight: 600,
               "&:hover": { bgcolor: viewMode === "M" ? "#1D4ED8" : "#EFF6FF" },
             }}
           >
@@ -163,11 +276,15 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
             variant={viewMode === "W" ? "contained" : "outlined"}
             onClick={() => setViewMode("W")}
             sx={{
-              minWidth: 38, width: 38, height: 38, borderRadius: "50px",
+              minWidth: 38,
+              width: 38,
+              height: 38,
+              borderRadius: "50px",
               borderColor: "#2563EB",
               color: viewMode === "W" ? "white" : "#1F2937",
               bgcolor: viewMode === "W" ? "#2563EB" : "transparent",
-              fontSize: 12, fontWeight: 600,
+              fontSize: 12,
+              fontWeight: 600,
               "&:hover": { bgcolor: viewMode === "W" ? "#1D4ED8" : "#EFF6FF" },
             }}
           >
@@ -176,13 +293,23 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
         </Stack>
       </Stack>
 
-      {/* Responsive SVG area */}
-      <Box sx={{ width: "100%", aspectRatio: { xs: "4 / 3", md: "16 / 7" } }}>
+      {/* Compact aspect ratio */}
+      <Box sx={{ width: "100%", aspectRatio: { xs: "4 / 2.4", md: "16 / 5" } }}>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%">
           {/* grid background */}
           <defs>
-            <pattern id="grid" width={iw / 8} height={ih / 7} patternUnits="userSpaceOnUse">
-              <path d={`M ${iw / 8} 0 L 0 0 0 ${ih / 7}`} fill="none" stroke="#E5E7EB" strokeWidth="1" />
+            <pattern
+              id="grid"
+              width={iw / 8}
+              height={ih / 7}
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d={`M ${iw / 8} 0 L 0 0 0 ${ih / 7}`}
+                fill="none"
+                stroke="#E5E7EB"
+                strokeWidth="1"
+              />
             </pattern>
           </defs>
 
@@ -196,7 +323,13 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
           />
 
           {/* pink band */}
-          <rect x={bandX} y={margin.top} width={bandW} height={ih} fill="rgba(255, 167, 167, 0.49)" />
+          <rect
+            x={bandX}
+            y={margin.top}
+            width={bandW}
+            height={ih}
+            fill="rgba(255, 167, 167, 0.49)"
+          />
 
           {/* axes lines */}
           <line
@@ -216,7 +349,7 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
             strokeWidth="1"
           />
 
-          {/* y tick labels */}
+          {/* y ticks */}
           {yTicks.map((t) => (
             <text
               key={t}
@@ -230,7 +363,7 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
             </text>
           ))}
 
-          {/* x tick labels */}
+          {/* x ticks */}
           {xLabels.map((lbl, i) => (
             <text
               key={lbl}
@@ -256,17 +389,31 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
 
           {/* series */}
           <path d={actualPath} fill="none" stroke="#0E7490" strokeWidth="2.5" />
-          <path d={forecastPath} fill="none" stroke="#2563EB" strokeWidth="2" strokeDasharray="6,6" />
+          <path
+            d={forecastPath}
+            fill="none"
+            stroke="#2563EB"
+            strokeWidth="2"
+            strokeDasharray="6,6"
+          />
         </svg>
       </Box>
     </Paper>
   );
 };
 
-/* ============================================================
-   RegionChart (unchanged from your version except minor polish)
-   ============================================================ */
 const RegionChart = ({ viewMode, setViewMode }) => {
+  // Match MonthGraph size
+  const SVG_W = 860;
+  const SVG_H = 280;
+  const GRID_ROWS = chartData.yAxisLabels.length; // 7
+  const GRID_COLS = chartData.xAxisLabels.length; // 8
+  const yMax = 30;
+
+  // Left y-axis spacing (kept simple; works fine at this height)
+  const ySpacingPx = SVG_H / GRID_ROWS;
+  const yStackSpacing = ySpacingPx / 8; // MUI spacing units
+
   return (
     <Paper
       sx={{
@@ -282,7 +429,17 @@ const RegionChart = ({ viewMode, setViewMode }) => {
             {chartData.regions.map((region, index) => (
               <Chip
                 key={index}
-                icon={<Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: region.color, ml: 1 }} />}
+                icon={
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      bgcolor: region.color,
+                      ml: 1,
+                    }}
+                  />
+                }
                 label={region.name}
                 variant="outlined"
                 sx={{
@@ -299,8 +456,12 @@ const RegionChart = ({ viewMode, setViewMode }) => {
               variant={viewMode === "M" ? "contained" : "outlined"}
               onClick={() => setViewMode("M")}
               sx={{
-                minWidth: 38, width: 38, height: 32, borderRadius: "50px",
-                fontSize: 12, fontWeight: 600,
+                minWidth: 38,
+                width: 38,
+                height: 32,
+                borderRadius: "50px",
+                fontSize: 12,
+                fontWeight: 600,
                 color: viewMode === "M" ? "white" : "#1e293b",
                 bgcolor: viewMode === "M" ? "#2563eb" : "transparent",
                 borderColor: "#2563eb",
@@ -313,8 +474,12 @@ const RegionChart = ({ viewMode, setViewMode }) => {
               variant={viewMode === "W" ? "contained" : "outlined"}
               onClick={() => setViewMode("W")}
               sx={{
-                minWidth: 38, width: 38, height: 32, borderRadius: "50px",
-                fontSize: 12, fontWeight: 600,
+                minWidth: 38,
+                width: 38,
+                height: 32,
+                borderRadius: "50px",
+                fontSize: 12,
+                fontWeight: 600,
                 color: viewMode === "W" ? "white" : "#1e293b",
                 bgcolor: viewMode === "W" ? "#2563eb" : "transparent",
                 borderColor: "#2563eb",
@@ -326,9 +491,11 @@ const RegionChart = ({ viewMode, setViewMode }) => {
           </Stack>
         </Stack>
 
-        <Box sx={{ position: "relative", flex: 1, minHeight: 280 }}>
+        {/* Match MonthGraph’s responsive height */}
+        <Box sx={{ width: "100%", aspectRatio: { xs: "4 / 2.4", md: "16 / 5" }, position: "relative" }}>
           <Stack direction="row" sx={{ height: "100%" }}>
-            <Stack spacing={5.125} sx={{ width: 60, justifyContent: "space-between", pt: 2 }}>
+            {/* y-axis labels */}
+            <Stack spacing={yStackSpacing} sx={{ width: 60, justifyContent: "space-between", pt: 2 }}>
               <Typography
                 sx={{
                   transform: "rotate(-90deg)",
@@ -354,11 +521,27 @@ const RegionChart = ({ viewMode, setViewMode }) => {
               ))}
             </Stack>
 
+            {/* chart svg */}
             <Box sx={{ flex: 1, position: "relative", ml: 2 }}>
-              <svg width="100%" height="280" viewBox="0 0 774 280" preserveAspectRatio="none">
+              <svg
+                width="100%"
+                height="100%"
+                viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+                preserveAspectRatio="none"
+              >
                 <defs>
-                  <pattern id="grid2" width="96.75" height="41" patternUnits="userSpaceOnUse">
-                    <path d="M 96.75 0 L 0 0 0 41" fill="none" stroke="#e2e8f0" strokeWidth="1" />
+                  <pattern
+                    id="grid2"
+                    width={SVG_W / GRID_COLS}
+                    height={SVG_H / GRID_ROWS}
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <path
+                      d={`M ${SVG_W / GRID_COLS} 0 L 0 0 0 ${SVG_H / GRID_ROWS}`}
+                      fill="none"
+                      stroke="#e2e8f0"
+                      strokeWidth="1"
+                    />
                   </pattern>
                 </defs>
 
@@ -367,8 +550,8 @@ const RegionChart = ({ viewMode, setViewMode }) => {
                 {chartData.regions.map((region, regionIndex) => {
                   const pathData = region.data
                     .map((value, index) => {
-                      const x = (index * 774) / 7;
-                      const y = 280 - (value / 30) * 280;
+                      const x = (index * SVG_W) / (GRID_COLS - 1);
+                      const y = SVG_H - (value / yMax) * SVG_H;
                       return `${index === 0 ? "M" : "L"} ${x} ${y}`;
                     })
                     .join(" ");
@@ -383,8 +566,8 @@ const RegionChart = ({ viewMode, setViewMode }) => {
                         strokeDasharray={regionIndex === 1 ? "5,5" : "0"}
                       />
                       {region.data.map((value, index) => {
-                        const x = (index * 774) / 7;
-                        const y = 280 - (value / 30) * 280;
+                        const x = (index * SVG_W) / (GRID_COLS - 1);
+                        const y = SVG_H - (value / yMax) * SVG_H;
                         return <circle key={index} cx={x} cy={y} r="3" fill={region.color} />;
                       })}
                     </g>
@@ -392,10 +575,11 @@ const RegionChart = ({ viewMode, setViewMode }) => {
                 })}
               </svg>
 
+              {/* x-axis labels */}
               <Stack
                 direction="row"
                 justifyContent="space-between"
-                sx={{ position: "absolute", bottom: -26, left: 0, right: 0, px: 2 }}
+                sx={{ position: "absolute", bottom: -24, left: 0, right: 0, px: 2 }}
               >
                 {chartData.xAxisLabels.map((label, index) => (
                   <Typography key={index} sx={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
@@ -411,70 +595,6 @@ const RegionChart = ({ viewMode, setViewMode }) => {
   );
 };
 
-/* ---------- top nav ---------- */
-const AnalyticsSection = () => {
-  const [activeTab, setActiveTab] = useState("Scenarios");
-  const navigationItems = [
-    { label: "Demand", hasAlert: false, alertCount: 0 },
-    { label: "Alerts for Forecast Error", hasAlert: true, alertCount: 2 },
-    { label: "Compare Model", hasAlert: false, alertCount: 0 },
-    { label: "Analytics", hasAlert: false, alertCount: 0 },
-    { label: "Scenarios", hasAlert: false, alertCount: 0 },
-  ];
-
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-        bgcolor: "white",
-        border: 1,
-        borderColor: "grey.300",
-        overflowX: "auto",
-      }}
-    >
-      {navigationItems.map((item) => (
-        <Box
-          key={item.label}
-          onClick={() => setActiveTab(item.label)}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 0.5,
-            px: 1.25,
-            py: 0.625,
-            cursor: "pointer",
-            backgroundColor: activeTab === item.label ? "blue.50" : "transparent",
-            borderBottom: activeTab === item.label ? 2 : 0,
-            borderBottomColor: activeTab === item.label ? "blue.500" : "transparent",
-            flexShrink: 0,
-          }}
-        >
-          <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 400, color: "grey.700", textAlign: "center" }}>
-            {item.label}
-          </Typography>
-          {item.hasAlert && (
-            <Chip
-              label={item.alertCount}
-              size="small"
-              sx={{
-                bgcolor: "red",
-                color: "white",
-                height: 20,
-                fontSize: 12,
-                fontWeight: 600,
-                "& .MuiChip-label": { px: 0.75, py: 0 },
-              }}
-            />
-          )}
-        </Box>
-      ))}
-    </Box>
-  );
-};
-
 /* ---------- main content ---------- */
 const ScenariosSection = () => {
   const [selectedScenario, setSelectedScenario] = useState(1);
@@ -485,16 +605,55 @@ const ScenariosSection = () => {
   const handleScenarioClick = (scenarioId) => setSelectedScenario(scenarioId);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
       {/* Main content area */}
-      <Stack direction="row" spacing={0.5} sx={{ height: "100%", border: 1, borderColor: "grey.300", flex: 1, minHeight: 0 }}>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        sx={{
+          height: "100%",
+          border: 1,
+          borderColor: "grey.300",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         {/* Left sidebar - Scenarios */}
-        <Box sx={{ width: 305, bgcolor: "background.paper", borderRight: 1, borderColor: "grey.300", minHeight: 0 }}>
+        <Box
+          sx={{
+            width: 305,
+            bgcolor: "background.paper",
+            borderRight: 1,
+            borderColor: "grey.300",
+            minHeight: 0,
+          }}
+        >
           <Stack sx={{ height: "100%" }}>
-            <Box sx={{ p: 1.25, bgcolor: "grey.200", borderBottom: 1, borderColor: "grey.300" }}>
-              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 1 }}>
+            <Box
+              sx={{
+                p: 1.25,
+                bgcolor: "grey.200",
+                borderBottom: 1,
+                borderColor: "grey.300",
+              }}
+            >
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                sx={{ mb: 1 }}
+              >
                 <HelpOutline sx={{ fontSize: 16 }} />
-                <Typography variant="body2" color="text.secondary">What-If Scenarios?</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  What-If Scenarios?
+                </Typography>
               </Stack>
               <Typography variant="caption" color="text.disabled">
                 Select a scenario to analyze its impact on demand planning.
@@ -541,21 +700,43 @@ const ScenariosSection = () => {
                       borderBottom: 1,
                       borderColor: "grey.300",
                       borderLeft: scenario.isSelected ? 4 : 0,
-                      borderLeftColor: scenario.isSelected ? "info.main" : "transparent",
-                      bgcolor: scenario.isSelected ? "info.50" : "background.paper",
+                      borderLeftColor: scenario.isSelected
+                        ? "info.main"
+                        : "transparent",
+                      bgcolor: scenario.isSelected
+                        ? "info.50"
+                        : "background.paper",
                       cursor: "pointer",
-                      "&:hover": { bgcolor: scenario.isSelected ? "info.50" : "grey.50" },
+                      "&:hover": {
+                        bgcolor: scenario.isSelected ? "info.50" : "grey.50",
+                      },
                     }}
                   >
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                    >
                       <Stack spacing={0.5} sx={{ flex: 1 }}>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                        >
                           <TrendingUp sx={{ fontSize: 12 }} />
-                          <Typography variant="body2" color="text.primary" sx={{ fontSize: 13, fontWeight: 500 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.primary"
+                            sx={{ fontSize: 13, fontWeight: 500 }}
+                          >
                             {scenario.title}
                           </Typography>
                         </Stack>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontSize: 11 }}
+                        >
                           {scenario.description}
                         </Typography>
                       </Stack>
@@ -610,7 +791,13 @@ const ScenariosSection = () => {
           <MonthGraph viewMode={viewMode} setViewMode={setViewMode} />
 
           {/* Bottom chart with tabs - RegionChart */}
-          <Box sx={{ bgcolor: "background.paper", border: 1, borderColor: "grey.300" }}>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "grey.300",
+            }}
+          >
             <Tabs
               value={chartTab}
               onChange={(e, newValue) => setChartTab(newValue)}
@@ -630,7 +817,15 @@ const ScenariosSection = () => {
         </Stack>
 
         {/* Right sidebar - Disruption */}
-        <Box sx={{ width: 320, bgcolor: "background.paper", border: 1, borderColor: "grey.300", minWidth: 0 }}>
+        <Box
+          sx={{
+            width: 320,
+            bgcolor: "background.paper",
+            border: 1,
+            borderColor: "grey.300",
+            minWidth: 0,
+          }}
+        >
           <Tabs
             value={disruptionTab}
             onChange={(e, newValue) => setDisruptionTab(newValue)}
@@ -645,25 +840,54 @@ const ScenariosSection = () => {
             <Tab label="Tracking" />
           </Tabs>
 
-          <Box sx={{ p: 1.5, bgcolor: "grey.50", height: "calc(100% - 48px)", overflow: "auto" }}>
+          <Box
+            sx={{
+              p: 1.5,
+              bgcolor: "grey.50",
+              height: "calc(100% - 48px)",
+              overflow: "auto",
+            }}
+          >
             <Stack spacing={2}>
               {disruptionData.map((disruption) => (
-                <Stack key={disruption.id} direction="row" spacing={1} alignItems="flex-start">
-                  <Checkbox checked={disruption.isCompleted} size="small" sx={{ mt: -0.5 }} />
+                <Stack
+                  key={disruption.id}
+                  direction="row"
+                  spacing={1}
+                  alignItems="flex-start"
+                >
+                  <Checkbox
+                    checked={disruption.isCompleted}
+                    size="small"
+                    sx={{ mt: -0.5 }}
+                  />
 
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" color="text.primary" sx={{ fontWeight: 600, fontSize: 11 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.primary"
+                      sx={{ fontWeight: 600, fontSize: 11 }}
+                    >
                       {disruption.date}
                     </Typography>
 
-                    <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mt: 0.5 }}>
-                      <Warning sx={{ fontSize: 12, color: "warning.main", mt: 0.25 }} />
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      alignItems="flex-start"
+                      sx={{ mt: 0.5 }}
+                    >
+                      <Warning
+                        sx={{ fontSize: 12, color: "warning.main", mt: 0.25 }}
+                      />
                       <Typography
                         variant="caption"
                         color="text.primary"
                         sx={{
                           fontSize: 11,
-                          textDecoration: disruption.isCompleted ? "line-through" : "none",
+                          textDecoration: disruption.isCompleted
+                            ? "line-through"
+                            : "none",
                         }}
                       >
                         <strong>
@@ -732,16 +956,19 @@ const WhatIfScenario = () => {
       >
         <Box
           sx={{
-            mt: "92px",
+            mt: 0,                 // <-- removed 92px top margin
             p: 1.25,
-            height: "calc(100vh - 92px)",
+            height: "100vh",       // <-- fill full height (no subtraction)
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
           }}
         >
-          <Stack direction="column" spacing={1.25} sx={{ width: "100%", height: "100%", minHeight: 0 }}>
-            <AnalyticsSection />
+          <Stack
+            direction="column"
+            spacing={1.25}
+            sx={{ width: "100%", height: "100%", minHeight: 0 }}
+          >
             <ScenariosSection />
           </Stack>
         </Box>
@@ -749,5 +976,6 @@ const WhatIfScenario = () => {
     </Box>
   );
 };
+
 
 export default WhatIfScenario;

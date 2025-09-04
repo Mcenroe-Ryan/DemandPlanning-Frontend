@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
@@ -67,12 +68,7 @@ function getRevenueForecastLabel(selectedCountry) {
   }
   return "Revenue Forecast (₹ in lakhs)";
 }
-const FORECAST_ROWS = [
-  "Baseline Forecast",
-  "ML Forecast",
-  "Consensus",
-  // Not used directly, see CORE_ROWS in component
-];
+const FORECAST_ROWS = ["Baseline Forecast", "ML Forecast", "Consensus"];
 const OPTIONAL_ROWS = [
   "Sales",
   "Promotion / Marketing",
@@ -181,9 +177,7 @@ function isMonthLocked(monthLabel) {
   );
 }
 
-/** difference (in months) between label and current month.
- *  0 = current month, -1 = one month earlier, -2 = two months earlier, etc.
- */
+/** difference (in months) between label and current month. */
 function monthDiffFromCurrent(label) {
   if (!label) return null;
   const [mon, yr] = label.split(" ");
@@ -212,7 +206,6 @@ function getConsensusNoteForLockedCell(label) {
   return "";
 }
 
-// Red triangle for consensus cells (left as per your code)
 const RedTriangleIcon = ({ visible = true }) => {
   if (!visible) return null;
   return (
@@ -379,7 +372,7 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
         sx: {
           width: 240,
           height: 180,
-          borderRadius: 2, // 8px pill-like corners
+          borderRadius: 2,
           border: "1px solid #E5E7EB",
           boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           p: 1,
@@ -389,7 +382,6 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
         },
       }}
     >
-      {/* Header: "Comment" + ... + X */}
       <Box
         sx={{
           display: "flex",
@@ -411,7 +403,6 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
         </Box>
       </Box>
 
-      {/* Name + time */}
       <Box
         sx={{
           display: "flex",
@@ -429,12 +420,9 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
             John
           </Typography>
         </Box>
-        <Typography sx={{ fontSize: 11, color: "#94A3B8" }}>
-          4 days ago
-        </Typography>
+        <Typography sx={{ fontSize: 11, color: "#94A3B8" }}>4 days ago</Typography>
       </Box>
 
-      {/* Message body (uses your dynamic message prop) */}
       <Typography
         sx={{
           fontSize: 12,
@@ -448,7 +436,6 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
         {message || "—"}
       </Typography>
 
-      {/* Reply pill */}
       <Box
         sx={{
           mt: "auto",
@@ -527,7 +514,6 @@ export default function ForecastTable({
 }) {
   const REVENUE_LABEL = getRevenueForecastLabel(selectedCountry);
 
-  // Move core rows inside component to support dynamic label
   const CORE_ROWS = useMemo(
     () => [
       "Actual",
@@ -540,7 +526,6 @@ export default function ForecastTable({
   );
 
   const [period, setPeriod] = useState("M");
-  const periodOptions = ["M", "W"];
   const [showForecast, setShowForecast] = useState(true);
   const [optionalRows, setOptionalRows] = useState([]);
   const [data, setData] = useState(null);
@@ -569,7 +554,6 @@ export default function ForecastTable({
   });
   const [highlightEditableCells, setHighlightEditableCells] = useState(false);
 
-  // Add swap state
   const [isSwapped, setIsSwapped] = useState(false);
 
   const months = useMemo(() => {
@@ -625,27 +609,22 @@ export default function ForecastTable({
     return set;
   }, [months]);
 
-  // Add filtered months based on showForecast checkbox
   const visibleMonths = useMemo(() => {
-    if (showForecast) {
-      return months;
-    } else {
-      const today = new Date();
-      const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
-      return months.filter((label) => {
-        const [mon, yr] = label.split(" ");
-        const monthIdx = MONTH_MAP[mon.toUpperCase()];
-        if (monthIdx !== undefined) {
-          const yearNum = 2000 + parseInt(yr, 10);
-          const key = yearNum * 12 + monthIdx;
-          return key <= currentMonthKey;
-        }
-        return false;
-      });
-    }
+    if (showForecast) return months;
+    const today = new Date();
+    const currentMonthKey = today.getFullYear() * 12 + today.getMonth();
+    return months.filter((label) => {
+      const [mon, yr] = label.split(" ");
+      const monthIdx = MONTH_MAP[mon.toUpperCase()];
+      if (monthIdx !== undefined) {
+        const yearNum = 2000 + parseInt(yr, 10);
+        const key = yearNum * 12 + monthIdx;
+        return key <= currentMonthKey;
+      }
+      return false;
+    });
   }, [months, showForecast]);
 
-  // Keymap needs both Revenue row label options, so we update:
   const keyMap = {
     Actual: "actual_units",
     "Baseline Forecast": "baseline_forecast",
@@ -660,7 +639,6 @@ export default function ForecastTable({
     "On Hand": "on_hand_units",
   };
 
-  // Add validation function for single SKU selection
   const validateSingleSKUSelection = () => {
     if (!selectedSKUs || selectedSKUs.length === 0) {
       setErrorSnackbar({
@@ -679,6 +657,7 @@ export default function ForecastTable({
     }
     return true;
   };
+
   const handleErrorSnackbarClose = (event, reason) => {
     if (reason === "clickaway") return;
     setErrorSnackbar({ open: false, message: "" });
@@ -777,7 +756,6 @@ export default function ForecastTable({
 
   useEffect(() => {
     fetchForecastData();
-    // eslint-disable-next-line
   }, [
     startDate,
     endDate,
@@ -810,7 +788,6 @@ export default function ForecastTable({
     }
   }, [data, months]);
 
-  // Reorder rows to ensure Sales and Promotion/Marketing appear below ML Forecast
   const reorderRows = () => {
     const result = [];
     for (let row of CORE_ROWS) {
@@ -829,7 +806,6 @@ export default function ForecastTable({
 
   const allRows = reorderRows();
 
-  // Add New menu handlers
   const handleAddRowsClick = (event) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
@@ -838,7 +814,6 @@ export default function ForecastTable({
     setAnchorEl(null);
   };
 
-  // Add swap handler
   const handleSwapClick = () => {
     setIsSwapped((prev) => !prev);
   };
@@ -892,9 +867,7 @@ export default function ForecastTable({
     }
   };
 
-  /* ----------------------------- CSV DOWNLOAD ----------------------------- */
-
-  // Escape and quote CSV values safely
+  // CSV helpers
   const toCSVValue = (val) => {
     if (val === null || val === undefined) return "";
     const s = String(val);
@@ -914,7 +887,6 @@ export default function ForecastTable({
       const row = [label];
       for (const m of visibleMonths) {
         const v = data?.[m]?.[label];
-        // export raw value or '-' (no locale formatting)
         row.push(v === undefined || v === null ? "-" : v);
       }
       lines.push(row);
@@ -932,7 +904,6 @@ export default function ForecastTable({
       });
       return;
     }
-    // Add BOM for Excel compatibility
     const blob = new Blob(["\uFEFF" + csv], {
       type: "text/csv;charset=utf-8;",
     });
@@ -947,7 +918,6 @@ export default function ForecastTable({
     URL.revokeObjectURL(url);
   };
 
-  /* --------------------------- TABLE RENDERING ---------------------------- */
   const renderForecastTable = () => (
     <Box
       sx={{
@@ -1008,7 +978,7 @@ export default function ForecastTable({
                   padding: "8px 12px",
                   borderBottom: "2px solid #e0e7ef",
                   color: "#334155",
-                  minWidth: 90,
+                  minWidth: 110,
                 }}
               >
                 {m}
@@ -1087,12 +1057,15 @@ export default function ForecastTable({
                         ? "0 0 0 3px #f3f1efff, 0 4px 16px rgba(238, 236, 233, 0.5)"
                         : undefined,
                       padding: "8px 12px",
+                      // add extra left padding when the pencil appears so it doesn't overlap
+                      paddingLeft:
+                        isConsensusRow && isAllowedMonth && !locked ? 36 : 12,
                       borderBottom: "1px solid #e0e7ef",
                       textAlign: "right",
                       fontSize: 14,
                       fontWeight: 400,
                       color: "#64748B",
-                      minWidth: 90,
+                      minWidth: 110, 
                       cursor: isConsensusRow ? "pointer" : "default",
                       position: "relative",
                       zIndex: getCellZIndex(false, shouldHighlight, isEditing),
@@ -1117,7 +1090,6 @@ export default function ForecastTable({
                         value &&
                         value !== "-"
                       ) {
-                        // show dynamic message for locked consensus months
                         setLockComment({
                           open: true,
                           anchor: e.currentTarget,
@@ -1129,12 +1101,14 @@ export default function ForecastTable({
                     {label === "Consensus" && value !== "-" && (
                       <RedTriangleIcon visible={true} />
                     )}
+
+                    {/* pulsing dot shifted a bit so it doesn't collide with the left pencil */}
                     {shouldHighlight && (
                       <Box
                         sx={{
                           position: "absolute",
-                          top: 4,
-                          left: 4,
+                          top: 6,
+                          left: 36,
                           width: 12,
                           height: 12,
                           zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
@@ -1147,6 +1121,39 @@ export default function ForecastTable({
                         }}
                       />
                     )}
+
+                    {isConsensusRow && isAllowedMonth && !locked && !isEditing && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!validateSingleSKUSelection()) return;
+                          if (!canEditConsensus) setCanEditConsensus(true);
+                          setTimeout(() => {
+                            setEditingCell({ month: m, row: label });
+                            setEditValue(value === "-" ? "" : value);
+                          }, 0);
+                        }}
+                        sx={{
+                          position: "absolute",
+                          left: 8,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: 22,
+                          height: 22,
+                          zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
+                          bgcolor: "rgba(15,23,42,0.06)",
+                          borderRadius: "6px",
+                          p: 0,
+                          "&:hover": { bgcolor: "rgba(15,23,42,0.12)" },
+                        }}
+                        aria-label="Edit consensus"
+                        title="Edit consensus"
+                      >
+                        <i className="bi bi-pencil" style={{ fontSize: 14, lineHeight: 1 }} />
+                      </IconButton>
+                    )}
+
                     {isConsensusRow ? (
                       locked ? (
                         <span
@@ -1167,7 +1174,7 @@ export default function ForecastTable({
                           type="number"
                           value={editValue}
                           style={{
-                            width: "70px",
+                            width: "90px", 
                             fontSize: 14,
                             padding: "2px 4px",
                             border: "1px solid #2563EB",
@@ -1292,12 +1299,7 @@ export default function ForecastTable({
                 {label}
               </Button>
             ))}
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={0.5}
-              sx={{ ml: 2 }}
-            >
+            <Stack direction="row" alignItems="center" spacing={0.5} sx={{ ml: 2 }}>
               <Checkbox
                 icon={
                   <CheckBoxOutlineBlankIcon
@@ -1305,9 +1307,7 @@ export default function ForecastTable({
                   />
                 }
                 checkedIcon={
-                  <CheckBoxIcon
-                    sx={{ width: 16, height: 16, color: "primary.main" }}
-                  />
+                  <CheckBoxIcon sx={{ width: 16, height: 16, color: "primary.main" }} />
                 }
                 checked={showForecast}
                 onChange={(e) => setShowForecast(e.target.checked)}
@@ -1326,9 +1326,7 @@ export default function ForecastTable({
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box sx={{ position: "relative" }}>
             <IconButton size="small" onClick={handleAddRowsClick}>
-              <AddBoxOutlinedIcon
-                sx={{ width: 20, height: 20, color: "text.secondary" }}
-              />
+              <AddBoxOutlinedIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
             </IconButton>
 
             <OptionalParamsMenu
@@ -1339,7 +1337,6 @@ export default function ForecastTable({
             />
           </Box>
 
-          {/* Swap Button with click handler */}
           <IconButton size="small" onClick={handleSwapClick}>
             <SwapVertIcon
               sx={{
@@ -1353,22 +1350,15 @@ export default function ForecastTable({
           </IconButton>
 
           <IconButton size="small">
-            <ShareIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <ShareIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
 
-          {/* DOWNLOAD: exports visible table to CSV */}
           <IconButton size="small" onClick={handleDownloadTable}>
-            <DownloadIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <DownloadIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
 
           <IconButton size="small">
-            <OpenInFullIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <OpenInFullIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
         </Stack>
       </Box>
@@ -1376,7 +1366,6 @@ export default function ForecastTable({
       {/* Conditional rendering based on swap state */}
       {isSwapped ? (
         <>
-          {/* Chart First (when swapped) */}
           {data && (
             <ForecastChart
               months={visibleMonths}
@@ -1391,16 +1380,11 @@ export default function ForecastTable({
               setErrorSnackbar={setErrorSnackbar}
             />
           )}
-
-          {/* Table Second (when swapped) */}
           {renderForecastTable()}
         </>
       ) : (
         <>
-          {/* Table First (default order) */}
           {renderForecastTable()}
-
-          {/* Chart Second (default order) */}
           {data && (
             <ForecastChart
               months={visibleMonths}
@@ -1418,18 +1402,13 @@ export default function ForecastTable({
         </>
       )}
 
-      {/* Error Snackbar */}
       <Snackbar
         open={errorSnackbar.open}
         autoHideDuration={4000}
         onClose={handleErrorSnackbarClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleErrorSnackbarClose}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleErrorSnackbarClose} severity="error" sx={{ width: "100%" }}>
           {errorSnackbar.message}
         </Alert>
       </Snackbar>

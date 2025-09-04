@@ -108,9 +108,9 @@ const BlueCheckbox = (props) => (
 
 /* ---------- Legend meta data ---------- */
 const LEGEND_CONFIG = [
-  { key: "actual", label: "Actual", color: "#4338CA", seriesIndex: 0 },
+  { key: "actual", label: "Actual", color: "#DC2626", seriesIndex: 0 },
   { key: "baseline", label: "Baseline", color: "#60A5FA", seriesIndex: 1 },
-  { key: "ml", label: "ML", color: "#A16207", seriesIndex: 2 },
+  { key: "ml", label: "ML", color: "#EAB308", seriesIndex: 2 },
   { key: "consensus", label: "Consensus", color: "#0E7490", seriesIndex: 3 },
   {
     key: "baseline_forecast",
@@ -133,8 +133,8 @@ const LEGEND_CONFIG = [
     dash: "Dash",
     seriesIndex: 6,
   },
-  { key: "holidays", label: "Holidays", color: "#DCFCE7", isOverlay: true },
-  { key: "promotions", label: "Promotions", color: "#FFEDD5", isOverlay: true },
+  { key: "holidays", label: "Holidays", color: "#22C55E", isOverlay: true },
+  { key: "promotions", label: "Promotions", color: "#F97316", isOverlay: true },
 ];
 
 /* ---------- Menu item for disabled tree sections ---------- */
@@ -967,7 +967,7 @@ export default function ForecastChart({
         {
           name: "Actual",
           data: seriesData.actual,
-          color: "#4338CA",
+          color: "#DC2626",
           marker: { enabled: false },
           visible: !hiddenSeries[0],
         },
@@ -981,7 +981,7 @@ export default function ForecastChart({
         {
           name: "ML",
           data: seriesData.ml,
-          color: "#A16207",
+          color: "#EAB308",
           marker: { enabled: false },
           visible: !hiddenSeries[2],
         },
