@@ -338,6 +338,7 @@ function TreeMenu({
   );
 }
 
+/* ---------- Custom Legend ---------- */
 const CustomLegend = ({
   activeKeys,
   onToggle,
@@ -447,6 +448,40 @@ const CustomLegend = ({
   </Box>
 );
 
+/* -------------------- ISO Week Helpers -------------------- */
+const WEEK_LABEL_RE = /^(\d{4})-W(\d{2})$/;
+
+function getISOWeekParts(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7; // Mon=1..Sun=7
+  d.setUTCDate(d.getUTCDate() + 4 - day); // Thursday in current week
+  const year = d.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return { year, week };
+}
+function isoWeekLabelFor(date) {
+  const { year, week } = getISOWeekParts(date);
+  return `${year}-W${String(week).padStart(2, "0")}`;
+}
+function parseISOWeekLabel(label) {
+  const m = WEEK_LABEL_RE.exec(label);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const week = Number(m[2]);
+
+  // Monday of ISO week 1 is the Monday of the week containing Jan 4
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const mondayOfWeek1 = new Date(jan4);
+  mondayOfWeek1.setUTCDate(jan4.getUTCDate() - (jan4Day - 1));
+
+  const target = new Date(mondayOfWeek1);
+  target.setUTCDate(mondayOfWeek1.getUTCDate() + (week - 1) * 7);
+  return target;
+}
+
+/* ======================= MAIN COMPONENT ======================= */
 export default function ForecastChart({
   months,
   data,
@@ -458,6 +493,7 @@ export default function ForecastChart({
   countryName,
   showForecast,
   setErrorSnackbar,
+  isWeekly: isWeeklyProp, // optional override
 }) {
   const chartRef = useRef();
   const gridIconRef = useRef();
@@ -468,6 +504,13 @@ export default function ForecastChart({
   });
   const [hiddenSeries, setHiddenSeries] = useState({});
   const [events, setEvents] = useState([]);
+
+  // --- Weekly/Monthly detection (fallback to auto-detect) ---
+  const autoWeekly =
+    Array.isArray(months) &&
+    months.length > 0 &&
+    months.every((m) => WEEK_LABEL_RE.test(String(m)));
+  const isWeekly = isWeeklyProp ?? autoWeekly;
 
   const treeData = useMemo(() => {
     const sorted = [...models].sort((a, b) => {
@@ -488,7 +531,7 @@ export default function ForecastChart({
           starred: m.model_name === "XGBoost",
         })),
       },
-      // (future sections hidden)
+        // (future sections hidden)
       // {
       //   id: 2,
       //   title: "External Factors",
@@ -598,99 +641,102 @@ export default function ForecastChart({
 
   const createPlotBands = useCallback(
     (evts, monthsArr, overlayState) =>
-      evts.reduce((acc, ev) => {
-        const s = new Date(ev.start_date);
-        const e = new Date(ev.end_date);
-        const sm = s.toLocaleString("default", {
-          month: "short",
-          year: "2-digit",
-        });
-        const em = e.toLocaleString("default", {
-          month: "short",
-          year: "2-digit",
-        });
-        const sIdx = monthsArr.indexOf(sm);
-        const eIdx = monthsArr.indexOf(em);
+      // Only apply plotBands for monthly charts (the math below maps to month buckets)
+      isWeekly
+        ? []
+        : evts.reduce((acc, ev) => {
+            const s = new Date(ev.start_date);
+            const e = new Date(ev.end_date);
+            const sm = s.toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            });
+            const em = e.toLocaleString("default", {
+              month: "short",
+              year: "2-digit",
+            });
+            const sIdx = monthsArr.indexOf(sm);
+            const eIdx = monthsArr.indexOf(em);
 
-        if (sIdx === -1) return acc;
-        const holiday = ev.event_type === "Holiday";
-        if (holiday ? !overlayState.holidays : !overlayState.promotions)
-          return acc;
+            if (sIdx === -1) return acc;
+            const holiday = ev.event_type === "Holiday";
+            if (holiday ? !overlayState.holidays : !overlayState.promotions)
+              return acc;
 
-        const dayFrac = (date) => {
-          const year = date.getFullYear();
-          const month = date.getMonth();
-          const day = date.getDate();
-          const max = new Date(year, month + 1, 0).getDate();
-          return (day - 1) / max;
-        };
-        const minWidth = 0.05;
-        const fromPos = sIdx + dayFrac(s) - 0.5;
-        const toPos =
-          eIdx === -1
-            ? sIdx + 0.5
-            : eIdx === sIdx
-            ? sIdx + dayFrac(e) - 0.5
-            : eIdx + dayFrac(e) - 0.5;
-        const wid = Math.max(toPos - fromPos, minWidth);
+            const dayFrac = (date) => {
+              const year = date.getFullYear();
+              const month = date.getMonth();
+              const day = date.getDate();
+              const max = new Date(year, month + 1, 0).getDate();
+              return (day - 1) / max;
+            };
+            const minWidth = 0.05;
+            const fromPos = sIdx + dayFrac(s) - 0.5;
+            const toPos =
+              eIdx === -1
+                ? sIdx + 0.5
+                : eIdx === sIdx
+                ? sIdx + dayFrac(e) - 0.5
+                : eIdx + dayFrac(e) - 0.5;
+            const wid = Math.max(toPos - fromPos, minWidth);
 
-        acc.push({
-          id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
-          from: fromPos,
-          to: fromPos + wid,
-          color: holiday ? "#DCFCE7" : "#FFEDD5",
-          events: {
-            mouseover: function (mouseEvt) {
-              const ch = chartRef.current?.chart;
-              if (!ch) return;
-              if (ch.customTooltip) ch.customTooltip.destroy();
+            acc.push({
+              id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
+              from: fromPos,
+              to: fromPos + wid,
+              color: holiday ? "#DCFCE7" : "#FFEDD5",
+              events: {
+                mouseover: function (mouseEvt) {
+                  const ch = chartRef.current?.chart;
+                  if (!ch) return;
+                  if (ch.customTooltip) ch.customTooltip.destroy();
 
-              const names = [];
-              if (Array.isArray(countryName)) names.push(...countryName);
-              else if (typeof countryName === "string") names.push(countryName);
-              if (ev.country_name) names.push(ev.country_name);
-              const all = names.map((t) => t.toLowerCase());
+                  const names = [];
+                  if (Array.isArray(countryName)) names.push(...countryName);
+                  else if (typeof countryName === "string") names.push(countryName);
+                  if (ev.country_name) names.push(ev.country_name);
+                  const all = names.map((t) => t.toLowerCase());
 
-              const matchAny = (text, keys) =>
-                keys.some((k) => text.includes(k));
-              const isUSA = all.some((t) =>
-                matchAny(t, [
-                  "usa",
-                  "u.s.",
-                  "united states",
-                  "united states of america",
-                  "us",
-                ])
-              );
-              const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
+                  const matchAny = (text, keys) =>
+                    keys.some((k) => text.includes(k));
+                  const isUSA = all.some((t) =>
+                    matchAny(t, [
+                      "usa",
+                      "u.s.",
+                      "united states",
+                      "united states of america",
+                      "us",
+                    ])
+                  );
+                  const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
 
-              const formatDate = (date) => {
-                if (isUSA && isIndia) {
-                  return date.toLocaleDateString("en-US", {
-                    month: "2-digit",
-                    day: "2-digit",
-                    year: "numeric",
-                  });
-                } else if (isUSA) {
-                  return date.toLocaleDateString("en-US", {
-                    month: "2-digit",
-                    day: "2-digit",
-                    year: "numeric",
-                  });
-                } else if (isIndia) {
-                  return date.toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  });
-                }
-                return date.toLocaleDateString();
-              };
+                  const formatDate = (date) => {
+                    if (isUSA && isIndia) {
+                      return date.toLocaleDateString("en-US", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                      });
+                    } else if (isUSA) {
+                      return date.toLocaleDateString("en-US", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                      });
+                    } else if (isIndia) {
+                      return date.toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      });
+                    }
+                    return date.toLocaleDateString();
+                  };
 
-              const s = new Date(ev.start_date);
-              const e = new Date(ev.end_date);
+                  const s = new Date(ev.start_date);
+                  const e = new Date(ev.end_date);
 
-              const tip = `
+                  const tip = `
       <div style="padding:8px;font-size:12px;font-family:Inter">
         <b>${ev.event_type}:</b> ${ev.event_name}<br/>
         <b>Start:</b> ${formatDate(s)}<br/>
@@ -698,50 +744,72 @@ export default function ForecastChart({
         <b>Country:</b> ${ev.country_name || "N/A"}
       </div>`;
 
-              const rect = ch.container.getBoundingClientRect();
-              const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-              const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
+                  const rect = ch.container.getBoundingClientRect();
+                  const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
+                  const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
 
-              ch.customTooltip = ch.renderer
-                .label(tip, x, y, "round", null, null, true)
-                .attr({
-                  fill: "rgba(255,255,255,0.95)",
-                  stroke: "rgba(51,51,51,0.3)",
-                  "stroke-width": 1,
-                  r: 3,
-                  padding: 8,
-                  zIndex: 999,
-                })
-                .css({
-                  boxShadow:
-                    "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
-                })
-                .add();
-            },
-            mouseout: function () {
-              const ch = chartRef.current?.chart;
-              if (ch?.customTooltip) {
-                ch.customTooltip.destroy();
-                ch.customTooltip = null;
-              }
-            },
-          },
-        });
-        return acc;
-      }, []),
-    []
+                  ch.customTooltip = ch.renderer
+                    .label(tip, x, y, "round", null, null, true)
+                    .attr({
+                      fill: "rgba(255,255,255,0.95)",
+                      stroke: "rgba(51,51,51,0.3)",
+                      "stroke-width": 1,
+                      r: 3,
+                      padding: 8,
+                      zIndex: 999,
+                    })
+                    .css({
+                      boxShadow:
+                        "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
+                    })
+                    .add();
+                },
+                mouseout: function () {
+                  const ch = chartRef.current?.chart;
+                  if (ch?.customTooltip) {
+                    ch.customTooltip.destroy();
+                    ch.customTooltip = null;
+                  }
+                },
+              },
+            });
+            return acc;
+          }, []),
+    [isWeekly, countryName]
   );
 
-  /* ---------- SAFE split index (prevents -1 issues) ---------- */
-  const todayLabel = new Date().toLocaleString("default", {
+  /* ---------- SAFE split index for Monthly or Weekly ---------- */
+  const today = new Date();
+  const monthlyTodayLabel = today.toLocaleString("default", {
     month: "short",
     year: "2-digit",
   });
-  const rawTodayIdx = months.indexOf(todayLabel);
-  const safeTodayIdx =
-    rawTodayIdx === -1 ? (months.length ? months.length - 1 : -1) : rawTodayIdx;
 
-  /* ---------- Series helpers using safeTodayIdx ---------- */
+  let safeTodayIdx = -1;
+  if (isWeekly) {
+    // Try exact match with ISO week label
+    const wkLbl = isoWeekLabelFor(today); // e.g., 2025-W36
+    const exact = months.indexOf(wkLbl);
+    if (exact !== -1) {
+      safeTodayIdx = exact;
+    } else {
+      // Fallback: map labels to dates and take the last index <= today
+      const mapped = months.map((l) => parseISOWeekLabel(String(l)));
+      safeTodayIdx = mapped.reduce((acc, d, i) => {
+        if (d && d.getTime() <= today.getTime()) return i;
+        return acc;
+      }, -1);
+      if (safeTodayIdx === -1 && months.length) {
+        // If all future, split before first index
+        safeTodayIdx = -1;
+      }
+    }
+  } else {
+    const idx = months.indexOf(monthlyTodayLabel);
+    safeTodayIdx = idx === -1 ? (months.length ? months.length - 1 : -1) : idx;
+  }
+
+  /* ---------- Series helpers ---------- */
   const seriesData = useMemo(() => {
     if (!months || !months.length) {
       return {
@@ -764,26 +832,14 @@ export default function ForecastChart({
     const baselineFull = getRow("Baseline Forecast");
     const mlFull = getRow("ML Forecast");
     const consFull = getRow("Consensus");
-    const actual = getRow("Actual");
+    const actualFull = getRow("Actual");
 
-    const hist = (arr) => arr.map((v, i) => (i <= safeTodayIdx ? v : null));
-    const fut = (arr) => arr.map((v, i) => (i > safeTodayIdx ? v : null));
+    const histMask = (arr) =>
+      arr.map((v, i) => (i <= safeTodayIdx ? v : null));
+    const futMask = (arr) =>
+      arr.map((v, i) => (i > safeTodayIdx ? v : null));
 
-    // const join = (histArr, futArr) => {
-    //   const out = [...futArr];
-    //   for (let i = 1; i < out.length; i++) {
-    //     if (out[i] != null && out[i - 1] == null) {
-    //       const bridgeIdx = Math.min(
-    //         Math.max(safeTodayIdx, 0),
-    //         histArr.length - 1
-    //       );
-    //       const bridgeVal = bridgeIdx >= 0 ? histArr[bridgeIdx] : null;
-    //       out[i - 1] = bridgeVal;
-    //       break;
-    //     }
-    //   }
-    //   return out;
-    // };
+    // Join: keep a smooth bridge by duplicating last historical point
     const join = (histArr, futArr) => {
       const out = [...futArr];
 
@@ -797,13 +853,9 @@ export default function ForecastChart({
       }
 
       if (bridgePos >= 0) {
-        // put the last historical value into the FORECAST series at the bridge
-        out[bridgePos] = histArr?.[bridgePos] ?? null;
-
-        // hide the historical point at the bridge so only forecast shows there
-        if (Array.isArray(histArr)) histArr[bridgePos] = null;
+        out[bridgePos] = histArr?.[bridgePos] ?? null; // bridge onto dashed series
+        if (Array.isArray(histArr)) histArr[bridgePos] = null; // hide solid at the bridge
       }
-
       return out;
     };
 
@@ -818,16 +870,55 @@ export default function ForecastChart({
       });
     };
 
+    // Build monthly default
+    let actual = actualFull;
+    let baselineHist = histMask(baselineFull);
+    let baselineFut = join(histMask(baselineFull), futMask(baselineFull));
+
+    let mlHist = histMask(mlFull);
+    let mlFut = join(histMask(mlFull), futMask(mlFull));
+
+    let consHist = histMask(consFull);
+    let consFut = join(histMask(consFull), firstFutureOnly(consFull));
+
+    // Weekly trimming: 6 weeks history and 6 weeks forecast from "current week".
+    if (isWeekly) {
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+      const lastIdx = months.length - 1;
+
+      // history window: last 6 weeks INCLUDING current week
+      const hFrom = clamp(safeTodayIdx - 5, 0, lastIdx);
+      const hTo = clamp(safeTodayIdx, 0, lastIdx);
+
+      // forecast window: next 6 weeks AFTER current week, but keep bridge at current week for dashed series
+      const fFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx); // include bridge at safeTodayIdx
+      const fTo = clamp(safeTodayIdx + 6, 0, lastIdx);
+
+      const applyWindow = (arr, from, to) =>
+        arr.map((v, i) => (i >= from && i <= to ? v : null));
+
+      actual = applyWindow(actualFull, hFrom, hTo);
+
+      baselineHist = applyWindow(baselineHist, hFrom, hTo);
+      baselineFut = applyWindow(baselineFut, fFrom, fTo);
+
+      mlHist = applyWindow(mlHist, hFrom, hTo);
+      mlFut = applyWindow(mlFut, fFrom, fTo);
+
+      consHist = applyWindow(consHist, hFrom, hTo);
+      consFut = applyWindow(consFut, fFrom, fTo); // will be just first future + bridge
+    }
+
     return {
       actual,
-      baseline: hist(baselineFull),
-      baseline_forecast: join(hist(baselineFull), fut(baselineFull)),
-      ml: hist(mlFull),
-      ml_forecast: join(hist(mlFull), fut(mlFull)),
-      consensus: hist(consFull),
-      consensus_forecast: join(hist(consFull), firstFutureOnly(consFull)),
+      baseline: baselineHist,
+      baseline_forecast: baselineFut,
+      ml: mlHist,
+      ml_forecast: mlFut,
+      consensus: consHist,
+      consensus_forecast: consFut,
     };
-  }, [months, data, safeTodayIdx]);
+  }, [months, data, safeTodayIdx, isWeekly]);
 
   // -------- Detect if any forecast data exists (to disable legend chips) --------
   const hasBaselineFc = (seriesData.baseline_forecast || []).some(
@@ -926,7 +1017,7 @@ export default function ForecastChart({
             (this.points && this.points[0] && this.points[0].point.x) ??
             (this.point && this.point.x);
 
-          // get month label from categories (months array)
+          // get label from categories (months array)
           const categories = this.points?.[0]?.series?.xAxis?.categories || [];
           const header =
             Number.isInteger(idx) && categories[idx] !== undefined
@@ -935,13 +1026,12 @@ export default function ForecastChart({
 
           let pts = this.points || [this];
 
-          // at join index, hide solid Baseline/ML/Consensus
+          // at split index, hide solid Baseline/ML/Consensus (bridge keeps dashed)
           if (idx === safeTodayIdx) {
             const hideSolid = new Set(["Baseline", "ML", "Consensus"]);
             pts = pts.filter((p) => !hideSolid.has(p.series.name));
           }
 
-          // build tooltip
           let html = `<div style="font-weight:600;margin-bottom:4px">${header}</div>`;
           pts.forEach((p) => {
             if (p.y == null) return;
@@ -1025,6 +1115,7 @@ export default function ForecastChart({
       overlays,
       hiddenSeries,
       createPlotBands,
+      safeTodayIdx,
     ]
   );
 
@@ -1106,6 +1197,7 @@ export default function ForecastChart({
     setHiddenSeries(init);
   }, []);
 
+  // Hide/show all forecast series when the Forecast toggle changes
   useEffect(() => {
     if (showForecast === undefined) return;
     const forecastIdx = [4, 5, 6]; // BaselineFc, MLFc, ConsFc
