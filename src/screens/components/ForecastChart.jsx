@@ -452,7 +452,9 @@ const CustomLegend = ({
 const WEEK_LABEL_RE = /^(\d{4})-W(\d{2})$/;
 
 function getISOWeekParts(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
   const day = d.getUTCDay() || 7; // Mon=1..Sun=7
   d.setUTCDate(d.getUTCDate() + 4 - day); // Thursday in current week
   const year = d.getUTCFullYear();
@@ -531,7 +533,7 @@ export default function ForecastChart({
           starred: m.model_name === "XGBoost",
         })),
       },
-        // (future sections hidden)
+      // (future sections hidden)
       // {
       //   id: 2,
       //   title: "External Factors",
@@ -693,7 +695,8 @@ export default function ForecastChart({
 
                   const names = [];
                   if (Array.isArray(countryName)) names.push(...countryName);
-                  else if (typeof countryName === "string") names.push(countryName);
+                  else if (typeof countryName === "string")
+                    names.push(countryName);
                   if (ev.country_name) names.push(ev.country_name);
                   const all = names.map((t) => t.toLowerCase());
 
@@ -708,7 +711,9 @@ export default function ForecastChart({
                       "us",
                     ])
                   );
-                  const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
+                  const isIndia = all.some((t) =>
+                    matchAny(t, ["india", "bharat"])
+                  );
 
                   const formatDate = (date) => {
                     if (isUSA && isIndia) {
@@ -745,8 +750,10 @@ export default function ForecastChart({
       </div>`;
 
                   const rect = ch.container.getBoundingClientRect();
-                  const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-                  const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
+                  const x =
+                    (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
+                  const y =
+                    (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
 
                   ch.customTooltip = ch.renderer
                     .label(tip, x, y, "round", null, null, true)
@@ -834,10 +841,8 @@ export default function ForecastChart({
     const consFull = getRow("Consensus");
     const actualFull = getRow("Actual");
 
-    const histMask = (arr) =>
-      arr.map((v, i) => (i <= safeTodayIdx ? v : null));
-    const futMask = (arr) =>
-      arr.map((v, i) => (i > safeTodayIdx ? v : null));
+    const histMask = (arr) => arr.map((v, i) => (i <= safeTodayIdx ? v : null));
+    const futMask = (arr) => arr.map((v, i) => (i > safeTodayIdx ? v : null));
 
     // Join: keep a smooth bridge by duplicating last historical point
     const join = (histArr, futArr) => {
