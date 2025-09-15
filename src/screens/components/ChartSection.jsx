@@ -576,10 +576,11 @@ export const ChartSection = () => {
       sx={{ width: "100%", border: 1, borderColor: "grey.300" }}
     >
       {/* Controls */}
+      {/* Controls */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
+          display: "grid",
+          gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
           px: 1.5,
           pt: 1.5,
@@ -587,61 +588,69 @@ export const ChartSection = () => {
           borderBottom: 1,
           borderColor: "grey.300",
           minHeight: 40,
+          columnGap: 1,
         }}
       >
-        <ToggleButtonGroup
-          value={selectedTimePeriod}
-          exclusive
-          onChange={handleTimePeriodChange}
-          sx={{
-            "& .MuiToggleButton-root": {
-              width: 36,
-              height: 20,
-              border: "1px solid #2563EB",
-              borderRadius: "50px",
-              p: 0,
-              fontWeight: 600,
-              fontSize: "12px",
-              lineHeight: "14px",
-              color: "#2563EB",
-              backgroundColor: "white",
-              "&.Mui-selected": {
-                backgroundColor: "#2563EB",
-                color: "white",
-              },
-              "&:not(:last-of-type)": {
-                marginRight: 0.5,
-              },
-            },
-          }}
-        >
-          <ToggleButton value="month">M</ToggleButton>
-          <ToggleButton value="week">W</ToggleButton>
-        </ToggleButtonGroup>
-
-        {/* Error Message between M/W and Models */}
-        {errorMessage && (
-          <Alert
-            severity="error"
-            onClose={() => setErrorMessage("")}
+        {/* Left: M/W toggle */}
+        <Box sx={{ justifySelf: "start" }}>
+          <ToggleButtonGroup
+            value={selectedTimePeriod}
+            exclusive
+            onChange={handleTimePeriodChange}
             sx={{
-              mx: 2,
-              py: 0,
-              fontSize: 12,
-              minHeight: 28,
-              "& .MuiAlert-message": {
-                fontSize: 12,
-              },
-              "& .MuiAlert-icon": {
-                fontSize: 16,
+              "& .MuiToggleButton-root": {
+                width: 36,
+                height: 20,
+                border: "1px solid #2563EB",
+                borderRadius: "50px",
+                p: 0,
+                fontWeight: 600,
+                fontSize: "12px",
+                lineHeight: "14px",
+                color: "#2563EB",
+                backgroundColor: "white",
+                "&.Mui-selected": {
+                  backgroundColor: "#2563EB",
+                  color: "white",
+                },
+                "&:not(:last-of-type)": { marginRight: 0.5 },
               },
             }}
           >
-            {errorMessage}
-          </Alert>
-        )}
+            {/* <ToggleButton value="month"></ToggleButton>
+      <ToggleButton value="week"></ToggleButton> */}
+          </ToggleButtonGroup>
+        </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {/* Center: Error message (always centered) */}
+        <Box sx={{ justifySelf: "center" }}>
+          {errorMessage && (
+            <Alert
+              severity="error"
+              onClose={() => setErrorMessage("")}
+              sx={{
+                mx: 0,
+                py: 0,
+                fontSize: 12,
+                minHeight: 28,
+                "& .MuiAlert-message": { fontSize: 12 },
+                "& .MuiAlert-icon": { fontSize: 16 },
+              }}
+            >
+              {errorMessage}
+            </Alert>
+          )}
+        </Box>
+
+        {/* Right: Model selector + actions */}
+        <Box
+          sx={{
+            justifySelf: "end",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
           {modelsLoading ? (
             <CircularProgress size={18} />
           ) : modelsError ? (
@@ -661,10 +670,7 @@ export const ChartSection = () => {
                 minWidth: 110,
                 height: 28,
                 fontSize: 13,
-                "& .MuiSelect-select": {
-                  py: 0.25,
-                  px: 1,
-                },
+                "& .MuiSelect-select": { py: 0.25, px: 1 },
               }}
               IconComponent={KeyboardArrowDownIcon}
             >

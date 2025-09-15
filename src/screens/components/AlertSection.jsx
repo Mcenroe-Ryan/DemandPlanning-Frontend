@@ -62,10 +62,10 @@ export const AlertsSection = () => {
   }, []);
 
   // Toggle button values
-  const timePeriods = [
-    { label: "M", value: "month" },
-    { label: "W", value: "week" },
-  ];
+  // const timePeriods = [
+  //   { label: "M", value: "month" },
+  //   { label: "W", value: "week" },
+  // ];
 
   // Transforms forecast data into chart-friendly format
   const transformForecastData = (forecastData) => {
@@ -334,11 +334,11 @@ export const AlertsSection = () => {
             },
           }}
         >
-          {timePeriods.map((period) => (
+          {/* {timePeriods.map((period) => (
             <ToggleButton key={period.value} value={period.value}>
               {period.label}
             </ToggleButton>
-          ))}
+          ))} */}
         </ToggleButtonGroup>
 
         {/* Model select + icons */}

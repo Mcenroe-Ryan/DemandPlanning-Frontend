@@ -69,19 +69,17 @@ async function updateConsensusForecastAPI(payload) {
   const now = Date.now();
   const key = makeDedupeKey(payload);
 
-  // Time-based protection - prevent rapid consecutive calls
   if (now - _lastUpdateTimestamp < 2000) {
-    console.log("Blocked by time-based protection (2 seconds)");
+    // console.log("Blocked by time-based protection (2 seconds)");
     throw new Error("Update too soon - please wait");
   }
 
-  // Key-based protection
   if (_consensusInFlightKey === key && _consensusInFlightPromise) {
-    console.log("Blocked by key-based protection, returning existing promise");
+    // console.log("Blocked by key-based protection, returning existing promise");
     return _consensusInFlightPromise;
   }
 
-  console.log("Executing consensus update API call", { key, payload });
+  // console.log("Executing consensus update API call", { key, payload });
   _lastUpdateTimestamp = now;
   _consensusInFlightKey = key;
 
@@ -98,7 +96,6 @@ async function updateConsensusForecastAPI(payload) {
       return res.json();
     })
     .finally(() => {
-      // Clear guards after delay to prevent immediate duplicates
       setTimeout(() => {
         _consensusInFlightKey = null;
         _consensusInFlightPromise = null;
@@ -550,13 +547,12 @@ const getCellZIndex = (isSticky, isHighlighted, isEditing) => {
 function startOfISOWeek(d0 = new Date()) {
   const d = new Date(d0);
   d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0..6 (Sun..Sat)
+  const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day; // back to Monday
   d.setDate(d.getDate() + diff);
   return d;
 }
 function weekLabelToDate(label) {
-  // expects "YYYY-Www" (e.g., "2025-W36")
   if (!label || typeof label !== "string") return null;
   const parts = label.split("-W");
   if (parts.length !== 2) return null;
@@ -567,8 +563,39 @@ function weekLabelToDate(label) {
   const wk1Mon = startOfISOWeek(jan4);
   const target = new Date(wk1Mon);
   target.setDate(target.getDate() + (week - 1) * 7);
-  return target; // Monday of that ISO week
+  return target;
 }
+
+// ---------- Dedicated ISO week builder ----------
+function getISOWeekInfo(d0) {
+  const d = new Date(Date.UTC(d0.getFullYear(), d0.getMonth(), d0.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const year = d.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil(((+d - +yearStart) / 86400000 + 1) / 7);
+  return { year, week };
+}
+
+function formatISOWeekLabel(d) {
+  const { year, week } = getISOWeekInfo(d);
+  return `${year}-W${String(week).padStart(2, "0")}`;
+}
+
+function buildISOWeekLabelsBetween(startDateStr, endDateStr) {
+  if (!startDateStr || !endDateStr) return [];
+  const start = startOfISOWeek(new Date(startDateStr));
+  const end = startOfISOWeek(new Date(endDateStr));
+
+  const out = [];
+  const cur = new Date(start);
+  while (cur <= end) {
+    out.push(formatISOWeekLabel(cur));
+    cur.setDate(cur.getDate() + 7);
+  }
+  return out;
+}
+// ------------------------------------------------------
 
 export default function ForecastTable({
   selectedCountry,
@@ -634,16 +661,13 @@ export default function ForecastTable({
   const [highlightEditableCells, setHighlightEditableCells] = useState(false);
   const [isSwapped, setIsSwapped] = useState(false);
 
-  // Enhanced protection against double submission
   const confirmSubmittingRef = useRef(false);
   const blurTimeoutRef = useRef(null);
   const [isPreparingConfirm, setIsPreparingConfirm] = useState(false);
   const [isSubmittingConfirm, setIsSubmittingConfirm] = useState(false);
 
-  // Dynamic table columns (months for M, week_name for W)
   const [columns, setColumns] = useState([]);
 
-  // --- NEW: measure container width to fill remaining screen ---
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -657,9 +681,7 @@ export default function ForecastTable({
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
-  // -------------------------------------------------------------
 
-  // Precompute default monthly labels if dates aren't provided
   const defaultMonthlyLabels = useMemo(() => {
     const today = new Date();
     today.setDate(1);
@@ -673,7 +695,6 @@ export default function ForecastTable({
     );
   }, []);
 
-  // Visible columns — weekly now respects Forecast toggle (hide future when off)
   const visibleColumns = useMemo(() => {
     if (period === "M") {
       const monthly =
@@ -700,9 +721,27 @@ export default function ForecastTable({
     }
 
     if (period === "W") {
+      const built =
+        columns.length > 0
+          ? columns
+          : startDate && endDate
+          ? buildISOWeekLabelsBetween(startDate, endDate)
+          : (() => {
+              const now = startOfISOWeek(new Date());
+              const from = new Date(now);
+              from.setDate(from.getDate() - 6 * 7);
+              const to = new Date(now);
+              to.setDate(to.getDate() + 6 * 7);
+              return buildISOWeekLabelsBetween(
+                from.toISOString().slice(0, 10),
+                to.toISOString().slice(0, 10)
+              );
+            })();
+
+      if (showForecast) return built;
+
       const nowStart = startOfISOWeek(new Date());
-      if (showForecast) return columns;
-      return columns.filter((lbl) => {
+      return built.filter((lbl) => {
         const d = weekLabelToDate(lbl);
         return d && d <= nowStart;
       });
@@ -711,7 +750,6 @@ export default function ForecastTable({
     return columns;
   }, [period, columns, showForecast, startDate, endDate, defaultMonthlyLabels]);
 
-  // ---- Dynamic filler columns to span remaining viewport width ----
   const STICKY_W = 240;
   const COL_W = 110;
 
@@ -725,14 +763,11 @@ export default function ForecastTable({
     [fillerCount]
   );
 
-  // Table min width = fixed widths of visible + filler cols
   const tableMinWidth = useMemo(() => {
     const totalCols = visibleColumns.length + fillerCount;
     return STICKY_W + Math.max(totalCols, 1) * COL_W;
   }, [visibleColumns.length, fillerCount]);
-  // ---------------------------------------------------------------
 
-  // Monthly-only helpers (firstFutureMonth & futureMonthSet)
   const firstFutureMonth = useMemo(() => {
     if (period !== "M") return null;
     const today = new Date();
@@ -766,7 +801,6 @@ export default function ForecastTable({
     return set;
   }, [period, columns, visibleColumns]);
 
-  // Weekly: mark future weeks to highlight like monthly
   const futureWeekSet = useMemo(() => {
     if (period !== "W") return new Set();
     const nowStart = startOfISOWeek(new Date());
@@ -866,7 +900,6 @@ export default function ForecastTable({
           return;
         }
 
-        // Avg MAPE
         const mapeValues = raw
           .map((item) => Number(item.avg_mape))
           .filter((val) => !isNaN(val));
@@ -884,7 +917,6 @@ export default function ForecastTable({
         ]);
 
         if (period === "M") {
-          // monthly columns
           const labels =
             startDate && endDate
               ? buildMonthLabelsBetween(startDate, endDate)
@@ -910,23 +942,20 @@ export default function ForecastTable({
 
           setColumns(labels);
         } else {
-          // weekly columns (limit to last 6 weeks + next 6 weeks around current ISO week)
-          const weekSet = new Set();
-          raw.forEach((r) => {
-            if (r.week_name) weekSet.add(String(r.week_name)); // "YYYY-Www"
-          });
-
-          const nowStart = startOfISOWeek(new Date());
-          const labels = Array.from(weekSet)
-            .filter((lbl) => {
-              const d = weekLabelToDate(lbl);
-              if (!d) return false;
-              const diffWeeks = Math.round(
-                (d - nowStart) / (7 * 24 * 60 * 60 * 1000)
-              );
-              return diffWeeks >= -6 && diffWeeks <= 6;
-            })
-            .sort((a, b) => weekLabelToDate(a) - weekLabelToDate(b));
+          const labels =
+            startDate && endDate
+              ? buildISOWeekLabelsBetween(startDate, endDate)
+              : (() => {
+                  const now = startOfISOWeek(new Date());
+                  const from = new Date(now);
+                  from.setDate(from.getDate() - 6 * 7);
+                  const to = new Date(now);
+                  to.setDate(to.getDate() + 6 * 7);
+                  return buildISOWeekLabelsBetween(
+                    from.toISOString().slice(0, 10),
+                    to.toISOString().slice(0, 10)
+                  );
+                })();
 
           labels.forEach((w) => {
             ds[w] = {};
@@ -936,8 +965,14 @@ export default function ForecastTable({
           });
 
           raw.forEach((item) => {
-            const label = String(item.week_name);
-            if (!ds[label]) return;
+            const label = item.week_name
+              ? String(item.week_name)
+              : item.week_start_date
+              ? formatISOWeekLabel(new Date(item.week_start_date))
+              : null;
+
+            if (!label || !ds[label]) return;
+
             Object.entries(keyMap).forEach(([rowLabel, jsonKey]) => {
               const val = item[jsonKey];
               if (val !== undefined && val !== null && val !== "NULL") {
@@ -1041,7 +1076,6 @@ export default function ForecastTable({
     setCanEditConsensus(false);
   };
 
-  // Enhanced submit protection
   const handleConfirmationSubmit = async () => {
     if (confirmSubmittingRef.current) return;
     confirmSubmittingRef.current = true;
@@ -1097,7 +1131,6 @@ export default function ForecastTable({
     }
   };
 
-  // CSV helpers
   const toCSVValue = (val) => {
     if (val === null || val === undefined) return "";
     const s = String(val);
@@ -1153,7 +1186,7 @@ export default function ForecastTable({
 
   const renderForecastTable = () => (
     <Box
-      ref={containerRef} // <-- measure me
+      ref={containerRef}
       sx={{
         p: 3,
         pt: 0,
@@ -1166,12 +1199,11 @@ export default function ForecastTable({
         borderColor: "grey.200",
         overflowX: "auto",
         fontFamily: "'Poppins', sans-serif !important",
-        width: "calc(100% - 16px)", // keeps within page padding nicely
+        width: "calc(100% - 16px)",
       }}
     >
       <table
         style={{
-          // keep the table hugging content; fillers make it span rest of screen
           width: "auto",
           minWidth: `${tableMinWidth}px`,
           display: "inline-table",
@@ -1221,7 +1253,6 @@ export default function ForecastTable({
                 {m}
               </th>
             ))}
-            {/* Filler header cells (blank) */}
             {fillerColumns.map((f) => (
               <th
                 key={f}
@@ -1280,7 +1311,6 @@ export default function ForecastTable({
                 const value = data?.[m]?.[label];
                 const isConsensusRow = label === "Consensus";
 
-                // Monthly-only edit/lock logic
                 const isEditing =
                   !isWeekly &&
                   editingCell.month === m &&
@@ -1364,8 +1394,9 @@ export default function ForecastTable({
                       }
                     }}
                   >
-                    {label === "Consensus" && value !== "-" && (
-                      <RedTriangleIcon visible={true} />
+                    {/* show red corner ONLY for monthly consensus cells */}
+                    {!isWeekly && label === "Consensus" && value !== "-" && (
+                      <RedTriangleIcon />
                     )}
 
                     {shouldHighlight && (
@@ -1570,7 +1601,6 @@ export default function ForecastTable({
                 );
               })}
 
-              {/* Right-side filler cells with light grey (forecast-like) background */}
               {fillerColumns.map((f) => (
                 <td
                   key={f}
@@ -1699,9 +1729,7 @@ export default function ForecastTable({
           </IconButton>
 
           <IconButton size="small">
-            <ShareIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <ShareIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
 
           <IconButton size="small" onClick={handleDownloadTable}>
@@ -1710,15 +1738,14 @@ export default function ForecastTable({
             />
           </IconButton>
 
-          <IconButton size="small">
+          {/* <IconButton size="small">
             <OpenInFullIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}
             />
-          </IconButton>
+          </IconButton> */}
         </Stack>
       </Box>
 
-      {/* Conditional rendering based on swap state */}
       {isSwapped ? (
         <>
           {data && (
