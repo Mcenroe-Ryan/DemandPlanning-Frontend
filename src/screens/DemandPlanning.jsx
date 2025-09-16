@@ -44,6 +44,7 @@ import { AlertProvider } from "./components/AlertContext";
 import Chart from "./components/Messaging";
 import ChatBot from "./components/Chatbox";
 import { AnalyticsFrameSection } from "./components/AnalyticsFrameSection";
+import ScenarioSection from "./components/ScenarioSection";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -364,7 +365,7 @@ export const DemandProjectMonth = () => {
     { label: "Compare Model", count: null },
     { label: "Analytics", count: null },
     //removed for demo
-    // { label: "Scenarios", count: null},
+    { label: "Scenarios", count: null },
   ];
 
   const scrollRef = useRef(null);
@@ -457,6 +458,8 @@ export const DemandProjectMonth = () => {
   const [compareLoading, setCompareLoading] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [chartLoading, setChartLoading] = useState(false);
+  // top-level state with the other loaders
+  const [scenariosLoading, setScenariosLoading] = useState(false);
 
   const handleEnableEditConsensus = () => {
     setCanEditConsensus(true);
@@ -1252,6 +1255,10 @@ export const DemandProjectMonth = () => {
             // Analytics
             setAnalyticsLoading(true);
             setTimeout(() => setAnalyticsLoading(false), 300);
+          } else if (newValue === 4) {
+            // <--- Scenarios tab
+            setScenariosLoading(true);
+            setTimeout(() => setScenariosLoading(false), 300);
           }
         }}
         sx={{
@@ -1381,6 +1388,23 @@ export const DemandProjectMonth = () => {
                 }}
               >
                 <AnalyticsFrameSection />
+              </Box>
+            )
+          ) : activeTab === 4 ? ( // <--- Scenarios here
+            scenariosLoading ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: 400,
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0 }}>
+                <ScenarioSection /> {/* loads below the tabs */}
               </Box>
             )
           ) : (

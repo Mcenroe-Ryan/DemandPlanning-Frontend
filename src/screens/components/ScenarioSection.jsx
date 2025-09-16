@@ -1,182 +1,2743 @@
-import Add from "@mui/icons-material/Add";
-import CheckCircle from "@mui/icons-material/CheckCircle";
-import HelpOutline from "@mui/icons-material/HelpOutline";
+// import React, { useMemo, useState } from "react";
+// import MoreVert from "@mui/icons-material/MoreVert";
+// import Search from "@mui/icons-material/Search";
+// import HelpOutline from "@mui/icons-material/HelpOutline";
+// import TrendingUp from "@mui/icons-material/TrendingUp";
+// import FiberManualRecord from "@mui/icons-material/FiberManualRecord";
+// import MoreHoriz from "@mui/icons-material/MoreHoriz";
+// import ErrorOutline from "@mui/icons-material/ErrorOutline";
+// import Tune from "@mui/icons-material/Tune";
+// import Highcharts from "highcharts";
+// import HighchartsReact from "highcharts-react-official";
+// import {
+//   Badge,
+//   Box,
+//   Button,
+//   Card,
+//   CardContent,
+//   Chip,
+//   Divider,
+//   FormControl,
+//   FormControlLabel,
+//   IconButton,
+//   List,
+//   ListItem,
+//   MenuItem,
+//   Radio,
+//   RadioGroup,
+//   Select,
+//   Stack,
+//   Tab,
+//   Tabs,
+//   TextField,
+//   Typography,
+//   useTheme,
+//   useMediaQuery,
+//   Checkbox,
+//   Table,
+//   TableBody,
+//   TableCell,
+//   TableContainer,
+//   TableHead,
+//   TableRow,
+//   CssBaseline,
+//   Popover,
+//   Tooltip,
+//   Slider,
+// } from "@mui/material";
+
+// import {
+//   BarChart,
+//   Bar,
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip as RTooltip,
+//   ReferenceLine,
+//   LabelList,
+//   Cell,
+//   ResponsiveContainer,
+// } from "recharts";
+
+// // 🔗 Compare view (default export)
+// import NewRecommendationScreen from "./ScenarioSimulation";
+
+// /* ===== Shared sizing for both graphs ===== */
+// const GRAPH_HEIGHT = 220;
+
+// /* =====================  DATA & UTILS  ===================== */
+
+// const scenariosData = [
+//   {
+//     id: 1,
+//     title: "Sudden Spike in Demand",
+//     description: "30% increase due to marketing campaign",
+//     type: "Demand",
+//     change: "+30%",
+//     duration: "3 Months",
+//     isSelected: true,
+//     typeColor: "info",
+//   },
+//   {
+//     id: 2,
+//     title: "Sudden Drop in Demand",
+//     description: "20% drop due to economic slowdown",
+//     type: "Demand",
+//     change: "-20%",
+//     duration: "6 Months",
+//     isSelected: false,
+//     typeColor: "info",
+//   },
+//   {
+//     id: 3,
+//     title: "New Market Expansion",
+//     description: "Launch in new region with 40% uplift",
+//     type: "Demand",
+//     change: "+40%",
+//     duration: "12 Months",
+//     isSelected: false,
+//     typeColor: "info",
+//   },
+//   {
+//     id: 4,
+//     title: "Supplier Disruption",
+//     description: "Unfulfilled demand due to raw material shortage",
+//     type: "Supply",
+//     change: "-15%",
+//     duration: "4 Months",
+//     isSelected: false,
+//     typeColor: "error",
+//   },
+//   {
+//     id: 5,
+//     title: "Price Change Impact",
+//     description: "10% price increase affects demand",
+//     type: "Price",
+//     change: "-12%",
+//     duration: "6 Months",
+//     isSelected: false,
+//     typeColor: "success",
+//   },
+//   {
+//     id: 6,
+//     title: "New Product Introduction",
+//     description: "25% cannibalization + 35% new demand",
+//     type: "Product",
+//     change: "+10%",
+//     duration: "9 Months",
+//     isSelected: false,
+//     typeColor: "primary",
+//   },
+//   {
+//     id: 7,
+//     title: "Promotions & Discount",
+//     description: "Flash sale increases demand by 50%",
+//     type: "Demand",
+//     change: "+50%",
+//     duration: "1 Months",
+//     isSelected: false,
+//     typeColor: "info",
+//   },
+//   {
+//     id: 8,
+//     title: "Change in Lead Time",
+//     description: "Lead time increase affects availability",
+//     type: "Supply",
+//     change: "-8%",
+//     duration: "8 Months",
+//     isSelected: false,
+//     typeColor: "error",
+//   },
+//   {
+//     id: 9,
+//     title: "Production Constraints",
+//     description: "30% capacity reduction",
+//     type: "Supply",
+//     change: "-30%",
+//     duration: "2 Months",
+//     isSelected: false,
+//     typeColor: "error",
+//   },
+// ];
+
+// const card = {
+//   backgroundColor: "#fff",
+//   border: 1,
+//   borderColor: "grey.300",
+//   borderRadius: 1,
+//   overflow: "hidden",
+// };
+
+// const locationData = [
+//   { label: "Location:", value: "Rajkot" },
+//   { label: "Current Inventory:", value: "4567" },
+//   { label: "Next week demand:", value: "5879" },
+// ];
+
+// const legendItems = [
+//   {
+//     id: "actual",
+//     label: "Actual",
+//     indicator: <FiberManualRecord sx={{ fontSize: 10, color: "#0891b2" }} />,
+//   },
+//   {
+//     id: "forecast",
+//     label: "Forecast",
+//     indicator: <MoreHoriz sx={{ fontSize: 15, color: "#64748b" }} />,
+//   },
+// ];
+
+// const disruptionSeed = [
+//   {
+//     id: 101,
+//     checked: false,
+//     date: new Date(2025, 7, 22, 12, 34),
+//     message:
+//       "Rajkot (RAJ182) - Sweet Mixes (C5050500D): Unexpected regional event.",
+//   },
+//   {
+//     id: 102,
+//     checked: true,
+//     date: new Date(2025, 6, 18, 16, 30),
+//     message:
+//       "Hyderabad (HYD543) - RTE - Soup Pack (Veg) (C46602008): Weather event.",
+//   },
+// ];
+
+// const formatDateTime = (d) => {
+//   const months = [
+//     "Jan",
+//     "Feb",
+//     "Mar",
+//     "Apr",
+//     "May",
+//     "Jun",
+//     "Jul",
+//     "Aug",
+//     "Sep",
+//     "Oct",
+//     "Nov",
+//     "Dec",
+//   ];
+//   const dd = String(d.getDate()).padStart(2, "0");
+//   const mon = months[d.getMonth()];
+//   const yyyy = d.getFullYear();
+//   let hh = d.getHours();
+//   const mm = String(d.getMinutes()).padStart(2, "0");
+//   const ampm = hh >= 12 ? "PM" : "AM";
+//   hh = hh % 12;
+//   if (hh === 0) hh = 12;
+//   const hhStr = String(hh).padStart(2, "0");
+//   return `${dd} ${mon}, ${yyyy} ${hhStr}:${mm}${ampm}`;
+// };
+
+// const fmtNum = (n) => n.toLocaleString("en-IN");
+
+// /* =====================  SIDEBAR  ===================== */
+
+// function SidebarBox({ selectedScenario, setSelectedScenario }) {
+//   const getTypeChipColor = (typeColor) => {
+//     switch (typeColor) {
+//       case "info":
+//         return { backgroundColor: "#2196f3", color: "white" };
+//       case "error":
+//         return { backgroundColor: "#ff9800", color: "white" };
+//       case "success":
+//         return { backgroundColor: "#4caf50", color: "white" };
+//       case "primary":
+//         return { backgroundColor: "#9c27b0", color: "white" };
+//       default:
+//         return { backgroundColor: "#f5f5f5", color: "#424242" };
+//     }
+//   };
+
+//   return (
+//     <Box
+//       sx={{
+//         width: { xs: 280, sm: 300, md: 320 },
+//         ...card,
+//         flexShrink: 0,
+//         height: "100%",
+//         display: "flex",
+//         flexDirection: "column",
+//       }}
+//     >
+//       <Box
+//         sx={{
+//           p: 1.5,
+//           backgroundColor: "#f8f9fa",
+//           borderBottom: 1,
+//           borderColor: "grey.300",
+//         }}
+//       >
+//         <Stack
+//           direction="row"
+//           justifyContent="space-between"
+//           alignItems="center"
+//         >
+//           <Stack spacing={0.5}>
+//             <Stack direction="row" spacing={0.5} alignItems="center">
+//               <HelpOutline sx={{ fontSize: 14, color: "#666" }} />
+//               <Typography variant="body2" fontSize={13} fontWeight={600}>
+//                 What-If Scenarios?
+//               </Typography>
+//             </Stack>
+//             <Typography variant="caption" color="#999" sx={{ fontSize: 11 }}>
+//               Select a scenario to analyze its impact on demand planning.
+//             </Typography>
+//           </Stack>
+//           <IconButton size="small">
+//             <MoreVert sx={{ fontSize: 16, color: "#1976d2" }} />
+//           </IconButton>
+//         </Stack>
+//       </Box>
+
+//       <Box sx={{ p: 1, borderBottom: 1, borderColor: "grey.300" }}>
+//         <TextField
+//           placeholder="Search scenarios"
+//           variant="outlined"
+//           size="small"
+//           fullWidth
+//           InputProps={{
+//             startAdornment: (
+//               <Search sx={{ fontSize: 16, color: "#999", mr: 1 }} />
+//             ),
+//           }}
+//           sx={{
+//             "& .MuiOutlinedInput-root": { borderRadius: 2 },
+//             "& input": { fontSize: 12 },
+//           }}
+//         />
+//       </Box>
+
+//       <Box sx={{ flex: 1, overflow: "auto" }}>
+//         <List sx={{ p: 0 }}>
+//           {scenariosData.map((s) => (
+//             <ListItem
+//               key={s.id}
+//               onClick={() => setSelectedScenario(s)}
+//               sx={{
+//                 cursor: "pointer",
+//                 backgroundColor:
+//                   selectedScenario?.id === s.id ? "#e3f2fd" : "transparent",
+//                 borderLeft:
+//                   selectedScenario?.id === s.id ? "3px solid #1976d2" : "none",
+//                 "&:hover": { backgroundColor: "#f5f5f5" },
+//                 borderBottom: "1px solid #f0f0f0",
+//                 alignItems: "flex-start",
+//                 p: 1,
+//               }}
+//             >
+//               <Stack sx={{ flex: 1 }} spacing={0.5}>
+//                 <Stack
+//                   direction="row"
+//                   justifyContent="space-between"
+//                   alignItems="flex-start"
+//                 >
+//                   <Stack spacing={0.5} sx={{ flex: 1 }}>
+//                     <Stack direction="row" spacing={0.5} alignItems="center">
+//                       <TrendingUp sx={{ fontSize: 12, color: "#666" }} />
+//                       <Typography
+//                         variant="body2"
+//                         sx={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3 }}
+//                       >
+//                         {s.title}
+//                       </Typography>
+//                     </Stack>
+//                     <Typography
+//                       variant="caption"
+//                       color="#666"
+//                       sx={{ fontSize: 11, lineHeight: 1.2 }}
+//                     >
+//                       {s.description}
+//                     </Typography>
+//                   </Stack>
+//                   <IconButton size="small" sx={{ mt: -0.5 }}>
+//                     <MoreVert sx={{ fontSize: 14 }} />
+//                   </IconButton>
+//                 </Stack>
+//                 <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+//                   <Chip
+//                     label={s.type}
+//                     size="small"
+//                     sx={{
+//                       ...getTypeChipColor(s.typeColor),
+//                       fontSize: 9,
+//                       fontWeight: 500,
+//                       height: 18,
+//                     }}
+//                   />
+//                   <Chip
+//                     label={s.change}
+//                     size="small"
+//                     sx={{
+//                       backgroundColor: "#f5f5f5",
+//                       color: "#424242",
+//                       fontSize: 9,
+//                       fontWeight: 500,
+//                       height: 18,
+//                     }}
+//                   />
+//                   <Chip
+//                     label={s.duration}
+//                     size="small"
+//                     sx={{
+//                       backgroundColor: "#f5f5f5",
+//                       color: "#424242",
+//                       fontSize: 9,
+//                       fontWeight: 500,
+//                       height: 18,
+//                     }}
+//                   />
+//                 </Stack>
+//               </Stack>
+//             </ListItem>
+//           ))}
+//         </List>
+//       </Box>
+//     </Box>
+//   );
+// }
+
+// /* =====================  TOP CHARTS CARD  ===================== */
+
+// function ChartSection({ selectedSku, setSelectedSku }) {
+//   const labelSx = { fontWeight: 600, color: "#475569", fontSize: 12 };
+//   const valueSx = { color: "#475569", fontSize: 12, ml: 0.5 };
+//   const pillGap = 1.25;
+
+//   return (
+//     <Stack spacing={1.25} sx={{ p: 1.25 }}>
+//       <Box
+//         sx={{
+//           display: "flex",
+//           alignItems: "center",
+//           gap: pillGap,
+//           flexWrap: "nowrap",
+//           overflowX: "auto",
+//           pb: 0.25,
+//         }}
+//       >
+//         {locationData.map((item, idx) => (
+//           <Box
+//             key={idx}
+//             sx={{
+//               display: "inline-flex",
+//               alignItems: "center",
+//               whiteSpace: "nowrap",
+//             }}
+//           >
+//             {idx > 0 && (
+//               <Divider
+//                 orientation="vertical"
+//                 flexItem
+//                 sx={{ mx: 1, height: 16, alignSelf: "center" }}
+//               />
+//             )}
+//             <Typography variant="body2" sx={labelSx}>
+//               {item.label}
+//             </Typography>
+//             <Typography variant="body2" sx={valueSx}>
+//               {item.value}
+//             </Typography>
+//           </Box>
+//         ))}
+
+//         <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />
+
+//         <Box
+//           sx={{
+//             display: "inline-flex",
+//             alignItems: "center",
+//             whiteSpace: "nowrap",
+//             gap: 0.5,
+//           }}
+//         >
+//           <Typography variant="body2" sx={labelSx}>
+//             SKU:
+//           </Typography>
+//           <FormControl size="small">
+//             <Select
+//               value={selectedSku}
+//               onChange={(e) => setSelectedSku(e.target.value)}
+//               sx={{
+//                 height: 24,
+//                 width: 110,
+//                 "& .MuiSelect-select": {
+//                   p: "2px 8px",
+//                   fontSize: 12,
+//                   color: "#2563eb",
+//                   textDecoration: "underline",
+//                 },
+//                 "& .MuiOutlinedInput-notchedOutline": {
+//                   borderColor: "#cbd5e1",
+//                   borderRadius: "3px",
+//                 },
+//               }}
+//             >
+//               <MenuItem value="C5020160">C5020160</MenuItem>
+//               <MenuItem value="C5050500D">C5050500D</MenuItem>
+//             </Select>
+//           </FormControl>
+//         </Box>
+//       </Box>
+
+//       <Stack direction="row" spacing={1} flexWrap="wrap">
+//         {legendItems.map((item) => (
+//           <Chip
+//             key={item.id}
+//             icon={item.indicator}
+//             label={item.label}
+//             variant="outlined"
+//             sx={{
+//               backgroundColor: "#eff6ff",
+//               borderColor: "#cbd5e1",
+//               borderRadius: "5px",
+//               height: 26,
+//               "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+//               "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+//             }}
+//           />
+//         ))}
+//       </Stack>
+//     </Stack>
+//   );
+// }
+
+// function DisruptionList() {
+//   const [rows, setRows] = useState(disruptionSeed);
+//   const toggle = (id) =>
+//     setRows((prev) =>
+//       prev.map((r) => (r.id === id ? { ...r, checked: !r.checked } : r))
+//     );
+
+//   return (
+//     <Box sx={{ px: 1.25, py: 1 }}>
+//       <Stack spacing={0.5}>
+//         {rows.map((r) => (
+//           <Box
+//             key={r.id}
+//             sx={{
+//               display: "flex",
+//               alignItems: "center",
+//               gap: 1,
+//               px: 1,
+//               py: 0.75,
+//               borderRadius: 1,
+//               "&:hover": { backgroundColor: "rgba(2,6,23,0.03)" },
+//             }}
+//           >
+//             <Checkbox
+//               size="small"
+//               checked={r.checked}
+//               onChange={() => toggle(r.id)}
+//               sx={{ p: 0.5, mr: 0.5 }}
+//             />
+//             <Typography
+//               variant="body2"
+//               sx={{
+//                 fontWeight: 600,
+//                 color: "#334155",
+//                 minWidth: 175,
+//                 fontSize: 12.5,
+//                 textDecoration: r.checked ? "line-through" : "none",
+//               }}
+//             >
+//               {formatDateTime(r.date)}
+//             </Typography>
+//             <ErrorOutline sx={{ color: "#ef4444", fontSize: 18, mr: 0.5 }} />
+//             <Typography
+//               variant="body2"
+//               sx={{
+//                 color: "#334155",
+//                 fontSize: 13,
+//                 textDecoration: r.checked ? "line-through" : "none",
+//               }}
+//             >
+//               {r.message}
+//             </Typography>
+//           </Box>
+//         ))}
+//       </Stack>
+//     </Box>
+//   );
+// }
+
+// function ForecastChartBox() {
+//   const [selectedSku, setSelectedSku] = useState("C5050500D");
+//   const [mainTabValue, setMainTabValue] = useState(0);
+
+//   const weekData = {
+//     categories: [
+//       "Week 33",
+//       "Week 34",
+//       "Week 35",
+//       "Week 36",
+//       "Week 37",
+//       "Week 38",
+//       "Week 39",
+//       "Week 40",
+//     ],
+//     actual: [4, 5, 11, 15, null, null, null, null],
+//     forecast: [null, null, null, 28, 12, 11, 7, 13],
+//     highlightIndex: 3,
+//   };
+
+//   const options = useMemo(
+//     () => ({
+//       chart: {
+//         type: "line",
+//         spacing: [4, 6, 6, 6],
+//         reflow: true,
+//         height: GRAPH_HEIGHT,
+//       },
+//       title: { text: "" },
+//       credits: { enabled: false },
+//       exporting: { enabled: false },
+//       legend: { enabled: false },
+//       xAxis: {
+//         categories: weekData.categories,
+//         tickLength: 0,
+//         lineColor: "#e5e7eb",
+//         gridLineWidth: 1,
+//         gridLineColor: "#eef2f7",
+//         crosshair: { width: 1, color: "#94a3b8" },
+//         plotBands: [
+//           {
+//             from: weekData.highlightIndex - 0.3,
+//             to: weekData.highlightIndex + 0.3,
+//             color: "rgba(244,63,94,0.25)",
+//             zIndex: 0,
+//           },
+//         ],
+//         labels: { style: { fontSize: "11px" } },
+//       },
+//       yAxis: {
+//         title: {
+//           text: "Units (in thousands)",
+//           style: { color: "#64748b", fontSize: "12px" },
+//         },
+//         min: 0,
+//         tickInterval: 5,
+//         gridLineColor: "#e5e7eb",
+//         labels: { style: { fontSize: "11px" } },
+//       },
+//       tooltip: {
+//         shared: true,
+//         borderRadius: 6,
+//         padding: 8,
+//         backgroundColor: "#fff",
+//         borderColor: "#e5e7eb",
+//       },
+//       plotOptions: { series: { animation: false, marker: { radius: 3 } } },
+//       series: [
+//         {
+//           name: "Actual",
+//           data: weekData.actual,
+//           color: "#0f766e",
+//           lineWidth: 2.5,
+//           dashStyle: "Solid",
+//           zIndex: 2,
+//         },
+//         {
+//           name: "Forecast",
+//           data: weekData.forecast,
+//           color: "#0f766e",
+//           lineWidth: 2.5,
+//           dashStyle: "ShortDot",
+//           marker: { enabled: false },
+//           opacity: 0.9,
+//           zIndex: 1,
+//         },
+//       ],
+//       accessibility: { enabled: false },
+//     }),
+//     []
+//   );
+
+//   return (
+//     <Box
+//       sx={{
+//         ...card,
+//         width: "100%",
+//         minWidth: 0,
+//         flex: 1,
+//         display: "flex",
+//         flexDirection: "column",
+//       }}
+//     >
+//       <Box
+//         sx={{
+//           borderBottom: 1,
+//           borderColor: "grey.300",
+//           backgroundColor: "#fff",
+//         }}
+//       >
+//         <Stack
+//           direction="row"
+//           justifyContent="space-between"
+//           alignItems="center"
+//           sx={{ px: 2, py: 1 }}
+//         >
+//           <Tabs value={mainTabValue} onChange={(_, v) => setMainTabValue(v)}>
+//             <Tab
+//               label="Demand"
+//               sx={{
+//                 textTransform: "none",
+//                 fontSize: 13,
+//                 fontWeight: 600,
+//                 minHeight: 36,
+//                 px: 2,
+//               }}
+//             />
+//             <Tab
+//               label={
+//                 <Stack direction="row" spacing={0.5} alignItems="center">
+//                   <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+//                     Disruption
+//                   </Typography>
+//                   <Badge
+//                     badgeContent={disruptionSeed.length}
+//                     color="error"
+//                     sx={{
+//                       "& .MuiBadge-badge": {
+//                         fontSize: 9,
+//                         height: 16,
+//                         minWidth: 16,
+//                       },
+//                     }}
+//                   />
+//                 </Stack>
+//               }
+//               sx={{ textTransform: "none", minHeight: 36, px: 2 }}
+//             />
+//           </Tabs>
+//           <Stack direction="row" spacing={0.5}>
+//             <IconButton size="small">
+//               <MoreVert fontSize="small" />
+//             </IconButton>
+//           </Stack>
+//         </Stack>
+//       </Box>
+
+//       {mainTabValue === 0 ? (
+//         <>
+//           <ChartSection
+//             selectedSku={selectedSku}
+//             setSelectedSku={setSelectedSku}
+//           />
+//           <Box sx={{ px: 1.25, pb: 2, flex: 1, minHeight: GRAPH_HEIGHT }}>
+//             <Box sx={{ width: "100%", height: GRAPH_HEIGHT }}>
+//               <HighchartsReact
+//                 highcharts={Highcharts}
+//                 options={options}
+//                 containerProps={{ style: { width: "100%", height: "100%" } }}
+//               />
+//             </Box>
+//           </Box>
+//           <Divider sx={{ mx: 1, mb: 1 }} />
+//         </>
+//       ) : (
+//         <DisruptionList />
+//       )}
+//     </Box>
+//   );
+// }
+
+// /* =====================  CITY CARD  ===================== */
+
+// const thCell = {
+//   fontWeight: 700,
+//   fontSize: 13,
+//   color: "#334155",
+//   backgroundColor: "#eef2f7",
+//   borderColor: "#e5e7eb",
+// };
+// const tdCell = {
+//   fontSize: 13,
+//   color: "#374151",
+//   borderColor: "#e5e7eb",
+//   whiteSpace: "nowrap",
+// };
+// const tdCellLeft = { ...tdCell, minWidth: 160 };
+// const subHdr = {
+//   fontWeight: 500,
+//   color: "#64748b",
+//   fontSize: 11,
+//   marginLeft: 4,
+// };
+
+// /* Match first graph’s legend look here too */
+// const LegendSwatch = ({ type, color }) => {
+//   if (type === "dot")
+//     return (
+//       <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color }} />
+//     );
+//   return (
+//     <Box
+//       sx={{
+//         width: 18,
+//         height: 2,
+//         background: `repeating-linear-gradient(to right, ${color} 0px, ${color} 4px, transparent 4px, transparent 6px)`,
+//       }}
+//     />
+//   );
+// };
+
+// const CityLegendChip = ({ label, color, type = "dot" }) => (
+//   <Chip
+//     icon={
+//       <Box
+//         sx={{
+//           width: 16,
+//           height: 12,
+//           display: "flex",
+//           alignItems: "center",
+//           justifyContent: "center",
+//         }}
+//       >
+//         <LegendSwatch type={type} color={color} />
+//       </Box>
+//     }
+//     label={label}
+//     variant="outlined"
+//     sx={{
+//       backgroundColor: "#eff6ff",
+//       borderColor: "#cbd5e1",
+//       borderRadius: "5px",
+//       height: 26,
+//       "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+//       "& .MuiChip-icon": { ml: "8px" },
+//     }}
+//   />
+// );
+
+// function DemandByCityCard() {
+//   const [tab, setTab] = useState(0);
+//   const yellow = "#fbbf24",
+//     red = "#ef4444",
+//     green = "#22c55e";
+//   const categories = [
+//     "Week 1",
+//     "Week 2",
+//     "Week 3",
+//     "Week 4",
+//     "Week 5",
+//     "Week 6",
+//     "Week 7",
+//     "Week 8",
+//   ];
+
+//   const series = [
+//     {
+//       name: "Bhuj (Actual)",
+//       color: yellow,
+//       dashStyle: "Solid",
+//       data: [6, 7, 11, 18, null, null, null, null],
+//       zIndex: 3,
+//     },
+//     {
+//       name: "Ahmedabad (Actual)",
+//       color: red,
+//       dashStyle: "Solid",
+//       data: [12, 10, 6, 12, null, null, null, null],
+//       zIndex: 3,
+//     },
+//     {
+//       name: "Bhavnagar (Actual)",
+//       color: green,
+//       dashStyle: "Solid",
+//       data: [16, 14, 11, 10, null, null, null, null],
+//       zIndex: 3,
+//     },
+//     {
+//       name: "Bhuj (Forecast)",
+//       color: yellow,
+//       dashStyle: "ShortDot",
+//       data: [null, null, null, 18, 8, 12, 9, 14],
+//       marker: { enabled: false },
+//       zIndex: 2,
+//     },
+//     {
+//       name: "Ahmedabad (Forecast)",
+//       color: red,
+//       dashStyle: "ShortDot",
+//       data: [null, null, null, 11, 12, 16, 14, 16],
+//       marker: { enabled: false },
+//       zIndex: 2,
+//     },
+//     {
+//       name: "Bhavnagar (Forecast)",
+//       color: green,
+//       dashStyle: "ShortDot",
+//       data: [null, null, null, 10, 12, 11, 13, 20],
+//       marker: { enabled: false },
+//       zIndex: 2,
+//     },
+//   ];
+
+//   const options = {
+//     chart: {
+//       type: "line",
+//       spacing: [4, 6, 6, 6],
+//       reflow: true,
+//       height: GRAPH_HEIGHT,
+//     },
+//     title: { text: "" },
+//     credits: { enabled: false },
+//     exporting: { enabled: false },
+//     legend: { enabled: false },
+//     xAxis: {
+//       categories,
+//       tickLength: 0,
+//       lineColor: "#e5e7eb",
+//       gridLineWidth: 1,
+//       gridLineColor: "#eef2f7",
+//       labels: { style: { color: "#64748b", fontSize: "11px" } },
+//     },
+//     yAxis: {
+//       title: {
+//         text: "Units (in thousands)",
+//         style: { color: "#64748b", fontSize: "12px" },
+//       },
+//       min: 0,
+//       max: 35,
+//       tickInterval: 5,
+//       gridLineColor: "#e5e7eb",
+//       labels: { style: { fontSize: "11px" } },
+//     },
+//     tooltip: {
+//       shared: true,
+//       borderRadius: 6,
+//       padding: 8,
+//       backgroundColor: "#fff",
+//       borderColor: "#e5e7eb",
+//     },
+//     plotOptions: {
+//       series: { animation: false, lineWidth: 2.5, marker: { radius: 3 } },
+//     },
+//     series,
+//     accessibility: { enabled: false },
+//   };
+
+//   const cityDefs = [
+//     { label: "Bhuj", color: yellow },
+//     { label: "Ahmedabad", color: red },
+//     { label: "Bhavnagar", color: green },
+//   ];
+
+//   const tableRows = [
+//     {
+//       id: "bhuj",
+//       location: "Bhuj",
+//       recommended: true,
+//       distance: 197,
+//       available: 15617,
+//       demand: 7112,
+//       safety: 10668,
+//       excess: 4949,
+//       eta: 4,
+//     },
+//     {
+//       id: "ahm",
+//       location: "Ahmedabad",
+//       recommended: false,
+//       distance: 263,
+//       available: 16873,
+//       demand: 7891,
+//       safety: 11836,
+//       excess: 5036,
+//       eta: 6,
+//     },
+//     {
+//       id: "bhv",
+//       location: "Bhavnagar",
+//       recommended: false,
+//       distance: 317,
+//       available: 18555,
+//       demand: 8943,
+//       safety: 13414,
+//       excess: 5140,
+//       eta: 8,
+//     },
+//   ];
+
+//   return (
+//     <Box
+//       sx={{
+//         ...card,
+//         width: "100%",
+//         minWidth: 0,
+//         flex: 1,
+//         display: "flex",
+//         flexDirection: "column",
+//       }}
+//     >
+//       <Box sx={{ px: 1.5, pt: 1, borderBottom: 1, borderColor: "grey.200" }}>
+//         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36 }}>
+//           <Tab
+//             label="Graph"
+//             sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }}
+//           />
+//           <Tab
+//             label="Data Table"
+//             sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }}
+//           />
+//         </Tabs>
+//       </Box>
+
+//       <Box
+//         sx={{
+//           p: 2,
+//           flex: 1,
+//           minHeight: 0,
+//           display: "flex",
+//           flexDirection: "column",
+//         }}
+//       >
+//         <Typography variant="h6" sx={{ fontSize: 14, fontWeight: 600, mb: 1 }}>
+//           Demand
+//         </Typography>
+
+//         {tab === 0 ? (
+//           <>
+//             <Stack
+//               direction="row"
+//               spacing={1}
+//               alignItems="center"
+//               flexWrap="wrap"
+//               sx={{ mb: 1 }}
+//             >
+//               {cityDefs.map((c) => (
+//                 <CityLegendChip
+//                   key={`${c.label}-actual`}
+//                   label={c.label}
+//                   color={c.color}
+//                   type="dot"
+//                 />
+//               ))}
+//               {cityDefs.map((c) => (
+//                 <CityLegendChip
+//                   key={`${c.label}-forecast`}
+//                   label={c.label}
+//                   color={c.color}
+//                   type="dash"
+//                 />
+//               ))}
+//             </Stack>
+
+//             <Box sx={{ flex: 1, minHeight: GRAPH_HEIGHT }}>
+//               <Box sx={{ width: "100%", height: GRAPH_HEIGHT }}>
+//                 <HighchartsReact
+//                   highcharts={Highcharts}
+//                   options={options}
+//                   containerProps={{ style: { width: "100%", height: "100%" } }}
+//                 />
+//               </Box>
+//             </Box>
+//           </>
+//         ) : (
+//           <TableContainer
+//             sx={{
+//               border: 1,
+//               borderColor: "#e5e7eb",
+//               borderRadius: 1,
+//               flex: 1,
+//               overflow: "auto",
+//             }}
+//           >
+//             <Table size="small" stickyHeader>
+//               <TableHead>
+//                 <TableRow sx={{ backgroundColor: "#eef2f7" }}>
+//                   <TableCell sx={thCell}>Location</TableCell>
+//                   <TableCell sx={thCell} align="right">
+//                     Distance<span style={subHdr}>(km)</span>
+//                   </TableCell>
+//                   <TableCell sx={thCell} align="right">
+//                     Available Qty
+//                   </TableCell>
+//                   <TableCell sx={thCell} align="right">
+//                     Demand <span style={subHdr}>(Next Week)</span>
+//                   </TableCell>
+//                   <TableCell sx={thCell} align="right">
+//                     Safety Stock
+//                   </TableCell>
+//                   <TableCell sx={thCell} align="right">
+//                     Excess Qty
+//                   </TableCell>
+//                   <TableCell sx={thCell} align="right">
+//                     ETA <span style={subHdr}>(Hours)</span>
+//                   </TableCell>
+//                 </TableRow>
+//               </TableHead>
+//               <TableBody>
+//                 {tableRows.map((r) => (
+//                   <TableRow
+//                     key={r.id}
+//                     sx={{
+//                       "& td": { borderColor: "#e5e7eb" },
+//                       backgroundColor: r.recommended
+//                         ? "rgba(37,99,235,0.08)"
+//                         : "transparent",
+//                     }}
+//                   >
+//                     <TableCell sx={tdCellLeft}>
+//                       <Typography sx={{ fontSize: 13, color: "#111827" }}>
+//                         {r.location}
+//                         {r.recommended && (
+//                           <Typography
+//                             component="span"
+//                             sx={{ color: "#2563eb", fontSize: 12, ml: 0.5 }}
+//                           >
+//                             (Recommended)
+//                           </Typography>
+//                         )}
+//                       </Typography>
+//                     </TableCell>
+//                     <TableCell sx={tdCell} align="right">
+//                       {fmtNum(r.distance)}
+//                     </TableCell>
+//                     <TableCell sx={tdCell} align="right">
+//                       {fmtNum(r.available)}
+//                     </TableCell>
+//                     <TableCell sx={tdCell} align="right">
+//                       {fmtNum(r.demand)}
+//                     </TableCell>
+//                     <TableCell sx={tdCell} align="right">
+//                       {fmtNum(r.safety)}
+//                     </TableCell>
+//                     <TableCell sx={tdCell} align="right">
+//                       {fmtNum(r.excess)}
+//                     </TableCell>
+//                     <TableCell sx={tdCell} align="right">
+//                       {fmtNum(r.eta)}
+//                     </TableCell>
+//                   </TableRow>
+//                 ))}
+//               </TableBody>
+//             </Table>
+//           </TableContainer>
+//         )}
+//       </Box>
+//     </Box>
+//   );
+// }
+
+// /* =====================  RIGHT PANEL (helpers)  ===================== */
+
+// // === Clean rounding helpers ===
+// const to1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+// const lakhLabel = (n) => `₹${to1(n)}L`;
+
+// function buildWaterfall(
+//   steps,
+//   includeTotal = true,
+//   totalLabel = "Simulated Revenue"
+// ) {
+//   let running = 0;
+//   const out = [];
+//   steps.forEach((st, idx) => {
+//     const val = to1(st.value);
+//     if (idx === 0) {
+//       running = val;
+//       out.push({
+//         name: st.name,
+//         base: 0,
+//         delta: Math.abs(val),
+//         raw: val,
+//         kind: "base",
+//         cumulative: to1(running),
+//       });
+//       return;
+//     }
+//     const next = to1(running + val);
+//     const base = Math.min(running, next);
+//     out.push({
+//         name: st.name,
+//         base,
+//         delta: Math.abs(val),
+//         raw: val,
+//         kind: val >= 0 ? "pos" : "neg",
+//         cumulative: next,
+//       });
+//     running = next;
+//   });
+//   if (includeTotal) {
+//     const total = to1(running);
+//     out.push({
+//       name: totalLabel,
+//       base: 0,
+//       delta: Math.abs(total),
+//       raw: total,
+//       kind: "total",
+//       cumulative: total,
+//     });
+//   }
+//   return out;
+// }
+// const barFill = (d) =>
+//   d.kind === "total" ? "#60a5fa" : d.raw >= 0 ? "#22c55e" : "#ef4444";
+
+// // Split label after the first word (rest goes to line 2)
+// const WfTick = ({ x, y, payload }) => {
+//   const value = String(payload.value || "");
+//   const [first, ...rest] = value.split(" ");
+//   const second = rest.join(" ");
+//   const lines = second ? [first, second] : [first];
+
+//   return (
+//     <g transform={`translate(${x},${y})`}>
+//       <text textAnchor="middle" fill="#475569" fontSize={11}>
+//         {lines.map((ln, i) => (
+//           <tspan key={i} x="0" dy={i === 0 ? 0 : 12}>
+//             {ln}
+//           </tspan>
+//         ))}
+//       </text>
+//     </g>
+//   );
+// };
+
+// /* Small metric tiles used inside cards */
+// function MetricTile({ title, value, delta }) {
+//   const isDown = (delta || "").trim().startsWith("-");
+//   return (
+//     <Card
+//       sx={{ boxShadow: 0, border: "1px solid #e5e7eb", background: "#fff" }}
+//     >
+//       <CardContent sx={{ p: 1.25 }}>
+//         <Typography
+//           variant="body2"
+//           sx={{ fontSize: 11, color: "#64748b", mb: 0.5 }}
+//         >
+//           {title}
+//         </Typography>
+//         <Stack direction="row" spacing={1} alignItems="center">
+//           <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+//             {value}
+//           </Typography>
+//           {delta && (
+//             <Typography
+//               sx={{
+//                 fontSize: 12,
+//                 fontWeight: 700,
+//                 color: isDown ? "#b91c1c" : "#16a34a",
+//               }}
+//             >
+//               {isDown ? "▼" : "▲"} {delta.replace("-", "")}
+//             </Typography>
+//           )}
+//         </Stack>
+//       </CardContent>
+//     </Card>
+//   );
+// }
+
+// /* =====================  RIGHT PANEL (component)  ===================== */
+
+// function RecommendationBox({ onCompare }) {
+//   const [recommendationType, setRecommendationType] = useState("recommended");
+//   const [summaryTabValue, setSummaryTabValue] = useState(0);
+
+//   // ▶︎ settings popover state (only for Customize)
+//   const [anchorEl, setAnchorEl] = useState(null);
+//   const settingsOpen = Boolean(anchorEl);
+
+//   // ▶︎ customize values (live mirror of the sliders)
+//   const [custom, setCustom] = useState({ bhuj: 2000, ahm: 456, bhv: 0 });
+//   const LIMITS = {
+//     bhuj: { min: 500, max: 5036, label: "Bhuj" },
+//     ahm: { min: 500, max: 5036, label: "Ahmedabad" },
+//     bhv: { min: 500, max: 5036, label: "Bhavnagar" },
+//   };
+
+//   // Recommended baseline (what your left card shows)
+//   const RECO_QTY = 2456;
+
+//   // Baseline step values (in ₹ Lakhs) corresponding to RECO_QTY
+//   const BASELINE_STEPS = [
+//     { name: "Projected Revenue", value: 4 },
+//     { name: "Additional Revenue", value: 2.5 },
+//     { name: "Logistic Cost", value: -1 },
+//     { name: "Handling Cost", value: -0.5 },
+//     { name: "Transaction Cost", value: -0.5 },
+//   ];
+
+//   // Scale baseline steps by a quantity multiplier so the waterfall reflects total Qty
+//   const stepsForQty = (qty) => {
+//     const mult = qty <= 0 ? 0 : qty / RECO_QTY;
+//     return BASELINE_STEPS.map((s) => ({ ...s, value: to1(s.value * mult) }));
+//   };
+
+//   const openSettings = (e) => setAnchorEl(e.currentTarget);
+//   const closeSettings = () => setAnchorEl(null);
+
+//   // close popover if switching away from customize
+//   useMemo(() => {
+//     if (recommendationType !== "customize") closeSettings();
+//   }, [recommendationType]);
+
+//   const fmt = (n) => (Number.isFinite(n) ? n.toLocaleString("en-IN") : "");
+//   const parse = (val) => {
+//     const cleaned = String(val).replace(/,/g, "");
+//     const num = Number(cleaned);
+//     return Number.isFinite(num) ? num : 0;
+//   };
+
+//   // ===== Waterfall data source (Recommended vs Customized) =====
+//   const totalCustomQty = custom.bhuj + custom.ahm + custom.bhv;
+//   const usingCustomized = recommendationType === "customize";
+//   const qtyFeedingChart = usingCustomized ? totalCustomQty : RECO_QTY;
+//   const stepsFeedingChart = useMemo(
+//     () => stepsForQty(qtyFeedingChart),
+//     [qtyFeedingChart]
+//   );
+//   const wfData = useMemo(
+//     () => buildWaterfall(stepsFeedingChart, true, "Simulated Revenue"),
+//     [stepsFeedingChart]
+//   );
+//   const yDomain = useMemo(() => {
+//     const mins = wfData.map((d) => Math.min(d.base, d.base + d.delta));
+//     const maxs = wfData.map((d) => Math.max(d.base, d.base + d.delta));
+//     const min = Math.min(0, ...mins);
+//     const max = Math.max(0, ...maxs);
+//     return [min, max];
+//   }, [wfData]);
+
+//   // show customized card only when user is on "customize"
+//   const showCustomizedCard = usingCustomized;
+
+//   return (
+//     <Box
+//       sx={{
+//         width: { xs: 300, sm: 350, md: 400, lg: 565 },
+//         ...card,
+//         borderColor: "#cfe1ff",
+//         height: "100%",
+//         display: "flex",
+//         flexDirection: "column",
+//         flexShrink: 0,
+//       }}
+//     >
+//       <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "grey.300" }}>
+//         <Stack
+//           direction="row"
+//           justifyContent="space-between"
+//           alignItems="center"
+//           flexWrap="wrap"
+//           gap={1}
+//         >
+//           <Stack direction="row" alignItems="center" gap={0.5}>
+//             <RadioGroup
+//               value={recommendationType}
+//               onChange={(e) => setRecommendationType(e.target.value)}
+//               row
+//             >
+//               <FormControlLabel
+//                 value="recommended"
+//                 control={<Radio size="small" />}
+//                 label={<Typography fontSize={12}>Recommended</Typography>}
+//               />
+//               <FormControlLabel
+//                 value="customize"
+//                 control={<Radio size="small" />}
+//                 label={<Typography fontSize={12}>Customize</Typography>}
+//               />
+//             </RadioGroup>
+
+//             {usingCustomized && (
+//               <Tooltip title="Adjust quantities">
+//                 <IconButton
+//                   aria-label="Adjust quantities"
+//                   size="small"
+//                   onClick={openSettings}
+//                   sx={{ ml: 0.5 }}
+//                 >
+//                   <Tune fontSize="small" />
+//                 </IconButton>
+//               </Tooltip>
+//             )}
+//           </Stack>
+
+//           <Stack direction="row" spacing={1}>
+//             <Button
+//               variant="outlined"
+//               size="small"
+//               sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}
+//               onClick={onCompare}
+//             >
+//               Compare Simulation
+//             </Button>
+//             <Button
+//               variant="contained"
+//               size="small"
+//               sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}
+//             >
+//               Request Transfer
+//             </Button>
+//           </Stack>
+//         </Stack>
+//       </Box>
+
+//       {/* Sliders Popover */}
+//       <Popover
+//         open={settingsOpen}
+//         anchorEl={anchorEl}
+//         onClose={closeSettings}
+//         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+//         transformOrigin={{ vertical: "top", horizontal: "left" }}
+//         PaperProps={{
+//           sx: {
+//             p: 1,
+//             borderRadius: 2,
+//             boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+//             width: 300,
+//           },
+//         }}
+//       >
+//         {/* Bhuj */}
+//         <Box sx={{ p: 1 }}>
+//           <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
+//             Bhuj
+//           </Typography>
+//           <Stack
+//             direction="row"
+//             justifyContent="space-between"
+//             sx={{ mb: 0.25 }}
+//           >
+//             <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+//               {LIMITS.bhuj.min}
+//             </Typography>
+//             <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+//               {LIMITS.bhuj.max}
+//             </Typography>
+//           </Stack>
+//           <Slider
+//             size="small"
+//             value={Math.min(
+//               Math.max(custom.bhuj, LIMITS.bhuj.min),
+//               LIMITS.bhuj.max
+//             )}
+//             min={LIMITS.bhuj.min}
+//             max={LIMITS.bhuj.max}
+//             onChange={(_, v) => setCustom((c) => ({ ...c, bhuj: Number(v) }))}
+//             sx={{ "& .MuiSlider-thumb": { width: 12, height: 12 } }}
+//           />
+//           <TextField
+//             size="small"
+//             value={fmt(custom.bhuj)}
+//             onChange={(e) =>
+//               setCustom((c) => ({ ...c, bhuj: parse(e.target.value) }))
+//             }
+//             fullWidth
+//             sx={{
+//               mt: 0.5,
+//               "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 },
+//             }}
+//           />
+//         </Box>
+
+//         <Divider />
+
+//         {/* Ahmedabad */}
+//         <Box sx={{ p: 1 }}>
+//           <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
+//             Ahmedabad
+//           </Typography>
+//           <Stack
+//             direction="row"
+//             justifyContent="space-between"
+//             sx={{ mb: 0.25 }}
+//           >
+//             <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+//               {LIMITS.ahm.min}
+//             </Typography>
+//             <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+//               {LIMITS.ahm.max}
+//             </Typography>
+//           </Stack>
+//           <Slider
+//             size="small"
+//             value={Math.min(
+//               Math.max(custom.ahm, LIMITS.ahm.min),
+//               LIMITS.ahm.max
+//             )}
+//             min={LIMITS.ahm.min}
+//             max={LIMITS.ahm.max}
+//             onChange={(_, v) => setCustom((c) => ({ ...c, ahm: Number(v) }))}
+//             sx={{ "& .MuiSlider-thumb": { width: 12, height: 12 } }}
+//           />
+//           <TextField
+//             size="small"
+//             value={fmt(custom.ahm)}
+//             onChange={(e) =>
+//               setCustom((c) => ({ ...c, ahm: parse(e.target.value) }))
+//             }
+//             fullWidth
+//             sx={{
+//               mt: 0.5,
+//               "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 },
+//             }}
+//           />
+//         </Box>
+
+//         <Divider />
+
+//         {/* Bhavnagar */}
+//         <Box sx={{ p: 1 }}>
+//           <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
+//             Bhavnagar
+//           </Typography>
+//           <Stack
+//             direction="row"
+//             justifyContent="space-between"
+//             sx={{ mb: 0.25 }}
+//           >
+//             <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+//               {LIMITS.bhv.min}
+//             </Typography>
+//             <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+//               {LIMITS.bhv.max}
+//             </Typography>
+//           </Stack>
+//           <Slider
+//             size="small"
+//             value={Math.min(
+//               Math.max(custom.bhv, LIMITS.bhv.min),
+//               LIMITS.bhv.max
+//             )}
+//             min={LIMITS.bhv.min}
+//             max={LIMITS.bhv.max}
+//             onChange={(_, v) => setCustom((c) => ({ ...c, bhv: Number(v) }))}
+//             sx={{ "& .MuiSlider-thumb": { width: 12, height: 12 } }}
+//           />
+//           <TextField
+//             size="small"
+//             value={fmt(custom.bhv)}
+//             onChange={(e) =>
+//               setCustom((c) => ({ ...c, bhv: parse(e.target.value) }))
+//             }
+//             fullWidth
+//             sx={{
+//               mt: 0.5,
+//               "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 },
+//             }}
+//           />
+//         </Box>
+//       </Popover>
+
+//       <Box sx={{ borderBottom: 1, borderColor: "grey.300" }}>
+//         <Tabs
+//           value={summaryTabValue}
+//           onChange={(_, v) => setSummaryTabValue(v)}
+//         >
+//           <Tab
+//             label={<Typography fontSize={12}>Summary</Typography>}
+//             sx={{ textTransform: "none", minHeight: 36 }}
+//           />
+//           <Tab
+//             label={<Typography fontSize={12}>Details</Typography>}
+//             sx={{ textTransform: "none", minHeight: 36 }}
+//           />
+//         </Tabs>
+//       </Box>
+
+//       {/* ===== Summary with side-by-side cards ===== */}
+//       <Box sx={{ p: 1.5, overflow: "auto", flex: 1 }}>
+//         {summaryTabValue === 0 ? (
+//           <Stack direction="row" spacing={1.25} sx={{ alignItems: "stretch" }}>
+//             {/* Recommended card (left, blue bg) */}
+//             <Card
+//               sx={{
+//                 flex: 1,
+//                 backgroundColor: "#e7f0ff",
+//                 border: "1px solid #cfe1ff",
+//                 boxShadow: 0,
+//               }}
+//             >
+//               <CardContent sx={{ p: 1.25 }}>
+//                 <Typography
+//                   sx={{
+//                     fontWeight: 700,
+//                     fontSize: 14,
+//                     color: "#1d4ed8",
+//                     mb: 1,
+//                   }}
+//                 >
+//                   Recommended
+//                 </Typography>
+
+//                 <Stack
+//                   direction="row"
+//                   justifyContent="space-between"
+//                   sx={{ mb: 1 }}
+//                 >
+//                   <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
+//                     Bhuj:
+//                   </Typography>
+//                   <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+//                     {fmt(RECO_QTY)} Qty
+//                   </Typography>
+//                 </Stack>
+
+//                 <Stack spacing={1}>
+//                   <MetricTile title="Profit" value="₹ 55,750" delta="24%" />
+//                   <MetricTile title="ETA" value="22 Jan 25" />
+//                 </Stack>
+//               </CardContent>
+//             </Card>
+
+//             {/* Customized card (right) — appears when Customize is active */}
+//             {showCustomizedCard && (
+//               <Card
+//                 sx={{
+//                   flex: 1,
+//                   backgroundColor: "#fff",
+//                   border: "1px solid #bfdbfe",
+//                   boxShadow: 0,
+//                 }}
+//               >
+//                 <CardContent sx={{ p: 1.25 }}>
+//                   <Typography
+//                     sx={{
+//                       fontWeight: 700,
+//                       fontSize: 14,
+//                       color: "#0f172a",
+//                       mb: 1,
+//                     }}
+//                   >
+//                     Customized
+//                   </Typography>
+
+//                   <Stack spacing={0.5} sx={{ mb: 1 }}>
+//                     {custom.bhuj > 0 && (
+//                       <Stack direction="row" justifyContent="space-between">
+//                         <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
+//                           Bhuj:
+//                         </Typography>
+//                         <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+//                           {fmt(custom.bhuj)} Qty
+//                         </Typography>
+//                       </Stack>
+//                     )}
+//                     {custom.ahm > 0 && (
+//                       <Stack direction="row" justifyContent="space-between">
+//                         <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
+//                           Ahmedabad:
+//                         </Typography>
+//                         <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+//                           {fmt(custom.ahm)} Qty
+//                         </Typography>
+//                       </Stack>
+//                     )}
+//                     {custom.bhv > 0 && (
+//                       <Stack direction="row" justifyContent="space-between">
+//                         <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
+//                           Bhavnagar:
+//                         </Typography>
+//                         <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+//                           {fmt(custom.bhv)} Qty
+//                         </Typography>
+//                       </Stack>
+//                     )}
+//                   </Stack>
+
+//                   <Stack spacing={1}>
+//                     <MetricTile title="Profit" value="₹ 55,750" delta="-14%" />
+//                     <MetricTile title="ETA" value="22 Jan 25" />
+//                   </Stack>
+//                 </CardContent>
+//               </Card>
+//             )}
+//           </Stack>
+//         ) : (
+//           <>
+//             {/* Waterfall */}
+//             <Card sx={{ mb: 1.5 }}>
+//               <CardContent sx={{ p: 1.25 }}>
+//                 <Typography sx={{ fontSize: 12, color: "#64748b", mb: 1 }}>
+//                   Waterfall • {usingCustomized ? "Customized" : "Recommended"}{" "}
+//                   plan • Total Qty: <strong>{fmt(qtyFeedingChart)}</strong>
+//                 </Typography>
+
+//                 <Box sx={{ width: "100%", height: 260, mt: 1 }}>
+//                   <ResponsiveContainer width="100%" height="100%">
+//                     <BarChart
+//                       data={wfData}
+//                       margin={{ top: 28, right: 16, bottom: 8, left: 12 }}
+//                       barCategoryGap={8}
+//                     >
+//                       <CartesianGrid stroke="#eef2f7" vertical />
+//                       <XAxis
+//                         dataKey="name"
+//                         interval={0}
+//                         minTickGap={0}
+//                         tickMargin={12}
+//                         height={44}
+//                         tick={<WfTick />}
+//                         axisLine={{ stroke: "#e5e7eb" }}
+//                         tickLine={false}
+//                       />
+//                       <YAxis
+//                         domain={yDomain}
+//                         tick={{ fontSize: 11, fill: "#475569" }}
+//                         axisLine={{ stroke: "#e5e7eb" }}
+//                         tickLine={false}
+//                         tickFormatter={(v) => `${to1(v)}`}
+//                         label={{
+//                           value: "₹ in Lakhs",
+//                           angle: -90,
+//                           position: "insideLeft",
+//                           offset: 10,
+//                           fill: "#64748b",
+//                           fontSize: 11,
+//                         }}
+//                       />
+//                       <ReferenceLine y={0} stroke="#94a3b8" />
+//                       <RTooltip
+//                         content={({ active, payload, label }) => {
+//                           if (!active || !payload?.[0]) return null;
+//                           const p = payload[0].payload;
+//                           return (
+//                             <Box
+//                               sx={{
+//                                 p: 1,
+//                                 bgcolor: "#fff",
+//                                 border: "1px solid #e5e7eb",
+//                                 borderRadius: 1,
+//                               }}
+//                             >
+//                               <Typography
+//                                 sx={{ fontWeight: 700, fontSize: 12, mb: 0.5 }}
+//                               >
+//                                 {label}
+//                               </Typography>
+//                               <Typography sx={{ fontSize: 12, color: "#334155" }}>
+//                                 Change: {lakhLabel(p.raw)}
+//                               </Typography>
+//                               <Typography sx={{ fontSize: 12, color: "#64748b" }}>
+//                                 Cumulative: {lakhLabel(p.cumulative)}
+//                               </Typography>
+//                             </Box>
+//                           );
+//                         }}
+//                       />
+//                       <Bar
+//                         dataKey="base"
+//                         stackId="wf"
+//                         fill="transparent"
+//                         isAnimationActive={false}
+//                         barSize={26}
+//                       />
+//                       <Bar
+//                         dataKey="delta"
+//                         stackId="wf"
+//                         isAnimationActive={false}
+//                         barSize={26}
+//                       >
+//                         {wfData.map((d, i) => (
+//                           <Cell key={i} fill={barFill(d)} />
+//                         ))}
+//                         <LabelList
+//                           dataKey="raw"
+//                           position="top"
+//                           offset={6}
+//                           formatter={(v) => lakhLabel(v)}
+//                           style={{
+//                             fontSize: 12,
+//                             fill: "#111827",
+//                             fontWeight: 700,
+//                           }}
+//                         />
+//                       </Bar>
+//                     </BarChart>
+//                   </ResponsiveContainer>
+//                 </Box>
+//               </CardContent>
+//             </Card>
+
+//             {/* Big summary card below waterfall */}
+//             <Card sx={{ border: 1, borderColor: "#dbeafe", boxShadow: 0 }}>
+//               {/* Header strip */}
+//               <Box
+//                 sx={{
+//                   px: 1.5,
+//                   py: 1,
+//                   bgcolor: "#eaf2ff",
+//                   borderBottom: "1px solid #dbeafe",
+//                   display: "flex",
+//                   alignItems: "center",
+//                   gap: 1,
+//                   flexWrap: "wrap",
+//                 }}
+//               >
+//                 <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
+//                   Bhuj{" "}
+//                   <Typography
+//                     component="span"
+//                     sx={{ color: "#2563eb", ml: 0.5, fontWeight: 700 }}
+//                   >
+//                     (Recommended)
+//                   </Typography>
+//                 </Typography>
+//                 <Typography sx={{ fontSize: 13, color: "#334155" }}>
+//                   Qty: <strong>{fmt(RECO_QTY)}</strong>
+//                 </Typography>
+//               </Box>
+
+//               {/* Tiles grid */}
+//               <CardContent sx={{ p: 1.25 }}>
+//                 <Box
+//                   sx={{
+//                     display: "grid",
+//                     gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+//                     gap: 1,
+//                   }}
+//                 >
+//                   <MetricTile title="Profit" value="₹ 55,750" delta="24%" />
+//                   <MetricTile title="ETA" value="22 Jan 25" />
+//                   <MetricTile title="Logistic Cost" value="₹ 1,02,100" delta="-15%" />
+//                   <MetricTile title="Labor/Handling" value="₹ 73,000" delta="-15%" />
+//                   <MetricTile title="Transaction Cost" value="₹ 2,55,650" delta="24%" />
+//                   <MetricTile title="Total Cost" value="₹ 1,78,650" delta="10%" />
+//                   <MetricTile title="Revenue" value="₹ 2,55,650" delta="24%" />
+//                 </Box>
+//               </CardContent>
+//             </Card>
+//           </>
+//         )}
+//       </Box>
+//     </Box>
+//   );
+// }
+
+// /* =====================  MAIN LAYOUT  ===================== */
+
+// function MainContentSection() {
+//   const [selectedScenario, setSelectedScenario] = useState(scenariosData[0]);
+//   const theme = useTheme();
+//   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+//   // 🔁 Toggle simulation view
+//   const [showSim, setShowSim] = useState(false);
+
+//   if (isMobile) {
+//     return (
+//       <Box
+//         sx={{
+//           display: "flex",
+//           flexDirection: "column",
+//           minHeight: "100vh",
+//           p: 1,
+//           gap: 1,
+//           overflowY: "auto",
+//         }}
+//       >
+//         <SidebarBox
+//           selectedScenario={selectedScenario}
+//           setSelectedScenario={setSelectedScenario}
+//         />
+//         {showSim ? (
+//           <NewRecommendationScreen onBack={() => setShowSim(false)} />
+//         ) : (
+//           <>
+//             <ForecastChartBox />
+//             <DemandByCityCard />
+//             <RecommendationBox onCompare={() => setShowSim(true)} />
+//           </>
+//         )}
+//       </Box>
+//     );
+//   }
+
+//   // Desktop: Sidebar persists; right panel swaps
+//   return (
+//     <Box
+//       sx={{
+//         display: "flex",
+//         flexDirection: "row",
+//         minHeight: "100vh",
+//         p: 1,
+//         gap: 1,
+//         overflowY: "auto",
+//       }}
+//     >
+//       <SidebarBox
+//         selectedScenario={selectedScenario}
+//         setSelectedScenario={setSelectedScenario}
+//       />
+
+//       {showSim ? (
+//         <Box
+//           sx={{
+//             flex: 1,
+//             minWidth: 0,
+//             display: "flex",
+//             flexDirection: "column",
+//             gap: 1,
+//           }}
+//         >
+//           <NewRecommendationScreen onBack={() => setShowSim(false)} />
+//         </Box>
+//       ) : (
+//         <>
+//           <Box
+//             sx={{
+//               flex: 1,
+//               minWidth: 0,
+//               display: "flex",
+//               flexDirection: "column",
+//               gap: 1,
+//             }}
+//           >
+//             <ForecastChartBox />
+//             <DemandByCityCard />
+//           </Box>
+//           <RecommendationBox onCompare={() => setShowSim(true)} />
+//         </>
+//       )}
+//     </Box>
+//   );
+// }
+
+// /* =====================  ROOT  ===================== */
+
+// export default function DemandMProject() {
+//   return (
+//     <Box
+//       sx={{
+//         backgroundColor: "#CBD5E1",
+//         width: "100%",
+//         minHeight: "100vh",
+//         display: "flex",
+//         flexDirection: "column",
+//       }}
+//     >
+//       <CssBaseline />
+//       <MainContentSection />
+//     </Box>
+//   );
+// }
+import React, { useMemo, useState } from "react";
 import MoreVert from "@mui/icons-material/MoreVert";
 import Search from "@mui/icons-material/Search";
+import HelpOutline from "@mui/icons-material/HelpOutline";
 import TrendingUp from "@mui/icons-material/TrendingUp";
-import Warning from "@mui/icons-material/Warning";
-import CircleIcon from "@mui/icons-material/FiberManualRecord";
-import LineIcon from "@mui/icons-material/Remove";
+import FiberManualRecord from "@mui/icons-material/FiberManualRecord";
+import MoreHoriz from "@mui/icons-material/MoreHoriz";
+import ErrorOutline from "@mui/icons-material/ErrorOutline";
+import Tune from "@mui/icons-material/Tune";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
 import {
-  Autocomplete,
+  Badge,
   Box,
   Button,
-  Checkbox,
+  Card,
+  CardContent,
   Chip,
-  Paper,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  List,
+  ListItem,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
   Stack,
   Tab,
   Tabs,
   TextField,
   Typography,
+  useTheme,
+  useMediaQuery,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  CssBaseline,
+  Popover,
+  Tooltip,
+  Slider,
 } from "@mui/material";
-import React, { useState } from "react";
 
-/* ---------- data ---------- */
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RTooltip,
+  ReferenceLine,
+  LabelList,
+  Cell,
+  ResponsiveContainer,
+} from "recharts";
+
+// 🔗 Compare view (default export)
+import NewRecommendationScreen from "./ScenarioSimulation";
+
+/* ===== Shared sizing for both graphs ===== */
+const GRAPH_HEIGHT = 220;
+
+/* =====================  DATA & UTILS  ===================== */
+
 const scenariosData = [
   {
     id: 1,
     title: "Sudden Spike in Demand",
     description: "30% increase due to marketing campaign",
-    category: "Demand",
-    impact: "+30%",
+    type: "Demand",
+    change: "+30%",
     duration: "3 Months",
     isSelected: true,
+    typeColor: "info",
   },
   {
     id: 2,
     title: "Sudden Drop in Demand",
     description: "20% drop due to economic slowdown",
-    category: "Demand",
-    impact: "-20%",
+    type: "Demand",
+    change: "-20%",
     duration: "6 Months",
     isSelected: false,
+    typeColor: "info",
   },
   {
     id: 3,
     title: "New Market Expansion",
     description: "Launch in new region with 40% uplift",
-    category: "Demand",
-    impact: "+40%",
+    type: "Demand",
+    change: "+40%",
     duration: "12 Months",
     isSelected: false,
+    typeColor: "info",
   },
   {
     id: 4,
     title: "Supplier Disruption",
     description: "Unfulfilled demand due to raw material shortage",
-    category: "Supply",
-    impact: "-15%",
+    type: "Supply",
+    change: "-15%",
     duration: "4 Months",
     isSelected: false,
+    typeColor: "error",
   },
   {
     id: 5,
     title: "Price Change Impact",
     description: "10% price increase affects demand",
-    category: "Price",
-    impact: "-12%",
+    type: "Price",
+    change: "-12%",
     duration: "6 Months",
     isSelected: false,
+    typeColor: "success",
   },
   {
     id: 6,
     title: "New Product Introduction",
     description: "25% cannibalization + 35% new demand",
-    category: "Product",
-    impact: "+10%",
+    type: "Product",
+    change: "+10%",
     duration: "9 Months",
     isSelected: false,
+    typeColor: "primary",
   },
   {
     id: 7,
     title: "Promotions & Discount",
     description: "Flash sale increases demand by 50%",
-    category: "Demand",
-    impact: "+50%",
+    type: "Demand",
+    change: "+50%",
     duration: "1 Months",
     isSelected: false,
+    typeColor: "info",
   },
   {
     id: 8,
     title: "Change in Lead Time",
     description: "Lead time increase affects availability",
-    category: "Supply",
-    impact: "-8%",
+    type: "Supply",
+    change: "-8%",
     duration: "8 Months",
     isSelected: false,
+    typeColor: "error",
   },
   {
     id: 9,
     title: "Production Constraints",
     description: "30% capacity reduction",
-    category: "Supply",
-    impact: "-30%",
+    type: "Supply",
+    change: "-30%",
     duration: "2 Months",
     isSelected: false,
+    typeColor: "error",
   },
 ];
 
-const disruptionData = [
+const card = {
+  backgroundColor: "#fff",
+  border: 1,
+  borderColor: "grey.300",
+  borderRadius: 1,
+  overflow: "hidden",
+};
+
+const locationData = [
+  { label: "Location:", value: "Rajkot" },
+  { label: "Current Inventory:", value: "4567" },
+  { label: "Next week demand:", value: "5879" },
+];
+
+const legendItems = [
   {
-    id: 1,
-    date: "22 Aug, 2025 12:34PM",
-    location: "Hyderabad (HYD543)",
-    product: "Sweet Mixes (C5240200A)",
-    description: "Unexpected regional event.",
-    isCompleted: false,
+    id: "actual",
+    label: "Actual",
+    indicator: <FiberManualRecord sx={{ fontSize: 10, color: "#0891b2" }} />,
   },
   {
-    id: 2,
-    date: "18 Jul, 2025 04:30PM",
-    location: "Hyderabad (HYD543)",
-    product: "RTE - Soup Pack (Veg) (C4660200B)",
-    description: "Weather event.",
-    isCompleted: true,
+    id: "forecast",
+    label: "Forecast",
+    indicator: <MoreHoriz sx={{ fontSize: 15, color: "#64748b" }} />,
   },
 ];
 
-const chartData = {
-  yAxisLabels: [30, 25, 20, 15, 10, 5, 0],
-  xAxisLabels: [
-    "Week 1",
-    "Week 2",
-    "Week 3",
-    "Week 4",
-    "Week 5",
-    "Week 6",
-    "Week 7",
-    "Week 8",
-  ],
-  regions: [
-    { name: "Region 1", color: "#0891b2", data: [6, 8, 10, 17, 12, 7, 9, 15] },
-    {
-      name: "Region 2",
-      color: "#f87171",
-      data: [12, 9, 6, 13, 10, 16, 14, 17],
-    },
-    {
-      name: "Region 3",
-      color: "#22c55e",
-      data: [15, 13, 11, 9, 12, 11, 18, 20],
-    },
-  ],
+const disruptionSeed = [
+  {
+    id: 101,
+    checked: false,
+    date: new Date(2025, 7, 22, 12, 34),
+    message:
+      "Rajkot (RAJ182) - Sweet Mixes (C5050500D): Unexpected regional event.",
+  },
+  {
+    id: 102,
+    checked: true,
+    date: new Date(2025, 6, 18, 16, 30),
+    message:
+      "Hyderabad (HYD543) - RTE - Soup Pack (Veg) (C46602008): Weather event.",
+  },
+];
+
+const formatDateTime = (d) => {
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mon = months[d.getMonth()];
+  const yyyy = d.getFullYear();
+  let hh = d.getHours();
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ampm = hh >= 12 ? "PM" : "AM";
+  hh = hh % 12;
+  if (hh === 0) hh = 12;
+  const hhStr = String(hh).padStart(2, "0");
+  return `${dd} ${mon}, ${yyyy} ${hhStr}:${mm}${ampm}`;
 };
 
-/* ---------- helpers ---------- */
-const getCategoryColor = (category) => {
-  switch (category) {
-    case "Demand":
-      return { bg: "#e0f7fa", color: "#00695c" };
-    case "Supply":
-      return { bg: "#ffebee", color: "#c62828" };
-    case "Price":
-      return { bg: "#e8f5e8", color: "#2e7d32" };
-    case "Product":
-      return { bg: "#e3f2fd", color: "#1565c0" };
-    default:
-      return { bg: "#f5f5f5", color: "#424242" };
-  }
+const fmtNum = (n) => n.toLocaleString("en-IN");
+
+/* =====================  SIDEBAR  ===================== */
+
+function SidebarBox({ selectedScenario, setSelectedScenario }) {
+  const getTypeChipColor = (typeColor) => {
+    switch (typeColor) {
+      case "info":
+        return { backgroundColor: "#2196f3", color: "white" };
+      case "error":
+        return { backgroundColor: "#ff9800", color: "white" };
+      case "success":
+        return { backgroundColor: "#4caf50", color: "white" };
+      case "primary":
+        return { backgroundColor: "#9c27b0", color: "white" };
+      default:
+        return { backgroundColor: "#f5f5f5", color: "#424242" };
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        width: { xs: 280, sm: 300, md: 320 },
+        ...card,
+        flexShrink: 0,
+        height: "100%",                 // ✨ fill column
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box
+        sx={{
+          p: 1.5,
+          backgroundColor: "#f8f9fa",
+          borderBottom: 1,
+          borderColor: "grey.300",
+        }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Stack spacing={0.5}>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <HelpOutline sx={{ fontSize: 14, color: "#666" }} />
+              <Typography variant="body2" fontSize={13} fontWeight={600}>
+                What-If Scenarios?
+              </Typography>
+            </Stack>
+            <Typography variant="caption" color="#999" sx={{ fontSize: 11 }}>
+              Select a scenario to analyze its impact on demand planning.
+            </Typography>
+          </Stack>
+          <IconButton size="small">
+            <MoreVert sx={{ fontSize: 16, color: "#1976d2" }} />
+          </IconButton>
+        </Stack>
+      </Box>
+
+      <Box sx={{ p: 1, borderBottom: 1, borderColor: "grey.300" }}>
+        <TextField
+          placeholder="Search scenarios"
+          variant="outlined"
+          size="small"
+          fullWidth
+          InputProps={{
+            startAdornment: (
+              <Search sx={{ fontSize: 16, color: "#999", mr: 1 }} />
+            ),
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": { borderRadius: 2 },
+            "& input": { fontSize: 12 },
+          }}
+        />
+      </Box>
+
+      <Box sx={{ flex: 1, overflow: "auto" }}>
+        <List sx={{ p: 0 }}>
+          {scenariosData.map((s) => (
+            <ListItem
+              key={s.id}
+              onClick={() => setSelectedScenario(s)}
+              sx={{
+                cursor: "pointer",
+                backgroundColor:
+                  selectedScenario?.id === s.id ? "#e3f2fd" : "transparent",
+                borderLeft:
+                  selectedScenario?.id === s.id ? "3px solid #1976d2" : "none",
+                "&:hover": { backgroundColor: "#f5f5f5" },
+                borderBottom: "1px solid #f0f0f0",
+                alignItems: "flex-start",
+                p: 1,
+              }}
+            >
+              <Stack sx={{ flex: 1 }} spacing={0.5}>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="flex-start"
+                >
+                  <Stack spacing={0.5} sx={{ flex: 1 }}>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <TrendingUp sx={{ fontSize: 12, color: "#666" }} />
+                      <Typography
+                        variant="body2"
+                        sx={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3 }}
+                      >
+                        {s.title}
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="caption"
+                      color="#666"
+                      sx={{ fontSize: 11, lineHeight: 1.2 }}
+                    >
+                      {s.description}
+                    </Typography>
+                  </Stack>
+                  <IconButton size="small" sx={{ mt: -0.5 }}>
+                    <MoreVert sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Stack>
+                <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+                  <Chip
+                    label={s.type}
+                    size="small"
+                    sx={{
+                      ...getTypeChipColor(s.typeColor),
+                      fontSize: 9,
+                      fontWeight: 500,
+                      height: 18,
+                    }}
+                  />
+                  <Chip
+                    label={s.change}
+                    size="small"
+                    sx={{
+                      backgroundColor: "#f5f5f5",
+                      color: "#424242",
+                      fontSize: 9,
+                      fontWeight: 500,
+                      height: 18,
+                    }}
+                  />
+                  <Chip
+                    label={s.duration}
+                    size="small"
+                    sx={{
+                      backgroundColor: "#f5f5f5",
+                      color: "#424242",
+                      fontSize: 9,
+                      fontWeight: 500,
+                      height: 18,
+                    }}
+                  />
+                </Stack>
+              </Stack>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+    </Box>
+  );
+}
+
+/* =====================  TOP CHARTS CARD  ===================== */
+
+function ChartSection({ selectedSku, setSelectedSku }) {
+  const labelSx = { fontWeight: 600, color: "#475569", fontSize: 12 };
+  const valueSx = { color: "#475569", fontSize: 12, ml: 0.5 };
+  const pillGap = 1.25;
+
+  return (
+    <Stack spacing={1.25} sx={{ p: 1.25 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: pillGap,
+          flexWrap: "nowrap",
+          overflowX: "auto",
+          pb: 0.25,
+        }}
+      >
+        {locationData.map((item, idx) => (
+          <Box
+            key={idx}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {idx > 0 && (
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ mx: 1, height: 16, alignSelf: "center" }}
+              />
+            )}
+            <Typography variant="body2" sx={labelSx}>
+              {item.label}
+            </Typography>
+            <Typography variant="body2" sx={valueSx}>
+              {item.value}
+            </Typography>
+          </Box>
+        ))}
+
+        <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />
+
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            whiteSpace: "nowrap",
+            gap: 0.5,
+          }}
+        >
+          <Typography variant="body2" sx={labelSx}>
+            SKU:
+          </Typography>
+          <FormControl size="small">
+            <Select
+              value={selectedSku}
+              onChange={(e) => setSelectedSku(e.target.value)}
+              sx={{
+                height: 24,
+                width: 110,
+                "& .MuiSelect-select": {
+                  p: "2px 8px",
+                  fontSize: 12,
+                  color: "#2563eb",
+                  textDecoration: "underline",
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#cbd5e1",
+                  borderRadius: "3px",
+                },
+              }}
+            >
+              <MenuItem value="C5020160">C5020160</MenuItem>
+              <MenuItem value="C5050500D">C5050500D</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+
+      <Stack direction="row" spacing={1} flexWrap="wrap">
+        {legendItems.map((item) => (
+          <Chip
+            key={item.id}
+            icon={item.indicator}
+            label={item.label}
+            variant="outlined"
+            sx={{
+              backgroundColor: "#eff6ff",
+              borderColor: "#cbd5e1",
+              borderRadius: "5px",
+              height: 26,
+              "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+              "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+            }}
+          />
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+
+function DisruptionList() {
+  const [rows, setRows] = useState(disruptionSeed);
+  const toggle = (id) =>
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, checked: !r.checked } : r))
+    );
+
+  return (
+    <Box sx={{ px: 1.25, py: 1 }}>
+      <Stack spacing={0.5}>
+        {rows.map((r) => (
+          <Box
+            key={r.id}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: 1,
+              py: 0.75,
+              borderRadius: 1,
+              "&:hover": { backgroundColor: "rgba(2,6,23,0.03)" },
+            }}
+          >
+            <Checkbox
+              size="small"
+              checked={r.checked}
+              onChange={() => toggle(r.id)}
+              sx={{ p: 0.5, mr: 0.5 }}
+            />
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: "#334155",
+                minWidth: 175,
+                fontSize: 12.5,
+                textDecoration: r.checked ? "line-through" : "none",
+              }}
+            >
+              {formatDateTime(r.date)}
+            </Typography>
+            <ErrorOutline sx={{ color: "#ef4444", fontSize: 18, mr: 0.5 }} />
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#334155",
+                fontSize: 13,
+                textDecoration: r.checked ? "line-through" : "none",
+              }}
+            >
+              {r.message}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
+    </Box>
+  );
+}
+
+function ForecastChartBox() {
+  const [selectedSku, setSelectedSku] = useState("C5050500D");
+  const [mainTabValue, setMainTabValue] = useState(0);
+
+  const weekData = {
+    categories: [
+      "Week 33",
+      "Week 34",
+      "Week 35",
+      "Week 36",
+      "Week 37",
+      "Week 38",
+      "Week 39",
+      "Week 40",
+    ],
+    actual: [4, 5, 11, 15, null, null, null, null],
+    forecast: [null, null, null, 28, 12, 11, 7, 13],
+    highlightIndex: 3,
+  };
+
+  const options = useMemo(
+    () => ({
+      chart: {
+        type: "line",
+        spacing: [4, 6, 6, 6],
+        reflow: true,
+        height: GRAPH_HEIGHT,
+      },
+      title: { text: "" },
+      credits: { enabled: false },
+      exporting: { enabled: false },
+      legend: { enabled: false },
+      xAxis: {
+        categories: weekData.categories,
+        tickLength: 0,
+        lineColor: "#e5e7eb",
+        gridLineWidth: 1,
+        gridLineColor: "#eef2f7",
+        crosshair: { width: 1, color: "#94a3b8" },
+        plotBands: [
+          {
+            from: weekData.highlightIndex - 0.3,
+            to: weekData.highlightIndex + 0.3,
+            color: "rgba(244,63,94,0.25)",
+            zIndex: 0,
+          },
+        ],
+        labels: { style: { fontSize: "11px" } },
+      },
+      yAxis: {
+        title: {
+          text: "Units (in thousands)",
+          style: { color: "#64748b", fontSize: "12px" },
+        },
+        min: 0,
+        tickInterval: 5,
+        gridLineColor: "#e5e7eb",
+        labels: { style: { fontSize: "11px" } },
+      },
+      tooltip: {
+        shared: true,
+        borderRadius: 6,
+        padding: 8,
+        backgroundColor: "#fff",
+        borderColor: "#e5e7eb",
+      },
+      plotOptions: { series: { animation: false, marker: { radius: 3 } } },
+      series: [
+        {
+          name: "Actual",
+          data: weekData.actual,
+          color: "#0f766e",
+          lineWidth: 2.5,
+          dashStyle: "Solid",
+          zIndex: 2,
+        },
+        {
+          name: "Forecast",
+          data: weekData.forecast,
+          color: "#0f766e",
+          lineWidth: 2.5,
+          dashStyle: "ShortDot",
+          marker: { enabled: false },
+          opacity: 0.9,
+          zIndex: 1,
+        },
+      ],
+      accessibility: { enabled: false },
+    }),
+    []
+  );
+
+  return (
+    <Box
+      sx={{
+        ...card,
+        width: "100%",
+        minWidth: 0,
+        height: "100%",                 // ✨ fill grid row
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: "grey.300",
+          backgroundColor: "#fff",
+        }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ px: 2, py: 1 }}
+        >
+          <Tabs value={mainTabValue} onChange={(_, v) => setMainTabValue(v)}>
+            <Tab
+              label="Demand"
+              sx={{
+                textTransform: "none",
+                fontSize: 13,
+                fontWeight: 600,
+                minHeight: 36,
+                px: 2,
+              }}
+            />
+            <Tab
+              label={
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+                    Disruption
+                  </Typography>
+                  <Badge
+                    badgeContent={disruptionSeed.length}
+                    color="error"
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        fontSize: 9,
+                        height: 16,
+                        minWidth: 16,
+                      },
+                    }}
+                  />
+                </Stack>
+              }
+              sx={{ textTransform: "none", minHeight: 36, px: 2 }}
+            />
+          </Tabs>
+          <Stack direction="row" spacing={0.5}>
+            <IconButton size="small">
+              <MoreVert fontSize="small" />
+            </IconButton>
+          </Stack>
+        </Stack>
+      </Box>
+
+      {mainTabValue === 0 ? (
+        <>
+          <ChartSection
+            selectedSku={selectedSku}
+            setSelectedSku={setSelectedSku}
+          />
+          <Box sx={{ px: 1.25, pb: 2, flex: 1, minHeight: 0 }}>
+            <Box sx={{ width: "100%", height: "100%" }}>
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={options}
+                containerProps={{ style: { width: "100%", height: "100%" } }}
+              />
+            </Box>
+          </Box>
+          <Divider sx={{ mx: 1, mb: 1 }} />
+        </>
+      ) : (
+        <DisruptionList />
+      )}
+    </Box>
+  );
+}
+
+/* =====================  CITY CARD  ===================== */
+
+const thCell = {
+  fontWeight: 700,
+  fontSize: 13,
+  color: "#334155",
+  backgroundColor: "#eef2f7",
+  borderColor: "#e5e7eb",
+};
+const tdCell = {
+  fontSize: 13,
+  color: "#374151",
+  borderColor: "#e5e7eb",
+  whiteSpace: "nowrap",
+};
+const tdCellLeft = { ...tdCell, minWidth: 160 };
+const subHdr = {
+  fontWeight: 500,
+  color: "#64748b",
+  fontSize: 11,
+  marginLeft: 4,
 };
 
-/* ============================================================
-   MonthGraph — responsive, pure SVG version of your first graph
-   (compact height)
-   ============================================================ */
-const MonthGraph = ({ viewMode, setViewMode }) => {
-  const yMax = 35;
-  const yTicks = [35, 30, 25, 20, 15, 10, 5, 0];
-  const xLabels = [
+/* Match first graph’s legend look here too */
+const LegendSwatch = ({ type, color }) => {
+  if (type === "dot")
+    return (
+      <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color }} />
+    );
+  return (
+    <Box
+      sx={{
+        width: 18,
+        height: 2,
+        background: `repeating-linear-gradient(to right, ${color} 0px, ${color} 4px, transparent 4px, transparent 6px)`,
+      }}
+    />
+  );
+};
+
+const CityLegendChip = ({ label, color, type = "dot" }) => (
+  <Chip
+    icon={
+      <Box
+        sx={{
+          width: 16,
+          height: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <LegendSwatch type={type} color={color} />
+      </Box>
+    }
+    label={label}
+    variant="outlined"
+    sx={{
+      backgroundColor: "#eff6ff",
+      borderColor: "#cbd5e1",
+      borderRadius: "5px",
+      height: 26,
+      "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+      "& .MuiChip-icon": { ml: "8px" },
+    }}
+  />
+);
+
+function DemandByCityCard() {
+  const [tab, setTab] = useState(0);
+  const yellow = "#fbbf24",
+    red = "#ef4444",
+    green = "#22c55e";
+  const categories = [
     "Week 1",
     "Week 2",
     "Week 3",
@@ -187,795 +2748,1065 @@ const MonthGraph = ({ viewMode, setViewMode }) => {
     "Week 8",
   ];
 
-  const actual = [6, 8, 12, 17, 14, 11, 13, 15];
-  const forecast = [14, 13, 12, 13, 14, 16, 15, 14];
+  const series = [
+    {
+      name: "Bhuj (Actual)",
+      color: yellow,
+      dashStyle: "Solid",
+      data: [6, 7, 11, 18, null, null, null, null],
+      zIndex: 3,
+    },
+    {
+      name: "Ahmedabad (Actual)",
+      color: red,
+      dashStyle: "Solid",
+      data: [12, 10, 6, 12, null, null, null, null],
+      zIndex: 3,
+    },
+    {
+      name: "Bhavnagar (Actual)",
+      color: green,
+      dashStyle: "Solid",
+      data: [16, 14, 11, 10, null, null, null, null],
+      zIndex: 3,
+    },
+    {
+      name: "Bhuj (Forecast)",
+      color: yellow,
+      dashStyle: "ShortDot",
+      data: [null, null, null, 18, 8, 12, 9, 14],
+      marker: { enabled: false },
+      zIndex: 2,
+    },
+    {
+      name: "Ahmedabad (Forecast)",
+      color: red,
+      dashStyle: "ShortDot",
+      data: [null, null, null, 11, 12, 16, 14, 16],
+      marker: { enabled: false },
+      zIndex: 2,
+    },
+    {
+      name: "Bhavnagar (Forecast)",
+      color: green,
+      dashStyle: "ShortDot",
+      data: [null, null, null, 10, 12, 11, 13, 20],
+      marker: { enabled: false },
+      zIndex: 2,
+    },
+  ];
 
-  const W = 860;
-  const H = 280; // compact
-  const margin = { top: 10, right: 16, bottom: 40, left: 56 };
-  const iw = W - margin.left - margin.right;
-  const ih = H - margin.top - margin.bottom;
+  const options = {
+    chart: {
+      type: "line",
+      spacing: [4, 6, 6, 6],
+      reflow: true,
+      height: GRAPH_HEIGHT,
+    },
+    title: { text: "" },
+    credits: { enabled: false },
+    exporting: { enabled: false },
+    legend: { enabled: false },
+    xAxis: {
+      categories,
+      tickLength: 0,
+      lineColor: "#e5e7eb",
+      gridLineWidth: 1,
+      gridLineColor: "#eef2f7",
+      labels: { style: { color: "#64748b", fontSize: "11px" } },
+    },
+    yAxis: {
+      title: {
+        text: "Units (in thousands)",
+        style: { color: "#64748b", fontSize: "12px" },
+      },
+      min: 0,
+      max: 35,
+      tickInterval: 5,
+      gridLineColor: "#e5e7eb",
+      labels: { style: { fontSize: "11px" } },
+    },
+    tooltip: {
+      shared: true,
+      borderRadius: 6,
+      padding: 8,
+      backgroundColor: "#fff",
+      borderColor: "#e5e7eb",
+    },
+    plotOptions: {
+      series: { animation: false, lineWidth: 2.5, marker: { radius: 3 } },
+    },
+    series,
+    accessibility: { enabled: false },
+  };
 
-  const x = (i) => (i / (xLabels.length - 1)) * iw;
-  const y = (val) => ih - (val / yMax) * ih;
+  const cityDefs = [
+    { label: "Bhuj", color: yellow },
+    { label: "Ahmedabad", color: red },
+    { label: "Bhavnagar", color: green },
+  ];
 
-  const toPath = (arr) =>
-    arr
-      .map(
-        (v, i) =>
-          `${i === 0 ? "M" : "L"} ${margin.left + x(i)} ${margin.top + y(v)}`
-      )
-      .join(" ");
-
-  const actualPath = toPath(actual);
-  const forecastPath = toPath(forecast);
-
-  // Pink band around middle (between week 4 and week 5)
-  const bandX = margin.left + x(4) - iw * 0.012;
-  const bandW = iw * 0.025;
+  const tableRows = [
+    {
+      id: "bhuj",
+      location: "Bhuj",
+      recommended: true,
+      distance: 197,
+      available: 15617,
+      demand: 7112,
+      safety: 10668,
+      excess: 4949,
+      eta: 4,
+    },
+    {
+      id: "ahm",
+      location: "Ahmedabad",
+      recommended: false,
+      distance: 263,
+      available: 16873,
+      demand: 7891,
+      safety: 11836,
+      excess: 5036,
+      eta: 6,
+    },
+    {
+      id: "bhv",
+      location: "Bhavnagar",
+      recommended: false,
+      distance: 317,
+      available: 18555,
+      demand: 8943,
+      safety: 13414,
+      excess: 5140,
+      eta: 8,
+    },
+  ];
 
   return (
-    <Paper
+    <Box
       sx={{
+        ...card,
         width: "100%",
-        border: "1px solid #9CA3AF",
-        borderTop: "none",
-        p: 1.5,
+        minWidth: 0,
+        height: "100%",               // ✨ fill grid row
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* Legend & toggles */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 1 }}
-      >
-        <Stack direction="row" spacing={2} flexWrap="wrap" rowGap={1}>
-          <Chip
-            icon={<CircleIcon sx={{ color: "#0E7490", fontSize: 12 }} />}
-            label="Actual"
-            variant="outlined"
-            sx={{
-              bgcolor: "#EFF6FF",
-              borderColor: "#9CA3AF",
-              "& .MuiChip-label": { fontSize: 14, color: "#4B5563" },
-            }}
+      <Box sx={{ px: 1.5, pt: 1, borderBottom: 1, borderColor: "grey.200" }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36 }}>
+          <Tab
+            label="Graph"
+            sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }}
           />
-          <Chip
-            icon={<LineIcon sx={{ color: "#2563EB", fontSize: 16 }} />}
-            label="Forecast"
-            variant="outlined"
-            sx={{
-              bgcolor: "#EFF6FF",
-              borderColor: "#9CA3AF",
-              "& .MuiChip-label": { fontSize: 14, color: "#4B5563" },
-            }}
+          <Tab
+            label="Data Table"
+            sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }}
           />
-        </Stack>
-
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant={viewMode === "M" ? "contained" : "outlined"}
-            onClick={() => setViewMode("M")}
-            sx={{
-              minWidth: 38,
-              width: 38,
-              height: 38,
-              borderRadius: "50px",
-              borderColor: "#2563EB",
-              color: viewMode === "M" ? "white" : "#1F2937",
-              bgcolor: viewMode === "M" ? "#2563EB" : "transparent",
-              fontSize: 12,
-              fontWeight: 600,
-              "&:hover": { bgcolor: viewMode === "M" ? "#1D4ED8" : "#EFF6FF" },
-            }}
-          >
-            M
-          </Button>
-          <Button
-            variant={viewMode === "W" ? "contained" : "outlined"}
-            onClick={() => setViewMode("W")}
-            sx={{
-              minWidth: 38,
-              width: 38,
-              height: 38,
-              borderRadius: "50px",
-              borderColor: "#2563EB",
-              color: viewMode === "W" ? "white" : "#1F2937",
-              bgcolor: viewMode === "W" ? "#2563EB" : "transparent",
-              fontSize: 12,
-              fontWeight: 600,
-              "&:hover": { bgcolor: viewMode === "W" ? "#1D4ED8" : "#EFF6FF" },
-            }}
-          >
-            W
-          </Button>
-        </Stack>
-      </Stack>
-
-      {/* Compact aspect ratio */}
-      <Box sx={{ width: "100%", aspectRatio: { xs: "4 / 2.4", md: "16 / 5" } }}>
-        <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%">
-          {/* grid background */}
-          <defs>
-            <pattern
-              id="grid"
-              width={iw / 8}
-              height={ih / 7}
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d={`M ${iw / 8} 0 L 0 0 0 ${ih / 7}`}
-                fill="none"
-                stroke="#E5E7EB"
-                strokeWidth="1"
-              />
-            </pattern>
-          </defs>
-
-          {/* plot area background */}
-          <rect
-            x={margin.left}
-            y={margin.top}
-            width={iw}
-            height={ih}
-            fill="url(#grid)"
-          />
-
-          {/* pink band */}
-          <rect
-            x={bandX}
-            y={margin.top}
-            width={bandW}
-            height={ih}
-            fill="rgba(255, 167, 167, 0.49)"
-          />
-
-          {/* axes lines */}
-          <line
-            x1={margin.left}
-            y1={margin.top + ih}
-            x2={margin.left + iw}
-            y2={margin.top + ih}
-            stroke="#9CA3AF"
-            strokeWidth="1"
-          />
-          <line
-            x1={margin.left}
-            y1={margin.top}
-            x2={margin.left}
-            y2={margin.top + ih}
-            stroke="#9CA3AF"
-            strokeWidth="1"
-          />
-
-          {/* y ticks */}
-          {yTicks.map((t) => (
-            <text
-              key={t}
-              x={margin.left - 8}
-              y={margin.top + y(t)}
-              textAnchor="end"
-              dominantBaseline="middle"
-              style={{ fontSize: 12, fontWeight: 600, fill: "#6B7280" }}
-            >
-              {t}
-            </text>
-          ))}
-
-          {/* x ticks */}
-          {xLabels.map((lbl, i) => (
-            <text
-              key={lbl}
-              x={margin.left + x(i)}
-              y={margin.top + ih + 24}
-              textAnchor="middle"
-              style={{ fontSize: 12, fontWeight: 600, fill: "#6B7280" }}
-            >
-              {lbl}
-            </text>
-          ))}
-
-          {/* y axis title */}
-          <text
-            x={margin.left - 48}
-            y={margin.top + ih / 2}
-            transform={`rotate(-90 ${margin.left - 48} ${margin.top + ih / 2})`}
-            textAnchor="middle"
-            style={{ fontSize: 14, fill: "#4B5563" }}
-          >
-            Units (in thousands)
-          </text>
-
-          {/* series */}
-          <path d={actualPath} fill="none" stroke="#0E7490" strokeWidth="2.5" />
-          <path
-            d={forecastPath}
-            fill="none"
-            stroke="#2563EB"
-            strokeWidth="2"
-            strokeDasharray="6,6"
-          />
-        </svg>
+        </Tabs>
       </Box>
-    </Paper>
+
+      <Box
+        sx={{
+          p: 2,
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Typography variant="h6" sx={{ fontSize: 14, fontWeight: 600, mb: 1 }}>
+          Demand
+        </Typography>
+
+        {tab === 0 ? (
+          <>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              flexWrap="wrap"
+              sx={{ mb: 1 }}
+            >
+              {cityDefs.map((c) => (
+                <CityLegendChip
+                  key={`${c.label}-actual`}
+                  label={c.label}
+                  color={c.color}
+                  type="dot"
+                />
+              ))}
+              {cityDefs.map((c) => (
+                <CityLegendChip
+                  key={`${c.label}-forecast`}
+                  label={c.label}
+                  color={c.color}
+                  type="dash"
+                />
+              ))}
+            </Stack>
+
+            <Box sx={{ flex: 1, minHeight: 0 }}>
+              <Box sx={{ width: "100%", height: "100%" }}>
+                <HighchartsReact
+                  highcharts={Highcharts}
+                  options={options}
+                  containerProps={{ style: { width: "100%", height: "100%" } }}
+                />
+              </Box>
+            </Box>
+          </>
+        ) : (
+          <TableContainer
+            sx={{
+              border: 1,
+              borderColor: "#e5e7eb",
+              borderRadius: 1,
+              flex: 1,
+              overflow: "auto",
+              minHeight: 0,
+            }}
+          >
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: "#eef2f7" }}>
+                  <TableCell sx={thCell}>Location</TableCell>
+                  <TableCell sx={thCell} align="right">
+                    Distance<span style={subHdr}>(km)</span>
+                  </TableCell>
+                  <TableCell sx={thCell} align="right">
+                    Available Qty
+                  </TableCell>
+                  <TableCell sx={thCell} align="right">
+                    Demand <span style={subHdr}>(Next Week)</span>
+                  </TableCell>
+                  <TableCell sx={thCell} align="right">
+                    Safety Stock
+                  </TableCell>
+                  <TableCell sx={thCell} align="right">
+                    Excess Qty
+                  </TableCell>
+                  <TableCell sx={thCell} align="right">
+                    ETA <span style={subHdr}>(Hours)</span>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tableRows.map((r) => (
+                  <TableRow
+                    key={r.id}
+                    sx={{
+                      "& td": { borderColor: "#e5e7eb" },
+                      backgroundColor: r.recommended
+                        ? "rgba(37,99,235,0.08)"
+                        : "transparent",
+                    }}
+                  >
+                    <TableCell sx={tdCellLeft}>
+                      <Typography sx={{ fontSize: 13, color: "#111827" }}>
+                        {r.location}
+                        {r.recommended && (
+                          <Typography
+                            component="span"
+                            sx={{ color: "#2563eb", fontSize: 12, ml: 0.5 }}
+                          >
+                            (Recommended)
+                          </Typography>
+                        )}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={tdCell} align="right">
+                      {fmtNum(r.distance)}
+                    </TableCell>
+                    <TableCell sx={tdCell} align="right">
+                      {fmtNum(r.available)}
+                    </TableCell>
+                    <TableCell sx={tdCell} align="right">
+                      {fmtNum(r.demand)}
+                    </TableCell>
+                    <TableCell sx={tdCell} align="right">
+                      {fmtNum(r.safety)}
+                    </TableCell>
+                    <TableCell sx={tdCell} align="right">
+                      {fmtNum(r.excess)}
+                    </TableCell>
+                    <TableCell sx={tdCell} align="right">
+                      {fmtNum(r.eta)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+/* =====================  RIGHT PANEL (helpers)  ===================== */
+
+// === Clean rounding helpers ===
+const to1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+const lakhLabel = (n) => `₹${to1(n)}L`;
+
+function buildWaterfall(
+  steps,
+  includeTotal = true,
+  totalLabel = "Simulated Revenue"
+) {
+  let running = 0;
+  const out = [];
+  steps.forEach((st, idx) => {
+    const val = to1(st.value);
+    if (idx === 0) {
+      running = val;
+      out.push({
+        name: st.name,
+        base: 0,
+        delta: Math.abs(val),
+        raw: val,
+        kind: "base",
+        cumulative: to1(running),
+      });
+      return;
+    }
+    const next = to1(running + val);
+    const base = Math.min(running, next);
+    out.push({
+      name: st.name,
+      base,
+      delta: Math.abs(val),
+      raw: val,
+      kind: val >= 0 ? "pos" : "neg",
+      cumulative: next,
+    });
+    running = next;
+  });
+  if (includeTotal) {
+    const total = to1(running);
+    out.push({
+      name: totalLabel,
+      base: 0,
+      delta: Math.abs(total),
+      raw: total,
+      kind: "total",
+      cumulative: total,
+    });
+  }
+  return out;
+}
+const barFill = (d) =>
+  d.kind === "total" ? "#60a5fa" : d.raw >= 0 ? "#22c55e" : "#ef4444";
+
+// Split label after the first word (rest goes to line 2)
+const WfTick = ({ x, y, payload }) => {
+  const value = String(payload.value || "");
+  const [first, ...rest] = value.split(" ");
+  const second = rest.join(" ");
+  const lines = second ? [first, second] : [first];
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="#475569" fontSize={11}>
+        {lines.map((ln, i) => (
+          <tspan key={i} x="0" dy={i === 0 ? 0 : 12}>
+            {ln}
+          </tspan>
+        ))}
+      </text>
+    </g>
   );
 };
 
-const RegionChart = ({ viewMode, setViewMode }) => {
-  // Match MonthGraph size
-  const SVG_W = 860;
-  const SVG_H = 280;
-  const GRID_ROWS = chartData.yAxisLabels.length; // 7
-  const GRID_COLS = chartData.xAxisLabels.length; // 8
-  const yMax = 30;
+/* Small metric tiles used inside cards */
+function MetricTile({ title, value, delta }) {
+  const isDown = (delta || "").trim().startsWith("-");
+  return (
+    <Card
+      sx={{ boxShadow: 0, border: "1px solid #e5e7eb", background: "#fff" }}
+    >
+      <CardContent sx={{ p: 1.25 }}>
+        <Typography
+          variant="body2"
+          sx={{ fontSize: 11, color: "#64748b", mb: 0.5 }}
+        >
+          {title}
+        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+            {value}
+          </Typography>
+          {delta && (
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: isDown ? "#b91c1c" : "#16a34a",
+              }}
+            >
+              {isDown ? "▼" : "▲"} {delta.replace("-", "")}
+            </Typography>
+          )}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
 
-  // Left y-axis spacing (kept simple; works fine at this height)
-  const ySpacingPx = SVG_H / GRID_ROWS;
-  const yStackSpacing = ySpacingPx / 8; // MUI spacing units
+/* =====================  RIGHT PANEL (component)  ===================== */
+
+function RecommendationBox({ onCompare }) {
+  const [recommendationType, setRecommendationType] = useState("recommended");
+  const [summaryTabValue, setSummaryTabValue] = useState(0);
+
+  // ▶︎ settings popover state (only for Customize)
+  const [anchorEl, setAnchorEl] = useState(null);
+  const settingsOpen = Boolean(anchorEl);
+
+  // ▶︎ customize values (live mirror of the sliders)
+  const [custom, setCustom] = useState({ bhuj: 2000, ahm: 456, bhv: 0 });
+  const LIMITS = {
+    bhuj: { min: 500, max: 5036, label: "Bhuj" },
+    ahm: { min: 500, max: 5036, label: "Ahmedabad" },
+    bhv: { min: 500, max: 5036, label: "Bhavnagar" },
+  };
+
+  // Recommended baseline (what your left card shows)
+  const RECO_QTY = 2456;
+
+  // Baseline step values (in ₹ Lakhs) corresponding to RECO_QTY
+  const BASELINE_STEPS = [
+    { name: "Projected Revenue", value: 4 },
+    { name: "Additional Revenue", value: 2.5 },
+    { name: "Logistic Cost", value: -1 },
+    { name: "Handling Cost", value: -0.5 },
+    { name: "Transaction Cost", value: -0.5 },
+  ];
+
+  const stepsForQty = (qty) => {
+    const mult = qty <= 0 ? 0 : qty / RECO_QTY;
+    return BASELINE_STEPS.map((s) => ({ ...s, value: to1(s.value * mult) }));
+  };
+
+  const openSettings = (e) => setAnchorEl(e.currentTarget);
+  const closeSettings = () => setAnchorEl(null);
+
+  useMemo(() => {
+    if (recommendationType !== "customize") closeSettings();
+  }, [recommendationType]);
+
+  const fmt = (n) => (Number.isFinite(n) ? n.toLocaleString("en-IN") : "");
+  const parse = (val) => {
+    const cleaned = String(val).replace(/,/g, "");
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : 0;
+  };
+
+  const totalCustomQty = custom.bhuj + custom.ahm + custom.bhv;
+  const usingCustomized = recommendationType === "customize";
+  const qtyFeedingChart = usingCustomized ? totalCustomQty : RECO_QTY;
+  const stepsFeedingChart = useMemo(
+    () => stepsForQty(qtyFeedingChart),
+    [qtyFeedingChart]
+  );
+  const wfData = useMemo(
+    () => buildWaterfall(stepsFeedingChart, true, "Simulated Revenue"),
+    [stepsFeedingChart]
+  );
+  const yDomain = useMemo(() => {
+    const mins = wfData.map((d) => Math.min(d.base, d.base + d.delta));
+    const maxs = wfData.map((d) => Math.max(d.base, d.base + d.delta));
+    const min = Math.min(0, ...mins);
+    const max = Math.max(0, ...maxs);
+    return [min, max];
+  }, [wfData]);
+
+  const showCustomizedCard = usingCustomized;
 
   return (
-    <Paper
+    <Box
       sx={{
-        width: "100%",
-        border: "1px solid #cbd5e1",
-        borderRadius: 0,
-        p: 1.5,
+        width: { xs: 300, sm: 350, md: 400, lg: 565 },
+        ...card,
+        borderColor: "#cfe1ff",
+        height: "100%",                   // ✨ fill column
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
       }}
     >
-      <Stack spacing={2} sx={{ height: "100%" }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={2} flexWrap="wrap" rowGap={1}>
-            {chartData.regions.map((region, index) => (
-              <Chip
-                key={index}
-                icon={
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      bgcolor: region.color,
-                      ml: 1,
-                    }}
-                  />
-                }
-                label={region.name}
-                variant="outlined"
-                sx={{
-                  bgcolor: "#eff6ff",
-                  borderColor: "#cbd5e1",
-                  "& .MuiChip-label": { fontSize: 14, color: "#64748b" },
-                }}
+      <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "grey.300" }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={1}
+        >
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <RadioGroup
+              value={recommendationType}
+              onChange={(e) => setRecommendationType(e.target.value)}
+              row
+            >
+              <FormControlLabel
+                value="recommended"
+                control={<Radio size="small" />}
+                label={<Typography fontSize={12}>Recommended</Typography>}
               />
-            ))}
+              <FormControlLabel
+                value="customize"
+                control={<Radio size="small" />}
+                label={<Typography fontSize={12}>Customize</Typography>}
+              />
+            </RadioGroup>
+
+            {usingCustomized && (
+              <Tooltip title="Adjust quantities">
+                <IconButton
+                  aria-label="Adjust quantities"
+                  size="small"
+                  onClick={openSettings}
+                  sx={{ ml: 0.5 }}
+                >
+                  <Tune fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
 
           <Stack direction="row" spacing={1}>
             <Button
-              variant={viewMode === "M" ? "contained" : "outlined"}
-              onClick={() => setViewMode("M")}
-              sx={{
-                minWidth: 38,
-                width: 38,
-                height: 32,
-                borderRadius: "50px",
-                fontSize: 12,
-                fontWeight: 600,
-                color: viewMode === "M" ? "white" : "#1e293b",
-                bgcolor: viewMode === "M" ? "#2563eb" : "transparent",
-                borderColor: "#2563eb",
-                "&:hover": { bgcolor: viewMode === "M" ? "#1d4ed8" : "#f1f5f9" },
-              }}
+              variant="outlined"
+              size="small"
+              sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}
+              onClick={onCompare}
             >
-              M
+              Compare Simulation
             </Button>
             <Button
-              variant={viewMode === "W" ? "contained" : "outlined"}
-              onClick={() => setViewMode("W")}
-              sx={{
-                minWidth: 38,
-                width: 38,
-                height: 32,
-                borderRadius: "50px",
-                fontSize: 12,
-                fontWeight: 600,
-                color: viewMode === "W" ? "white" : "#1e293b",
-                bgcolor: viewMode === "W" ? "#2563eb" : "transparent",
-                borderColor: "#2563eb",
-                "&:hover": { bgcolor: viewMode === "W" ? "#1d4ed8" : "#f1f5f9" },
-              }}
+              variant="contained"
+              size="small"
+              sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}
             >
-              W
+              Request Transfer
             </Button>
           </Stack>
         </Stack>
+      </Box>
 
-        {/* Match MonthGraph’s responsive height */}
-        <Box sx={{ width: "100%", aspectRatio: { xs: "4 / 2.4", md: "16 / 5" }, position: "relative" }}>
-          <Stack direction="row" sx={{ height: "100%" }}>
-            {/* y-axis labels */}
-            <Stack spacing={yStackSpacing} sx={{ width: 60, justifyContent: "space-between", pt: 2 }}>
-              <Typography
-                sx={{
-                  transform: "rotate(-90deg)",
-                  transformOrigin: "center",
-                  fontSize: 14,
-                  color: "#64748b",
-                  position: "absolute",
-                  left: -60,
-                  top: "50%",
-                  width: 144,
-                  textAlign: "center",
-                }}
-              >
-                Units (in thousands)
-              </Typography>
-              {chartData.yAxisLabels.map((label, index) => (
-                <Typography
-                  key={index}
-                  sx={{ fontSize: 12, color: "#64748b", textAlign: "right", fontWeight: 600, width: 34 }}
-                >
-                  {label}
-                </Typography>
-              ))}
-            </Stack>
-
-            {/* chart svg */}
-            <Box sx={{ flex: 1, position: "relative", ml: 2 }}>
-              <svg
-                width="100%"
-                height="100%"
-                viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-                preserveAspectRatio="none"
-              >
-                <defs>
-                  <pattern
-                    id="grid2"
-                    width={SVG_W / GRID_COLS}
-                    height={SVG_H / GRID_ROWS}
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <path
-                      d={`M ${SVG_W / GRID_COLS} 0 L 0 0 0 ${SVG_H / GRID_ROWS}`}
-                      fill="none"
-                      stroke="#e2e8f0"
-                      strokeWidth="1"
-                    />
-                  </pattern>
-                </defs>
-
-                <rect width="100%" height="100%" fill="url(#grid2)" />
-
-                {chartData.regions.map((region, regionIndex) => {
-                  const pathData = region.data
-                    .map((value, index) => {
-                      const x = (index * SVG_W) / (GRID_COLS - 1);
-                      const y = SVG_H - (value / yMax) * SVG_H;
-                      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-                    })
-                    .join(" ");
-
-                  return (
-                    <g key={regionIndex}>
-                      <path
-                        d={pathData}
-                        fill="none"
-                        stroke={region.color}
-                        strokeWidth="2"
-                        strokeDasharray={regionIndex === 1 ? "5,5" : "0"}
-                      />
-                      {region.data.map((value, index) => {
-                        const x = (index * SVG_W) / (GRID_COLS - 1);
-                        const y = SVG_H - (value / yMax) * SVG_H;
-                        return <circle key={index} cx={x} cy={y} r="3" fill={region.color} />;
-                      })}
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {/* x-axis labels */}
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                sx={{ position: "absolute", bottom: -24, left: 0, right: 0, px: 2 }}
-              >
-                {chartData.xAxisLabels.map((label, index) => (
-                  <Typography key={index} sx={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
-                    {label}
-                  </Typography>
-                ))}
-              </Stack>
-            </Box>
-          </Stack>
-        </Box>
-      </Stack>
-    </Paper>
-  );
-};
-
-/* ---------- main content ---------- */
-const ScenariosSection = () => {
-  const [selectedScenario, setSelectedScenario] = useState(1);
-  const [chartTab, setChartTab] = useState(0);
-  const [disruptionTab, setDisruptionTab] = useState(0);
-  const [viewMode, setViewMode] = useState("W");
-
-  const handleScenarioClick = (scenarioId) => setSelectedScenario(scenarioId);
-
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        minHeight: 0,
-      }}
-    >
-      {/* Main content area */}
-      <Stack
-        direction="row"
-        spacing={0.5}
-        sx={{
-          height: "100%",
-          border: 1,
-          borderColor: "grey.300",
-          flex: 1,
-          minHeight: 0,
+      {/* Sliders Popover */}
+      <Popover
+        open={settingsOpen}
+        anchorEl={anchorEl}
+        onClose={closeSettings}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        PaperProps={{
+          sx: {
+            p: 1,
+            borderRadius: 2,
+            boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+            width: 300,
+          },
         }}
       >
-        {/* Left sidebar - Scenarios */}
-        <Box
-          sx={{
-            width: 305,
-            bgcolor: "background.paper",
-            borderRight: 1,
-            borderColor: "grey.300",
-            minHeight: 0,
-          }}
+        {/* Bhuj */}
+        <Box sx={{ p: 1 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
+            Bhuj
+          </Typography>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            sx={{ mb: 0.25 }}
+          >
+            <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+              {LIMITS.bhuj.min}
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+              {LIMITS.bhuj.max}
+            </Typography>
+          </Stack>
+          <Slider
+            size="small"
+            value={Math.min(
+              Math.max(custom.bhuj, LIMITS.bhuj.min),
+              LIMITS.bhuj.max
+            )}
+            min={LIMITS.bhuj.min}
+            max={LIMITS.bhuj.max}
+            onChange={(_, v) => setCustom((c) => ({ ...c, bhuj: Number(v) }))}
+            sx={{ "& .MuiSlider-thumb": { width: 12, height: 12 } }}
+          />
+          <TextField
+            size="small"
+            value={fmt(custom.bhuj)}
+            onChange={(e) =>
+              setCustom((c) => ({ ...c, bhuj: parse(e.target.value) }))
+            }
+            fullWidth
+            sx={{
+              mt: 0.5,
+              "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 },
+            }}
+          />
+        </Box>
+
+        <Divider />
+
+        {/* Ahmedabad */}
+        <Box sx={{ p: 1 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
+            Ahmedabad
+          </Typography>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            sx={{ mb: 0.25 }}
+          >
+            <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+              {LIMITS.ahm.min}
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+              {LIMITS.ahm.max}
+            </Typography>
+          </Stack>
+          <Slider
+            size="small"
+            value={Math.min(
+              Math.max(custom.ahm, LIMITS.ahm.min),
+              LIMITS.ahm.max
+            )}
+            min={LIMITS.ahm.min}
+            max={LIMITS.ahm.max}
+            onChange={(_, v) => setCustom((c) => ({ ...c, ahm: Number(v) }))}
+            sx={{ "& .MuiSlider-thumb": { width: 12, height: 12 } }}
+          />
+          <TextField
+            size="small"
+            value={fmt(custom.ahm)}
+            onChange={(e) =>
+              setCustom((c) => ({ ...c, ahm: parse(e.target.value) }))
+            }
+            fullWidth
+            sx={{
+              mt: 0.5,
+              "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 },
+            }}
+          />
+        </Box>
+
+        <Divider />
+
+        {/* Bhavnagar */}
+        <Box sx={{ p: 1 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
+            Bhavnagar
+          </Typography>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            sx={{ mb: 0.25 }}
+          >
+            <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+              {LIMITS.bhv.min}
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+              {LIMITS.bhv.max}
+            </Typography>
+          </Stack>
+          <Slider
+            size="small"
+            value={Math.min(
+              Math.max(custom.bhv, LIMITS.bhv.min),
+              LIMITS.bhv.max
+            )}
+            min={LIMITS.bhv.min}
+            max={LIMITS.bhv.max}
+            onChange={(_, v) => setCustom((c) => ({ ...c, bhv: Number(v) }))}
+            sx={{ "& .MuiSlider-thumb": { width: 12, height: 12 } }}
+          />
+          <TextField
+            size="small"
+            value={fmt(custom.bhv)}
+            onChange={(e) =>
+              setCustom((c) => ({ ...c, bhv: parse(e.target.value) }))
+            }
+            fullWidth
+            sx={{
+              mt: 0.5,
+              "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 },
+            }}
+          />
+        </Box>
+      </Popover>
+
+      <Box sx={{ borderBottom: 1, borderColor: "grey.300" }}>
+        <Tabs
+          value={summaryTabValue}
+          onChange={(_, v) => setSummaryTabValue(v)}
         >
-          <Stack sx={{ height: "100%" }}>
-            <Box
+          <Tab
+            label={<Typography fontSize={12}>Summary</Typography>}
+            sx={{ textTransform: "none", minHeight: 36 }}
+          />
+          <Tab
+            label={<Typography fontSize={12}>Details</Typography>}
+            sx={{ textTransform: "none", minHeight: 36 }}
+          />
+        </Tabs>
+      </Box>
+
+      {/* ===== Summary with side-by-side cards ===== */}
+      <Box sx={{ p: 1.5, overflow: "auto", flex: 1, minHeight: 0 }}>
+        {summaryTabValue === 0 ? (
+          <Stack direction="row" spacing={1.25} sx={{ alignItems: "stretch" }}>
+            <Card
               sx={{
-                p: 1.25,
-                bgcolor: "grey.200",
-                borderBottom: 1,
-                borderColor: "grey.300",
+                flex: 1,
+                backgroundColor: "#e7f0ff",
+                border: "1px solid #cfe1ff",
+                boxShadow: 0,
               }}
             >
-              <Stack
-                direction="row"
-                spacing={0.5}
-                alignItems="center"
-                sx={{ mb: 1 }}
-              >
-                <HelpOutline sx={{ fontSize: 16 }} />
-                <Typography variant="body2" color="text.secondary">
-                  What-If Scenarios?
+              <CardContent sx={{ p: 1.25 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: "#1d4ed8",
+                    mb: 1,
+                  }}
+                >
+                  Recommended
                 </Typography>
-              </Stack>
-              <Typography variant="caption" color="text.disabled">
-                Select a scenario to analyze its impact on demand planning.
-              </Typography>
-            </Box>
 
-            <Box sx={{ height: 50, borderBottom: 1, borderColor: "grey.300" }}>
-              <Autocomplete
-                options={[]}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Search scenarios"
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 0,
-                        height: 50,
-                        "& fieldset": { border: "none" },
-                      },
-                    }}
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: <Search sx={{ fontSize: 16, mr: 1 }} />,
-                      endAdornment: <Add sx={{ fontSize: 16 }} />,
-                    }}
-                  />
-                )}
-              />
-            </Box>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  sx={{ mb: 1 }}
+                >
+                  <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
+                    Bhuj:
+                  </Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                    {fmt(2456)} Qty
+                  </Typography>
+                </Stack>
 
-            <Box sx={{ flex: 1, overflow: "auto" }}>
-              <Stack>
-                {scenariosData.map((scenario) => (
-                  <Paper
-                    key={scenario.id}
-                    onClick={() => handleScenarioClick(scenario.id)}
+                <Stack spacing={1}>
+                  <MetricTile title="Profit" value="₹ 55,750" delta="24%" />
+                  <MetricTile title="ETA" value="22 Jan 25" />
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {recommendationType === "customize" && (
+              <Card
+                sx={{
+                  flex: 1,
+                  backgroundColor: "#fff",
+                  border: "1px solid #bfdbfe",
+                  boxShadow: 0,
+                }}
+              >
+                <CardContent sx={{ p: 1.25 }}>
+                  <Typography
                     sx={{
-                      p: 1.25,
-                      m: 0,
-                      borderRadius: 0,
-                      border: "none",
-                      borderBottom: 1,
-                      borderColor: "grey.300",
-                      borderLeft: scenario.isSelected ? 4 : 0,
-                      borderLeftColor: scenario.isSelected
-                        ? "info.main"
-                        : "transparent",
-                      bgcolor: scenario.isSelected
-                        ? "info.50"
-                        : "background.paper",
-                      cursor: "pointer",
-                      "&:hover": {
-                        bgcolor: scenario.isSelected ? "info.50" : "grey.50",
-                      },
+                      fontWeight: 700,
+                      fontSize: 14,
+                      color: "#0f172a",
+                      mb: 1,
                     }}
                   >
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                    >
-                      <Stack spacing={0.5} sx={{ flex: 1 }}>
-                        <Stack
-                          direction="row"
-                          spacing={0.5}
-                          alignItems="center"
-                        >
-                          <TrendingUp sx={{ fontSize: 12 }} />
-                          <Typography
-                            variant="body2"
-                            color="text.primary"
-                            sx={{ fontSize: 13, fontWeight: 500 }}
-                          >
-                            {scenario.title}
-                          </Typography>
-                        </Stack>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ fontSize: 11 }}
-                        >
-                          {scenario.description}
-                        </Typography>
-                      </Stack>
-                      <MoreVert sx={{ fontSize: 16 }} />
-                    </Stack>
+                    Customized
+                  </Typography>
 
-                    <Stack direction="row" spacing={0.5} sx={{ mt: 1 }}>
-                      <Chip
-                        label={scenario.category}
-                        size="small"
-                        sx={{
-                          bgcolor: getCategoryColor(scenario.category).bg,
-                          color: getCategoryColor(scenario.category).color,
-                          fontSize: 9,
-                          height: 18,
-                          "& .MuiChip-label": { px: 0.5 },
-                        }}
-                      />
-                      <Chip
-                        label={scenario.impact}
-                        size="small"
-                        sx={{
-                          bgcolor: "grey.200",
-                          color: "grey.800",
-                          fontSize: 9,
-                          height: 18,
-                          "& .MuiChip-label": { px: 0.5 },
-                        }}
-                      />
-                      <Chip
-                        label={scenario.duration}
-                        size="small"
-                        sx={{
-                          bgcolor: "grey.200",
-                          color: "grey.800",
-                          fontSize: 9,
-                          height: 18,
-                          "& .MuiChip-label": { px: 0.5 },
-                        }}
-                      />
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            </Box>
+                  <Stack spacing={0.5} sx={{ mb: 1 }}>
+                    {/* ...custom qty rows... */}
+                  </Stack>
+
+                  <Stack spacing={1}>
+                    <MetricTile title="Profit" value="₹ 55,750" delta="-14%" />
+                    <MetricTile title="ETA" value="22 Jan 25" />
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
           </Stack>
-        </Box>
+        ) : (
+          <>
+            {/* Waterfall */}
+            <Card sx={{ mb: 1.5 }}>
+              <CardContent sx={{ p: 1.25 }}>
 
-        {/* Middle content - Charts */}
-        <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-          {/* Top chart - MonthGraph (responsive SVG) */}
-          <MonthGraph viewMode={viewMode} setViewMode={setViewMode} />
-
-          {/* Bottom chart with tabs - RegionChart */}
-          <Box
-            sx={{
-              bgcolor: "background.paper",
-              border: 1,
-              borderColor: "grey.300",
-            }}
-          >
-            <Tabs
-              value={chartTab}
-              onChange={(e, newValue) => setChartTab(newValue)}
-              sx={{
-                bgcolor: "background.paper",
-                borderBottom: 1,
-                borderColor: "grey.300",
-                "& .MuiTab-root": { minHeight: 40, fontSize: 12 },
-              }}
-            >
-              <Tab label="Graph" />
-              <Tab label="Data Table" />
-            </Tabs>
-
-            <RegionChart viewMode={viewMode} setViewMode={setViewMode} />
-          </Box>
-        </Stack>
-
-        {/* Right sidebar - Disruption */}
-        <Box
-          sx={{
-            width: 320,
-            bgcolor: "background.paper",
-            border: 1,
-            borderColor: "grey.300",
-            minWidth: 0,
-          }}
-        >
-          <Tabs
-            value={disruptionTab}
-            onChange={(e, newValue) => setDisruptionTab(newValue)}
-            sx={{
-              bgcolor: "background.paper",
-              borderBottom: 1,
-              borderColor: "grey.300",
-              "& .MuiTab-root": { minHeight: 40, fontSize: 12 },
-            }}
-          >
-            <Tab label="Disruption" />
-            <Tab label="Tracking" />
-          </Tabs>
-
-          <Box
-            sx={{
-              p: 1.5,
-              bgcolor: "grey.50",
-              height: "calc(100% - 48px)",
-              overflow: "auto",
-            }}
-          >
-            <Stack spacing={2}>
-              {disruptionData.map((disruption) => (
-                <Stack
-                  key={disruption.id}
-                  direction="row"
-                  spacing={1}
-                  alignItems="flex-start"
-                >
-                  <Checkbox
-                    checked={disruption.isCompleted}
-                    size="small"
-                    sx={{ mt: -0.5 }}
-                  />
-
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="caption"
-                      color="text.primary"
-                      sx={{ fontWeight: 600, fontSize: 11 }}
+                <Box sx={{ width: "100%", height: 260, mt: 1 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={wfData}
+                      margin={{ top: 28, right: 16, bottom: 8, left: 12 }}
+                      barCategoryGap={8}
                     >
-                      {disruption.date}
-                    </Typography>
-
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      alignItems="flex-start"
-                      sx={{ mt: 0.5 }}
-                    >
-                      <Warning
-                        sx={{ fontSize: 12, color: "warning.main", mt: 0.25 }}
+                      <CartesianGrid stroke="#eef2f7" vertical />
+                      <XAxis
+                        dataKey="name"
+                        interval={0}
+                        minTickGap={0}
+                        tickMargin={12}
+                        height={44}
+                        tick={<WfTick />}
+                        axisLine={{ stroke: "#e5e7eb" }}
+                        tickLine={false}
                       />
-                      <Typography
-                        variant="caption"
-                        color="text.primary"
-                        sx={{
+                      <YAxis
+                        domain={yDomain}
+                        tick={{ fontSize: 11, fill: "#475569" }}
+                        axisLine={{ stroke: "#e5e7eb" }}
+                        tickLine={false}
+                        tickFormatter={(v) => `${to1(v)}`}
+                        label={{
+                          value: "₹ in Lakhs",
+                          angle: -90,
+                          position: "insideLeft",
+                          offset: 10,
+                          fill: "#64748b",
                           fontSize: 11,
-                          textDecoration: disruption.isCompleted
-                            ? "line-through"
-                            : "none",
                         }}
+                      />
+                      <ReferenceLine y={0} stroke="#94a3b8" />
+                      <RTooltip
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload?.[0]) return null;
+                          const p = payload[0].payload;
+                          return (
+                            <Box
+                              sx={{
+                                p: 1,
+                                bgcolor: "#fff",
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 1,
+                              }}
+                            >
+                              <Typography
+                                sx={{ fontWeight: 700, fontSize: 12, mb: 0.5 }}
+                              >
+                                {label}
+                              </Typography>
+                              <Typography sx={{ fontSize: 12, color: "#334155" }}>
+                                Change: {lakhLabel(p.raw)}
+                              </Typography>
+                              <Typography sx={{ fontSize: 12, color: "#64748b" }}>
+                                Cumulative: {lakhLabel(p.cumulative)}
+                              </Typography>
+                            </Box>
+                          );
+                        }}
+                      />
+                      <Bar
+                        dataKey="base"
+                        stackId="wf"
+                        fill="transparent"
+                        isAnimationActive={false}
+                        barSize={26}
+                      />
+                      <Bar
+                        dataKey="delta"
+                        stackId="wf"
+                        isAnimationActive={false}
+                        barSize={26}
                       >
-                        <strong>
-                          {disruption.location} - {disruption.product}:
-                        </strong>
-                        <br />
-                        {disruption.description}
-                      </Typography>
-                    </Stack>
-                  </Box>
-                </Stack>
-              ))}
-            </Stack>
-          </Box>
-        </Box>
-      </Stack>
+                        {wfData.map((d, i) => (
+                          <Cell key={i} fill={barFill(d)} />
+                        ))}
+                        <LabelList
+                          dataKey="raw"
+                          position="top"
+                          offset={6}
+                          formatter={(v) => lakhLabel(v)}
+                          style={{
+                            fontSize: 12,
+                            fill: "#111827",
+                            fontWeight: 700,
+                          }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Box>
+              </CardContent>
+            </Card>
 
-      {/* Bottom action buttons */}
+            {/* Big summary card below waterfall */}
+            <Card sx={{ border: 1, borderColor: "#dbeafe", boxShadow: 0 }}>
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 1,
+                  bgcolor: "#eaf2ff",
+                  borderBottom: "1px solid #dbeafe",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
+                  Bhuj{" "}
+                  <Typography
+                    component="span"
+                    sx={{ color: "#2563eb", ml: 0.5, fontWeight: 700 }}
+                  >
+                    (Recommended)
+                  </Typography>
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: "#334155" }}>
+                  Qty: <strong>{fmt(2456)}</strong>
+                </Typography>
+              </Box>
+
+              <CardContent sx={{ p: 1.25 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                    gap: 1,
+                  }}
+                >
+                  <MetricTile title="Profit" value="₹ 55,750" delta="24%" />
+                  <MetricTile title="ETA" value="22 Jan 25" />
+                  <MetricTile title="Logistic Cost" value="₹ 1,02,100" delta="-15%" />
+                  <MetricTile title="Labor/Handling" value="₹ 73,000" delta="-15%" />
+                  <MetricTile title="Transaction Cost" value="₹ 2,55,650" delta="24%" />
+                  <MetricTile title="Total Cost" value="₹ 1,78,650" delta="10%" />
+                  <MetricTile title="Revenue" value="₹ 2,55,650" delta="24%" />
+                </Box>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+/* =====================  MAIN LAYOUT  ===================== */
+
+function MainContentSection() {
+  const [selectedScenario, setSelectedScenario] = useState(scenariosData[0]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const [showSim, setShowSim] = useState(false);
+
+  if (isMobile) {
+    return (
       <Box
         sx={{
           display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
+          flexDirection: "column",
+          height: "100dvh",   // ✨ true-viewport
+          p: 1,
           gap: 1,
-          p: 2,
-          bgcolor: "background.paper",
-          borderTop: 1,
-          borderColor: "grey.300",
+          overflow: "hidden",
         }}
       >
-        <Checkbox size="small" />
-        <Typography variant="body2" color="text.secondary" sx={{ mr: "auto" }}>
-          Save as Template
-        </Typography>
-        <Button variant="contained" color="primary" size="small">
-          Apply Scenario
-        </Button>
-        <Button variant="outlined" size="small">
-          Cancel
-        </Button>
+        <SidebarBox
+          selectedScenario={selectedScenario}
+          setSelectedScenario={setSelectedScenario}
+        />
+        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+          {showSim ? (
+            <NewRecommendationScreen onBack={() => setShowSim(false)} />
+          ) : (
+            <>
+              <ForecastChartBox />
+              <Box sx={{ height: 8 }} />
+              <DemandByCityCard />
+              <Box sx={{ height: 8 }} />
+              <RecommendationBox onCompare={() => setShowSim(true)} />
+            </>
+          )}
+        </Box>
       </Box>
-    </Box>
-  );
-};
+    );
+  }
 
-/* ---------- page shell ---------- */
-const WhatIfScenario = () => {
+  // Desktop
   return (
     <Box
       sx={{
-        bgcolor: "grey.300",
         display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-        minHeight: "100vh",
-        width: "100%",
+        flexDirection: "row",
+        height: "100dvh",  // ✨ fill viewport
+        p: 1,
+        gap: 1,
+        overflow: "hidden",
       }}
     >
-      <Box
-        sx={{
-          bgcolor: "grey.200",
-          width: "100%",
-          maxWidth: 1920,
-          minHeight: "100vh",
-        }}
-      >
+      <SidebarBox
+        selectedScenario={selectedScenario}
+        setSelectedScenario={setSelectedScenario}
+      />
+
+      {showSim ? (
         <Box
           sx={{
-            mt: 0,                 // <-- removed 92px top margin
-            p: 1.25,
-            height: "100vh",       // <-- fill full height (no subtraction)
+            flex: 1,
+            minWidth: 0,
             display: "flex",
             flexDirection: "column",
-            minHeight: 0,
+            gap: 1,
+            height: "100%",
+            overflow: "auto",
           }}
         >
-          <Stack
-            direction="column"
-            spacing={1.25}
-            sx={{ width: "100%", height: "100%", minHeight: 0 }}
-          >
-            <ScenariosSection />
-          </Stack>
+          <NewRecommendationScreen onBack={() => setShowSim(false)} />
         </Box>
-      </Box>
+      ) : (
+        <>
+          {/* Middle column becomes a 2-row grid = both cards are viewport-tall halves */}
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: "grid",
+              gridTemplateRows: "1fr 1fr",
+              gap: 1,
+              height: "100%",
+              overflow: "hidden",
+            }}
+          >
+            <ForecastChartBox />
+            <DemandByCityCard />
+          </Box>
+
+          {/* Right column fills viewport */}
+          <Box sx={{ height: "100%", display: "flex" }}>
+            <RecommendationBox onCompare={() => setShowSim(true)} />
+          </Box>
+        </>
+      )}
     </Box>
   );
-};
+}
 
+/* =====================  ROOT  ===================== */
 
-export default WhatIfScenario;
+export default function DemandMProject() {
+  return (
+    <Box
+      sx={{
+        backgroundColor: "#CBD5E1",
+        width: "100%",
+        height: "100dvh", // ✨ ensure true-viewport height
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <CssBaseline />
+      <MainContentSection />
+    </Box>
+  );
+}
