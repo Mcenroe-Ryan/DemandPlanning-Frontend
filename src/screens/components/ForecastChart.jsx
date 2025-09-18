@@ -450,7 +450,6 @@ const CustomLegend = ({
 
 /* -------------------- ISO Week Helpers -------------------- */
 const WEEK_LABEL_RE = /^(\d{4})-W(\d{2})$/;
-
 function getISOWeekParts(date) {
   const d = new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
@@ -794,20 +793,17 @@ export default function ForecastChart({
 
   let safeTodayIdx = -1;
   if (isWeekly) {
-    // Try exact match with ISO week label
     const wkLbl = isoWeekLabelFor(today); // e.g., 2025-W36
     const exact = months.indexOf(wkLbl);
     if (exact !== -1) {
       safeTodayIdx = exact;
     } else {
-      // Fallback: map labels to dates and take the last index <= today
       const mapped = months.map((l) => parseISOWeekLabel(String(l)));
       safeTodayIdx = mapped.reduce((acc, d, i) => {
         if (d && d.getTime() <= today.getTime()) return i;
         return acc;
       }, -1);
       if (safeTodayIdx === -1 && months.length) {
-        // If all future, split before first index
         safeTodayIdx = -1;
       }
     }
@@ -844,11 +840,8 @@ export default function ForecastChart({
     const histMask = (arr) => arr.map((v, i) => (i <= safeTodayIdx ? v : null));
     const futMask = (arr) => arr.map((v, i) => (i > safeTodayIdx ? v : null));
 
-    // Join: keep a smooth bridge by duplicating last historical point
     const join = (histArr, futArr) => {
       const out = [...futArr];
-
-      // find the bridge position (first future point whose previous slot is empty)
       let bridgePos = -1;
       for (let i = 1; i < out.length; i++) {
         if (out[i] != null && out[i - 1] == null) {
@@ -856,10 +849,9 @@ export default function ForecastChart({
           break;
         }
       }
-
       if (bridgePos >= 0) {
-        out[bridgePos] = histArr?.[bridgePos] ?? null; // bridge onto dashed series
-        if (Array.isArray(histArr)) histArr[bridgePos] = null; // hide solid at the bridge
+        out[bridgePos] = histArr?.[bridgePos] ?? null;
+        if (Array.isArray(histArr)) histArr[bridgePos] = null;
       }
       return out;
     };
@@ -875,7 +867,6 @@ export default function ForecastChart({
       });
     };
 
-    // Build monthly default
     let actual = actualFull;
     let baselineHist = histMask(baselineFull);
     let baselineFut = join(histMask(baselineFull), futMask(baselineFull));
@@ -891,12 +882,10 @@ export default function ForecastChart({
       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
       const lastIdx = months.length - 1;
 
-      // history window: last 6 weeks INCLUDING current week
       const hFrom = clamp(safeTodayIdx - 5, 0, lastIdx);
       const hTo = clamp(safeTodayIdx, 0, lastIdx);
 
-      // forecast window: next 6 weeks AFTER current week, but keep bridge at current week for dashed series
-      const fFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx); // include bridge at safeTodayIdx
+      const fFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx);
       const fTo = clamp(safeTodayIdx + 6, 0, lastIdx);
 
       const applyWindow = (arr, from, to) =>
@@ -911,7 +900,7 @@ export default function ForecastChart({
       mlFut = applyWindow(mlFut, fFrom, fTo);
 
       consHist = applyWindow(consHist, hFrom, hTo);
-      consFut = applyWindow(consFut, fFrom, fTo); // will be just first future + bridge
+      consFut = applyWindow(consFut, fFrom, fTo);
     }
 
     return {
@@ -1022,7 +1011,6 @@ export default function ForecastChart({
             (this.points && this.points[0] && this.points[0].point.x) ??
             (this.point && this.point.x);
 
-          // get label from categories (months array)
           const categories = this.points?.[0]?.series?.xAxis?.categories || [];
           const header =
             Number.isInteger(idx) && categories[idx] !== undefined
@@ -1031,7 +1019,6 @@ export default function ForecastChart({
 
           let pts = this.points || [this];
 
-          // at split index, hide solid Baseline/ML/Consensus (bridge keeps dashed)
           if (idx === safeTodayIdx) {
             const hideSolid = new Set(["Baseline", "ML", "Consensus"]);
             pts = pts.filter((p) => !hideSolid.has(p.series.name));
@@ -1148,7 +1135,6 @@ export default function ForecastChart({
       const cfg = LEGEND_CONFIG.find((i) => i.key === key);
       if (!cfg) return;
 
-      // Ignore forecast toggles if there's no forecast data
       const isForecastKey = [
         "baseline_forecast",
         "ml_forecast",
@@ -1234,6 +1220,47 @@ export default function ForecastChart({
   const mapeStr = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
   const mapeColor = getMapeColor(mapeStr);
 
+  /* --- Auto-zoom when weekly --- */
+  useEffect(() => {
+    const ch = chartRef.current?.chart;
+    if (!ch) return;
+
+    if (isWeekly) {
+      // Look across all rendered series data for non-null points
+      const arrays = [
+        seriesData.actual,
+        seriesData.baseline,
+        seriesData.baseline_forecast,
+        seriesData.ml,
+        seriesData.ml_forecast,
+        seriesData.consensus,
+        seriesData.consensus_forecast,
+      ];
+      let min = Infinity;
+      let max = -Infinity;
+
+      arrays.forEach((arr) => {
+        (arr || []).forEach((v, i) => {
+          if (v != null) {
+            if (i < min) min = i;
+            if (i > max) max = i;
+          }
+        });
+      });
+
+      if (min !== Infinity && max !== -Infinity) {
+        const pad = 0.5; // small left/right breathing room
+        ch.xAxis[0].setExtremes(min - pad, max + pad, true, false);
+      } else {
+        // no data -> reset
+        ch.xAxis[0].setExtremes(null, null, true, false);
+      }
+    } else {
+      // monthly: show all
+      ch.xAxis[0].setExtremes(null, null, true, false);
+    }
+  }, [isWeekly, months, seriesData]);
+
   return (
     <Box
       sx={{
@@ -1307,9 +1334,6 @@ export default function ForecastChart({
           >
             <GridViewIcon fontSize="small" />
           </IconButton>
-          {/* <IconButton size="small">
-            <ChatBubbleOutlineIcon fontSize="small" />
-          </IconButton> */}
           <IconButton size="small" onClick={handleDownloadPdf}>
             <DownloadIcon
               sx={{ width: 20, height: 20, color: "text.secondary" }}

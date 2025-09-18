@@ -1,0 +1,379 @@
+{
+  "skus": [
+    {
+      "id": "CS050500D",
+      "name": "Sweet Mixes",
+      "country": "India",
+      "currency": "INR",
+      "symbol": "₹",
+      "currentLocation": "Rajkot",
+      "currentInventory": 4567,
+      "nextWeekDemand": 5879,
+      "demandForecast": {
+        "actual": [
+          { "week": 33, "units": 5000 },
+          { "week": 34, "units": 12000 },
+          { "week": 35, "units": 10000 },
+          { "week": 36, "units": 15000 }
+        ],
+  "scenarios": {
+    "SCN001": {
+      "id": "SCN001",
+      "name": "Sudden Spike in Demand",
+      "impact": "+30%",
+      "duration": "3 Months",
+      "description": "30% increase due to marketing campaign",
+      "category": "demand_increase",
+      "applicableRegions": ["India", "Asia"]
+    },
+    "SCN002": {
+      "id": "SCN002",
+      "name": "Sudden Drop in Demand",
+      "impact": "-20%",
+      "duration": "6 Months",
+      "description": "20% drop due to economic slowdown",
+      "category": "demand_decrease",
+      "applicableRegions": ["India", "Global"]
+    },
+    "SCN003": {
+      "id": "SCN003",
+      "name": "New Market Expansion",
+      "impact": "+40%",
+      "duration": "12 Months",
+      "description": "Launch in new region with 40% uplift",
+      "category": "expansion",
+      "applicableRegions": ["India"]
+    },
+    "SCN004": {
+      "id": "SCN004",
+      "name": "Supplier Disruption",
+      "impact": "-15%",
+      "duration": "4 Months",
+      "description": "Unfulfilled demand due to raw material shortage",
+      "category": "supply_disruption",
+      "applicableRegions": ["India", "Asia"]
+    },
+    "SCN005": {
+      "id": "SCN005",
+      "name": "Fitness Trend Surge",
+      "impact": "+45%",
+      "duration": "8 Months",
+      "description": "45% increase due to fitness trend and gym reopenings",
+      "category": "demand_increase",
+      "applicableRegions": ["USA", "North America"]
+    },
+    "SCN006": {
+      "id": "SCN006",
+      "name": "Competitive Pricing Pressure",
+      "impact": "-25%",
+      "duration": "5 Months",
+      "description": "25% drop due to competitor price reduction",
+      "category": "competitive_pressure",
+      "applicableRegions": ["USA", "Global"]
+    },
+    "SCN007": {
+      "id": "SCN007",
+      "name": "New Flavor Launch",
+      "impact": "+35%",
+      "duration": "10 Months",
+      "description": "Launch new chocolate flavor with 35% demand boost",
+      "category": "product_launch",
+      "applicableRegions": ["USA"]
+    },
+    "SCN008": {
+      "id": "SCN008",
+      "name": "Supply Chain Cost Increase",
+      "impact": "-18%",
+      "duration": "6 Months",
+      "description": "Reduced demand due to increased product costs",
+      "category": "cost_increase",
+      "applicableRegions": ["USA", "North America"]
+    }
+  },
+        "forecast": [
+          { "week": 36, "units": 28000 },
+          { "week": 37, "units": 12000 },
+          { "week": 38, "units": 11000 },
+          { "week": 39, "units": 7000 },
+          { "week": 40, "units": 14000 }
+        ]
+      },
+      "locations": [
+        {
+          "name": "Bhuj",
+          "recommended": true,
+          "distance": 197,
+          "availableQty": 15617,
+          "demandNextWeek": 7112,
+          "safetyStock": 10668,
+          "excessQty": 4949,
+          "eta": 4,
+          "logistics": {
+            "projectedRevenue": 74100,
+            "additionalRevenue": 72500,
+            "logisticCost": -11000,
+            "laborHandlingCost": -6500,
+            "transactionCost": -5100,
+            "simulatedRevenue": 74500,
+            "totalRevenue": 41000,
+            "totalProfit": 21000,
+            "totalCost": 178650,
+            "profitMargin": 24
+          }
+        },
+        {
+          "name": "Ahemdabad",
+          "recommended": false,
+          "distance": 263,
+          "availableQty": 16873,
+          "demandNextWeek": 7891,
+          "safetyStock": 11836,
+          "excessQty": 5036,
+          "eta": 6,
+          "logistics": {
+            "projectedRevenue": 74000,
+            "additionalRevenue": 72000,
+            "logisticCost": -3000,
+            "laborHandlingCost": -3100,
+            "transactionCost": -5100,
+            "simulatedRevenue": 74100,
+            "totalRevenue": 40000,
+            "totalProfit": 10000,
+            "totalCost": 175000,
+            "profitMargin": 18
+          }
+        },
+        {
+          "name": "Bhavnagar",
+          "recommended": false,
+          "distance": 317,
+          "availableQty": 18555,
+          "demandNextWeek": 8943,
+          "safetyStock": 13414,
+          "excessQty": 5140,
+          "eta": 8,
+          "logistics": {
+            "projectedRevenue": 74000,
+            "additionalRevenue": 72000,
+            "logisticCost": -3000,
+            "laborHandlingCost": -5300,
+            "transactionCost": -3400,
+            "simulatedRevenue": 74600,
+            "totalRevenue": 40000,
+            "totalProfit": 30000,
+            "totalCost": 168000,
+            "profitMargin": 22
+          }
+        }
+      ],
+      "recommendedLocation": {
+        "name": "Bhuj",
+        "qty": 2456,
+        "profit": 55750,
+        "profitMargin": 24,
+        "eta": "22 Jan 25",
+        "logisticCost": 102100,
+        "laborHandlingCost": 73000,
+        "revenue": 255650,
+        "totalCost": 178650
+      },
+      "disruptions": [
+        {
+          "date": "22 Aug, 2025 12:34PM",
+          "location": "Rajkot (RAJB2)",
+          "type": "unexpected regional event",
+          "description": "Sweet Mixes (CS050500D): unexpected regional event.",
+          "selected": false
+        },
+        {
+          "date": "18 Jul, 2025 04:30PM", 
+          "location": "Hyderabad (HYD643)",
+          "type": "Weather event",
+          "description": "RTE - Soup Pack (Veg) (G46802008): Weather event",
+          "selected": true
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "Sudden Spike in Demand",
+          "impact": "+30%",
+          "duration": "3 Months",
+          "description": "30% increase due to marketing campaign"
+        },
+        {
+          "name": "Sudden Drop in Demand",
+          "impact": "-20%",
+          "duration": "6 Months", 
+          "description": "20% drop due to economic slowdown"
+        },
+        {
+          "name": "New Market Expansion",
+          "impact": "+40%",
+          "duration": "12 Months",
+          "description": "Launch in new region with 40% uplift"
+        },
+        {
+          "name": "Supplier Disruption",
+          "impact": "-15%",
+          "duration": "4 Months",
+          "description": "Unfulfilled demand due to raw material shortage"
+        }
+      ]
+    },
+    {
+      "id": "US075600A",
+      "name": "Protein Bars",
+      "country": "USA",
+      "currency": "USD",
+      "symbol": "$",
+      "currentLocation": "Chicago",
+      "currentInventory": 3240,
+      "nextWeekDemand": 4650,
+      "demandForecast": {
+        "actual": [
+          { "week": 33, "units": 4200 },
+          { "week": 34, "units": 8500 },
+          { "week": 35, "units": 9200 },
+          { "week": 36, "units": 12800 }
+        ],
+        "forecast": [
+          { "week": 36, "units": 22000 },
+          { "week": 37, "units": 18000 },
+          { "week": 38, "units": 15000 },
+          { "week": 39, "units": 9500 },
+          { "week": 40, "units": 11200 }
+        ]
+      },
+      "locations": [
+        {
+          "name": "Denver",
+          "recommended": true,
+          "distance": 920,
+          "availableQty": 18500,
+          "demandNextWeek": 6800,
+          "safetyStock": 12400,
+          "excessQty": 6100,
+          "eta": 2,
+          "logistics": {
+            "projectedRevenue": 125000,
+            "additionalRevenue": 118000,
+            "logisticCost": -18500,
+            "laborHandlingCost": -12300,
+            "transactionCost": -8200,
+            "simulatedRevenue": 124000,
+            "totalRevenue": 98000,
+            "totalProfit": 58000,
+            "totalCost": 142000,
+            "profitMargin": 28
+          }
+        },
+        {
+          "name": "Phoenix",
+          "recommended": false,
+          "distance": 1420,
+          "availableQty": 16200,
+          "demandNextWeek": 7200,
+          "safetyStock": 11800,
+          "excessQty": 4400,
+          "eta": 4,
+          "logistics": {
+            "projectedRevenue": 118000,
+            "additionalRevenue": 115000,
+            "logisticCost": -22000,
+            "laborHandlingCost": -15800,
+            "transactionCost": -9500,
+            "simulatedRevenue": 119000,
+            "totalRevenue": 86000,
+            "totalProfit": 38700,
+            "totalCost": 156000,
+            "profitMargin": 22
+          }
+        },
+        {
+          "name": "Dallas",
+          "recommended": false,
+          "distance": 925,
+          "availableQty": 19800,
+          "demandNextWeek": 8900,
+          "safetyStock": 14200,
+          "excessQty": 5600,
+          "eta": 3,
+          "logistics": {
+            "projectedRevenue": 128000,
+            "additionalRevenue": 122000,
+            "logisticCost": -16800,
+            "laborHandlingCost": -13500,
+            "transactionCost": -7900,
+            "simulatedRevenue": 127000,
+            "totalRevenue": 102000,
+            "totalProfit": 63800,
+            "totalCost": 138000,
+            "profitMargin": 31
+          }
+        }
+      ],
+      "recommendedLocation": {
+        "name": "Denver",
+        "qty": 3240,
+        "profit": 89500,
+        "profitMargin": 28,
+        "eta": "24 Jan 25",
+        "logisticCost": 18500,
+        "laborHandlingCost": 12300,
+        "revenue": 245000,
+        "totalCost": 142000
+      },
+      "disruptions": [
+        {
+          "date": "15 Aug, 2025 09:15AM",
+          "location": "Chicago (CHI01)",
+          "type": "supply chain disruption",
+          "description": "Protein Bars (US075600A): supply chain disruption due to transport strike.",
+          "selected": true
+        },
+        {
+          "date": "28 Jul, 2025 02:45PM",
+          "location": "Denver (DEN25)", 
+          "type": "Weather event",
+          "description": "Energy Drinks (ED45820): Severe weather affecting distribution",
+          "selected": false
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "Fitness Trend Surge",
+          "impact": "+45%",
+          "duration": "8 Months",
+          "description": "45% increase due to fitness trend and gym reopenings"
+        },
+        {
+          "name": "Competitive Pricing Pressure",
+          "impact": "-25%",
+          "duration": "5 Months",
+          "description": "25% drop due to competitor price reduction"
+        },
+        {
+          "name": "New Flavor Launch",
+          "impact": "+35%",
+          "duration": "10 Months",
+          "description": "Launch new chocolate flavor with 35% demand boost"
+        },
+        {
+          "name": "Supply Chain Cost Increase", 
+          "impact": "-18%",
+          "duration": "6 Months",
+          "description": "Reduced demand due to increased product costs"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "lastUpdated": "2025-01-15T10:30:00Z",
+    "version": "1.0",
+    "units": {
+      "distance": "km",
+      "quantity": "units",
+      "time": "hours"
+    }
+  }
+}

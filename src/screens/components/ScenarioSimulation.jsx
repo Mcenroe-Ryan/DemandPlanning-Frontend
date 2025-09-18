@@ -32,7 +32,7 @@ const PANELS = [
       { name: "Projected\nRevenue", v: 4 },
       { name: "Additional\nRevenue", v: 2.5 },
       { name: "Logistic\nCost", v: -1 },
-      { name: "Labor/Handling\nCost", v: -0.5 },
+      { name: "Labor\nCost", v: -0.5 },
       { name: "Transaction\nCost", v: -0.5 },
     ],
     totals: { revenue: "₹4L", profit: "₹2L" },
@@ -49,7 +49,7 @@ const PANELS = [
       { name: "Projected\nRevenue", v: 4 },
       { name: "Additional\nRevenue", v: 2.5 },
       { name: "Logistic\nCost", v: -2 },
-      { name: "Labor/Handling\nCost", v: -0.5 },
+      { name: "Labor\nCost", v: -0.5 },
       { name: "Transaction\nCost", v: -0.5 },
     ],
     totals: { revenue: "₹4L", profit: "₹1L" },
@@ -65,7 +65,7 @@ const PANELS = [
       { name: "Projected\nRevenue", v: 4 },
       { name: "Additional\nRevenue", v: 2.5 },
       { name: "Logistic\nCost", v: -1.2 },
-      { name: "Labor/Handling\nCost", v: -0.3 },
+      { name: "Labor\nCost", v: -0.3 },
       { name: "Transaction\nCost", v: -0.5 },
     ],
     totals: { revenue: "₹4L", profit: "₹3K" },
@@ -99,6 +99,23 @@ function StatRow({ label, value, suffix }) {
   );
 }
 
+/* ---------- two-line X-axis tick with smaller font ---------- */
+const TwoLineTick = ({ x, y, payload }) => {
+  const raw = String(payload?.value ?? "").replace(/\s*\n\s*/g, " ").trim();
+  const parts = raw.split(/\s+/);
+  const first = parts[0] ?? "";
+  const second = parts[1] ?? "";
+  const size = 9;
+  const lineGap = 10;
+
+  return (
+    <text x={x} y={y} textAnchor="middle" fill="#475569" fontSize={size}>
+      <tspan x={x} dy="0">{first}</tspan>
+      {second && <tspan x={x} dy={lineGap}>{second}</tspan>}
+    </text>
+  );
+};
+
 /* ---------- one location card ---------- */
 function LocationPanel({ panel }) {
   const [qty, setQty] = useState(panel.qty);
@@ -108,8 +125,8 @@ function LocationPanel({ panel }) {
     <Card
       sx={{
         ...card,
-        flex: "1 1 0",
-        minWidth: 320,
+        flex: "1 1 420px",   // ← wider base width
+        minWidth: 420,       // ← ensure each card can grow wider
         borderColor: panel.highlight ? kBlue : "#E5E7EB",
         boxShadow: panel.highlight ? `0 0 0 3px rgba(59,130,246,.15)` : undefined,
       }}
@@ -175,18 +192,18 @@ function LocationPanel({ panel }) {
         </Box>
 
         {/* mini waterfall */}
-        {/* <Box sx={{ height: 210 }}> */}
-        {/* <Box sx={{ height: 210, mt: 3 }}> */}
-        <Box sx={{ height: 210, pt: 3 }}>
+        <Box sx={{ height: 260, pt: 3 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={wfData}>
+            <BarChart data={wfData} margin={{ bottom: 10 }}>
               <CartesianGrid stroke="#eef2f7" vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 10, fill: "#475569" }}
+                tick={<TwoLineTick />}
+                height={26}
+                tickMargin={4}
+                interval={0}
                 axisLine={{ stroke: "#e5e7eb" }}
                 tickLine={false}
-                interval={0}
               />
               <YAxis
                 domain={[0, 7]}
@@ -223,6 +240,7 @@ function LocationPanel({ panel }) {
     </Card>
   );
 }
+
 export default function NewRecommendationScreen({ onBack }) {
   const [chips, setChips] = useState(["Locations", "Bhuj", "Ahemdhabad", "Bhavnagar"]);
   const theme = useTheme();
@@ -235,7 +253,7 @@ export default function NewRecommendationScreen({ onBack }) {
 
   return (
     <Box sx={{ bgcolor: "#E2E8F0", minHeight: "100vh", p: 1 }}>
-      <Box sx={{ maxWidth: 1500, mx: "auto", position: "relative" }}>
+      <Box sx={{ maxWidth: 1800, mx: "auto", position: "relative" }}>{/* ↑ 1500 → 1800 */}
         {/* top bar */}
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
           <Button
@@ -293,7 +311,7 @@ export default function NewRecommendationScreen({ onBack }) {
         </Box>
 
         <Stack direction={isSm ? "column" : "row"} spacing={1.25} alignItems="stretch" sx={{ mt: 6 }}>
-          {PANELS.map((p, idx) => (
+          {PANELS.map((p) => (
             <LocationPanel key={p.id} panel={p} />
           ))}
         </Stack>
