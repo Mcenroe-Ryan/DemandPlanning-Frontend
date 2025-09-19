@@ -189,14 +189,14 @@ function SidebarBox({
           sx={{
             position: "absolute",
             right: -12,
-            top: "50%",
+            top: "45px",
             transform: "translateY(-50%)",
             zIndex: 2,
             background: "#f1f5f9",
             border: "1px solid #cbd5e1",
-            width: 24,
+            width: 30,
             height: 48,
-            borderRadius: "12px",
+            borderRadius: "50px",
             boxShadow: "0 2px 8px rgba(0,0,0,.12)",
             display: "flex",
             alignItems: "center",
@@ -207,9 +207,9 @@ function SidebarBox({
           aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {effectiveCollapsed ? (
-            <ChevronRight sx={{ fontSize: 18, color: "#334155" }} />
+            <ChevronRight sx={{ fontSize: 18, color: "#334155" ,mr:1}}  />
           ) : (
-            <ChevronLeft sx={{ fontSize: 18, color: "#334155" }} />
+            <ChevronLeft sx={{ fontSize: 18, color: "#334155" ,mr:1}} />
           )}
         </Box>
       )}
@@ -629,9 +629,9 @@ function ForecastChartCard({ sku, selectedSkuId, skuOptions, onChangeSku, height
           <Tab label="Demand" sx={{ textTransform: "none", fontSize: 13, fontWeight: 600, minHeight: 36, px: 2 }} />
           <Tab
             label={
-              <Stack direction="row" spacing={0.5} alignItems="center">
+              <Stack direction="row" spacing={2} alignItems="center">
                 <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Disruption</Typography>
-                <Badge badgeContent={sku?.disruptions?.length || 0} color="error" sx={{ "& .MuiBadge-badge": { fontSize: 9, height: 16, minWidth: 16 } }} />
+                <Badge badgeContent={sku?.disruptions?.length || 0} color="error" className="marginLeft10" sx={{ "& .MuiBadge-badge": { fontSize: 9, height: 16, minWidth: 16} }} />
               </Stack>
             }
             sx={{ textTransform: "none", minHeight: 36, px: 2 }}
@@ -818,7 +818,7 @@ function DemandByCityCard({ locations = [], sku }) {
                       <Typography sx={{ fontSize: 13, color: "#111827" }}>
                         {r.name}
                         {r.recommended && (
-                          <Typography component="span" sx={{ color: "#2563eb", fontSize: 12, ml: 0.5 }}>
+                          <Typography component="span" sx={{ top:6, color: "#2563eb", fontSize: 12, ml: 0.5 }}>
                             (Recommended)
                           </Typography>
                         )}
@@ -1187,10 +1187,10 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", px: 1.5, pb: 1.5 }}>
         <Box sx={{ width: "100%" }}>
           {summaryTabValue === 0 ? (
-            <Stack direction="row" spacing={1.25} sx={{ alignItems: "stretch", flexWrap: "wrap" }}>
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "stretch", flexWrap: "wrap", mt: 2 }}>
               <Card sx={{ flex: 1, minWidth: 260, backgroundColor: "#e7f0ff", border: "1px solid #cfe1ff", boxShadow: 0 }}>
                 <CardContent sx={{ p: 1.25 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#1d4ed8", mb: 1 }}>Recommended</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#1d4ed8", mb: 2, mt: 1 }}>Recommended</Typography>
                   <Stack spacing={0.5} sx={{ mb: 1 }}>
                     <Stack direction="row" justifyContent="space-between">
                       <Typography sx={{ fontSize: 12, color: "#0f172a" }}>{recommended?.name ?? "-"}</Typography>
