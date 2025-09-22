@@ -533,6 +533,7 @@ export default function ForecastChart({
         })),
       },
       // (future sections hidden)
+        // (future sections hidden)
       // {
       //   id: 2,
       //   title: "External Factors",
@@ -877,30 +878,38 @@ export default function ForecastChart({
     let consHist = histMask(consFull);
     let consFut = join(histMask(consFull), firstFutureOnly(consFull));
 
-    // Weekly trimming: 6 weeks history and 6 weeks forecast from "current week".
-    if (isWeekly) {
+    /* ---- Weekly windowing logic (6 past + 6 future) ----
+       - If user likely selected a date range (short weeks array), show FULL range.
+       - Otherwise (landing chart), show 6 weeks history + 6 weeks forecast.
+    */
+    const dateRangeLikelyActive = months.length <= 30; // heuristic: short => user-selected
+    if (isWeekly && !dateRangeLikelyActive) {
+      const WEEKS_WINDOW = 6; // 6 past + 6 future
       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
       const lastIdx = months.length - 1;
 
-      const hFrom = clamp(safeTodayIdx - 5, 0, lastIdx);
-      const hTo = clamp(safeTodayIdx, 0, lastIdx);
+      const todayIdx = safeTodayIdx === -1 ? 0 : safeTodayIdx;
 
-      const fFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx);
-      const fTo = clamp(safeTodayIdx + 6, 0, lastIdx);
+      const histFrom = clamp(todayIdx - (WEEKS_WINDOW - 1), 0, lastIdx);
+      const histTo = clamp(todayIdx, 0, lastIdx);
+
+      const futFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx);
+      const futTo = clamp(futFrom + WEEKS_WINDOW, 0, lastIdx);
 
       const applyWindow = (arr, from, to) =>
         arr.map((v, i) => (i >= from && i <= to ? v : null));
 
-      actual = applyWindow(actualFull, hFrom, hTo);
+      // For Actual we want to show the entire visible span (past through future)
+      actual = applyWindow(actualFull, histFrom, futTo);
 
-      baselineHist = applyWindow(baselineHist, hFrom, hTo);
-      baselineFut = applyWindow(baselineFut, fFrom, fTo);
+      baselineHist = applyWindow(baselineHist, histFrom, histTo);
+      baselineFut = applyWindow(baselineFut, futFrom, futTo);
 
-      mlHist = applyWindow(mlHist, hFrom, hTo);
-      mlFut = applyWindow(mlFut, fFrom, fTo);
+      mlHist = applyWindow(mlHist, histFrom, histTo);
+      mlFut = applyWindow(mlFut, futFrom, futTo);
 
-      consHist = applyWindow(consHist, hFrom, hTo);
-      consFut = applyWindow(consFut, fFrom, fTo);
+      consHist = applyWindow(consHist, histFrom, histTo);
+      consFut = applyWindow(consFut, futFrom, futTo);
     }
 
     return {

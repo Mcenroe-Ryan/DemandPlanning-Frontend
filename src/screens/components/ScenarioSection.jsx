@@ -38,6 +38,9 @@ import {
   Checkbox,
   Box,
   Radio as MuiRadio,
+  Dialog,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import MoreVert from "@mui/icons-material/MoreVert";
 import Search from "@mui/icons-material/Search";
@@ -49,6 +52,7 @@ import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import Tune from "@mui/icons-material/Tune";
 import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
+import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
 
 import {
   BarChart,
@@ -112,7 +116,7 @@ const RAW_WATERFALL_COLORS = {
   "projected revenue": "#22C55E80",
   "additional revenue": "#22C55E80",
   "logistic cost": "#FFA8A880",
-  "labor/handling cost": "#FFA8A880",
+  "labor cost": "#FFA8A880",
   "handling cost": "#FFA8A880",
   "transaction cost": "#FFA8A880",
   "simulated revenue": "#93C5FDCC",
@@ -128,10 +132,10 @@ const colorForStep = (name, kind, rawVal) => {
 
 /* =====================  CITY COLORS (shared) ===================== */
 const CITY_COLOR_MAP = {
-  bhuj: "#22c55e", // green
-  ahemdabad: "#3b82f6", // common misspelling
-  ahmedabad: "#3b82f6", // blue
-  bhavnagar: "#fda4af", // pink
+  bhuj: "#22c55e",
+  ahemdabad: "#3b82f6",
+  ahmedabad: "#3b82f6",
+  bhavnagar: "#fda4af",
   denver: "#f59e0b",
   phoenix: "#ef4444",
   dallas: "#10b981",
@@ -189,14 +193,14 @@ function SidebarBox({
           sx={{
             position: "absolute",
             right: -12,
-            top: "45px",
+            top: "50%",
             transform: "translateY(-50%)",
             zIndex: 2,
             background: "#f1f5f9",
             border: "1px solid #cbd5e1",
-            width: 30,
+            width: 24,
             height: 48,
-            borderRadius: "50px",
+            borderRadius: "12px",
             boxShadow: "0 2px 8px rgba(0,0,0,.12)",
             display: "flex",
             alignItems: "center",
@@ -207,9 +211,9 @@ function SidebarBox({
           aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {effectiveCollapsed ? (
-            <ChevronRight sx={{ fontSize: 18, color: "#334155" ,mr:1}}  />
+            <ChevronRight sx={{ fontSize: 18, color: "#334155" }} />
           ) : (
-            <ChevronLeft sx={{ fontSize: 18, color: "#334155" ,mr:1}} />
+            <ChevronLeft sx={{ fontSize: 18, color: "#334155" }} />
           )}
         </Box>
       )}
@@ -260,7 +264,13 @@ function SidebarBox({
         }}
         direction="row"
       >
-        <Search sx={{ fontSize: 16, color: "#999", mr: effectiveCollapsed ? 0 : 1 }} />
+        <Search
+          sx={{
+            fontSize: 16,
+            color: "#999",
+            mr: effectiveCollapsed ? 0 : 1,
+          }}
+        />
         {!effectiveCollapsed && (
           <TextField
             placeholder="Search scenarios"
@@ -309,7 +319,9 @@ function SidebarBox({
                   backgroundColor:
                     selectedScenario?.id === s.id ? "#e3f2fd" : "transparent",
                   borderLeft:
-                    selectedScenario?.id === s.id ? "3px solid #1976d2" : "none",
+                    selectedScenario?.id === s.id
+                      ? "3px solid #1976d2"
+                      : "none",
                   "&:hover": { backgroundColor: "#f5f5f5" },
                   borderBottom: "1px solid #f0f0f0",
                   alignItems: "flex-start",
@@ -394,8 +406,18 @@ function SidebarBox({
 
 /* =====================  SMALL HEADER  ===================== */
 const legendItems = [
-  { id: "actual", label: "Actual", indicator: <FiberManualRecord sx={{ fontSize: 10, color: "#0891b2" }} /> },
-  { id: "forecast", label: "Forecast", indicator: <MoreHoriz sx={{ fontSize: 15, color: "#64748b" }} /> },
+  {
+    id: "actual",
+    label: "Actual",
+    indicator: (
+      <FiberManualRecord sx={{ fontSize: 10, color: "#0891b2" }} />
+    ),
+  },
+  {
+    id: "forecast",
+    label: "Forecast",
+    indicator: <MoreHoriz sx={{ fontSize: 15, color: "#64748b" }} />,
+  },
 ];
 
 function ChartSectionHeader({ header, selectedSkuId, skuOptions, onChangeSku }) {
@@ -404,17 +426,40 @@ function ChartSectionHeader({ header, selectedSkuId, skuOptions, onChangeSku }) 
 
   return (
     <Stack spacing={1.25} sx={{ p: 1.25 }}>
-      <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="nowrap" sx={{ overflowX: "auto", pb: 0.25 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.25}
+        flexWrap="nowrap"
+        sx={{ overflowX: "auto", pb: 0.25 }}
+      >
         {header.map((item, idx) => (
-          <Stack key={idx} direction="row" alignItems="center" sx={{ whiteSpace: "nowrap" }}>
-            {idx > 0 && <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />}
-            <Typography variant="body2" sx={labelSx}>{item.label}</Typography>
-            <Typography variant="body2" sx={valueSx}>{item.value}</Typography>
+          <Stack
+            key={idx}
+            direction="row"
+            alignItems="center"
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            {idx > 0 && (
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ mx: 1, height: 16 }}
+              />
+            )}
+            <Typography variant="body2" sx={labelSx}>
+              {item.label}
+            </Typography>
+            <Typography variant="body2" sx={valueSx}>
+              {item.value}
+            </Typography>
           </Stack>
         ))}
         <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />
         <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Typography variant="body2" sx={labelSx}>SKU:</Typography>
+          <Typography variant="body2" sx={labelSx}>
+            SKU:
+          </Typography>
           <FormControl size="small">
             <Select
               value={selectedSkuId}
@@ -422,8 +467,16 @@ function ChartSectionHeader({ header, selectedSkuId, skuOptions, onChangeSku }) 
               sx={{
                 height: 24,
                 width: 160,
-                "& .MuiSelect-select": { p: "2px 8px", fontSize: 12, color: "#2563eb", textDecoration: "underline" },
-                "& .MuiOutlinedInput-notchedOutline": { borderColor: "#cbd5e1", borderRadius: "3px" },
+                "& .MuiSelect-select": {
+                  p: "2px 8px",
+                  fontSize: 12,
+                  color: "#2563eb",
+                  textDecoration: "underline",
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#cbd5e1",
+                  borderRadius: "3px",
+                },
               }}
             >
               {skuOptions.map((o) => (
@@ -492,9 +545,19 @@ function DisruptionList({ rowsFromJson }) {
           direction="row"
           alignItems="center"
           spacing={1}
-          sx={{ px: 1, py: 0.75, borderRadius: 1, "&:hover": { backgroundColor: "rgba(2,6,23,0.03)" } }}
+          sx={{
+            px: 1,
+            py: 0.75,
+            borderRadius: 1,
+            "&:hover": { backgroundColor: "rgba(2,6,23,0.03)" },
+          }}
         >
-          <Checkbox size="small" checked={r.checked} onChange={() => toggle(r.id)} sx={{ p: 0.5, mr: 0.5 }} />
+          <Checkbox
+            size="small"
+            checked={r.checked}
+            onChange={() => toggle(r.id)}
+            sx={{ p: 0.5, mr: 0.5 }}
+          />
           <Typography
             variant="body2"
             sx={{
@@ -510,7 +573,11 @@ function DisruptionList({ rowsFromJson }) {
           <ErrorOutline sx={{ color: "#ef4444", fontSize: 18, mr: 0.5 }} />
           <Typography
             variant="body2"
-            sx={{ color: "#334155", fontSize: 13, textDecoration: r.checked ? "line-through" : "none" }}
+            sx={{
+              color: "#334155",
+              fontSize: 13,
+              textDecoration: r.checked ? "line-through" : "none",
+            }}
           >
             {r.message}
           </Typography>
@@ -521,14 +588,24 @@ function DisruptionList({ rowsFromJson }) {
 }
 
 /* =====================  FORECAST CHART CARD  ===================== */
-function ForecastChartCard({ sku, selectedSkuId, skuOptions, onChangeSku, height = 180 }) {
+function ForecastChartCard({
+  sku,
+  selectedSkuId,
+  skuOptions,
+  onChangeSku,
+  height = 180,
+}) {
   const [mainTabValue, setMainTabValue] = useState(0);
 
   const theme = useTheme();
   const upLg = useMediaQuery(theme.breakpoints.up("lg"));
   const upXl = useMediaQuery(theme.breakpoints.up("xl"));
   const isSmall = useMediaQuery(theme.breakpoints.down("md"));
-  const graphHeight = upXl ? Math.max(height, 160) : upLg ? Math.max(height - 20, 150) : height;
+  const graphHeight = upXl
+    ? Math.max(height, 160)
+    : upLg
+    ? Math.max(height - 20, 150)
+    : height;
 
   const [containerHeight, setContainerHeight] = useState(400);
   const [containerWidth, setContainerWidth] = useState(800);
@@ -567,21 +644,38 @@ function ForecastChartCard({ sku, selectedSkuId, skuOptions, onChangeSku, height
   const forecastMap = new Map((df.forecast || []).map((d) => [d.week, d.units]));
   const categories = allWeeks.map((w) => `Week ${w}`);
 
-  const actualSeries = allWeeks.map((w) => (actualMap.has(w) ? to1((actualMap.get(w) || 0) / 1000) : null));
-  const lastActualIdx = allWeeks.reduce((acc, w, i) => (actualMap.has(w) ? i : acc), -1);
+  const actualSeries = allWeeks.map((w) =>
+    actualMap.has(w) ? to1((actualMap.get(w) || 0) / 1000) : null
+  );
+  const lastActualIdx = allWeeks.reduce(
+    (acc, w, i) => (actualMap.has(w) ? i : acc),
+    -1
+  );
   const forecastJoined = allWeeks.map((w, i) => {
     if (i < lastActualIdx) return null;
     if (i === lastActualIdx) {
-      const ay = actualMap.has(w) ? to1((actualMap.get(w) || 0) / 1000) : null;
-      const fy = forecastMap.has(w) ? to1((forecastMap.get(w) || 0) / 1000) : null;
+      const ay = actualMap.has(w)
+        ? to1((actualMap.get(w) || 0) / 1000)
+        : null;
+      const fy = forecastMap.has(w)
+        ? to1((forecastMap.get(w) || 0) / 1000)
+        : null;
       return ay ?? fy ?? null;
     }
-    return forecastMap.has(w) ? to1((forecastMap.get(w) || 0) / 1000) : null;
+    return forecastMap.has(w)
+      ? to1((forecastMap.get(w) || 0) / 1000)
+      : null;
   });
 
   const options = useMemo(() => {
     const base = {
-      chart: { type: "line", spacing: [4, 6, 6, 6], reflow: true, height: containerHeight, width: chartWidth },
+      chart: {
+        type: "line",
+        spacing: [4, 6, 6, 6],
+        reflow: true,
+        height: containerHeight,
+        width: chartWidth,
+      },
       title: { text: "" },
       credits: { enabled: false },
       exporting: { enabled: false },
@@ -595,26 +689,69 @@ function ForecastChartCard({ sku, selectedSkuId, skuOptions, onChangeSku, height
         crosshair: { width: 1, color: "#94a3b8" },
         plotBands:
           lastActualIdx >= 0
-            ? [{ from: lastActualIdx - 0.3, to: lastActualIdx + 0.3, color: "rgba(244,63,94,0.25)", zIndex: 0 }]
+            ? [
+                {
+                  from: lastActualIdx - 0.3,
+                  to: lastActualIdx + 0.3,
+                  color: "rgba(244,63,94,0.25)",
+                  zIndex: 0,
+                },
+              ]
             : [],
         labels: { style: { fontSize: "11px" } },
       },
       yAxis: {
-        title: { text: "Units (in thousands)", style: { color: "#64748b", fontSize: "12px" } },
+        title: {
+          text: "Units (in thousands)",
+          style: { color: "#64748b", fontSize: "12px" },
+        },
         min: 0,
         gridLineColor: "#e5e7eb",
         labels: { style: { fontSize: "11px" } },
       },
-      tooltip: { shared: true, borderRadius: 6, padding: 8, backgroundColor: "#fff", borderColor: "#e5e7eb" },
+      tooltip: {
+        shared: true,
+        borderRadius: 6,
+        padding: 8,
+        backgroundColor: "#fff",
+        borderColor: "#e5e7eb",
+      },
       plotOptions: { series: { animation: false, marker: { radius: 3 } } },
       series: [
-        { name: "Actual", data: actualSeries, color: "#0f766e", lineWidth: 2.5, dashStyle: "Solid", zIndex: 2, connectNulls: true },
-        { name: "Forecast", data: forecastJoined, color: "#0f766e", lineWidth: 2.5, dashStyle: "ShortDot", marker: { enabled: false }, opacity: 0.9, zIndex: 1, connectNulls: true },
+        {
+          name: "Actual",
+          data: actualSeries,
+          color: "#0f766e",
+          lineWidth: 2.5,
+          dashStyle: "Solid",
+          zIndex: 2,
+          connectNulls: true,
+        },
+        {
+          name: "Forecast",
+          data: forecastJoined,
+          color: "#0f766e",
+          lineWidth: 2.5,
+          dashStyle: "ShortDot",
+          marker: { enabled: false },
+          opacity: 0.9,
+          zIndex: 1,
+          connectNulls: true,
+        },
       ],
       accessibility: { enabled: false },
     };
     return enhanceForMobileDrag(base, isSmall, graphHeight);
-  }, [categories, actualSeries, forecastJoined, containerHeight, chartWidth, isSmall, lastActualIdx, graphHeight]);
+  }, [
+    categories,
+    actualSeries,
+    forecastJoined,
+    containerHeight,
+    chartWidth,
+    isSmall,
+    lastActualIdx,
+    graphHeight,
+  ]);
 
   const header = [
     { label: "Location:", value: sku?.currentLocation ?? "-" },
@@ -623,30 +760,106 @@ function ForecastChartCard({ sku, selectedSkuId, skuOptions, onChangeSku, height
   ];
 
   return (
-    <Card sx={{ backgroundColor: "#fff", border: 1, borderColor: "grey.300", borderRadius: 1, overflow: "hidden", height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 2, py: 1, borderBottom: 1, borderColor: "grey.300", bgcolor: "#fff", flexShrink: 0 }}>
+    <Card
+      sx={{
+        backgroundColor: "#fff",
+        border: 1,
+        borderColor: "grey.300",
+        borderRadius: 1,
+        overflow: "hidden",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+      }}
+    >
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{
+          px: 2,
+          py: 1,
+          borderBottom: 1,
+          borderColor: "grey.300",
+          bgcolor: "#fff",
+          flexShrink: 0,
+        }}
+      >
         <Tabs value={mainTabValue} onChange={(_, v) => setMainTabValue(v)}>
-          <Tab label="Demand" sx={{ textTransform: "none", fontSize: 13, fontWeight: 600, minHeight: 36, px: 2 }} />
+          <Tab
+            label="Demand"
+            sx={{ textTransform: "none", fontSize: 13, fontWeight: 600, minHeight: 36, px: 2 }}
+          />
           <Tab
             label={
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Disruption</Typography>
-                <Badge badgeContent={sku?.disruptions?.length || 0} color="error" className="marginLeft10" sx={{ "& .MuiBadge-badge": { fontSize: 9, height: 16, minWidth: 16} }} />
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+                  Disruption
+                </Typography>
+                <Badge
+                  badgeContent={sku?.disruptions?.length || 0}
+                  color="error"
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      fontSize: 9,
+                      height: 16,
+                      minWidth: 16,
+                    },
+                  }}
+                />
               </Stack>
             }
             sx={{ textTransform: "none", minHeight: 36, px: 2 }}
           />
         </Tabs>
-        <IconButton size="small"><MoreVert fontSize="small" /></IconButton>
+        <IconButton size="small">
+          <MoreVert fontSize="small" />
+        </IconButton>
       </Stack>
 
       {mainTabValue === 0 ? (
         <>
-          <ChartSectionHeader header={header} selectedSkuId={selectedSkuId} skuOptions={skuOptions} onChangeSku={onChangeSku} />
-          <Stack sx={{ p: 2, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-            <Box ref={containerRef} sx={{ flex: 1, minHeight: 200, width: "100%", border: "1px solid #e5e7eb", borderRadius: 1, backgroundColor: "#fff" }}>
-              <Box sx={{ width: chartWidth, height: containerHeight, minWidth: chartWidth, minHeight: containerHeight }}>
-                <HighchartsReact ref={chartRef} highcharts={Highcharts} options={options} containerProps={{ style: { width: "100%", height: "100%" } }} />
+          <ChartSectionHeader
+            header={header}
+            selectedSkuId={selectedSkuId}
+            skuOptions={skuOptions}
+            onChangeSku={onChangeSku}
+          />
+          <Stack
+            sx={{
+              p: 2,
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box
+              ref={containerRef}
+              sx={{
+                flex: 1,
+                minHeight: 200,
+                width: "100%",
+                border: "1px solid #e5e7eb",
+                borderRadius: 1,
+                backgroundColor: "#fff",
+              }}
+            >
+              <Box
+                sx={{
+                  width: chartWidth,
+                  height: containerHeight,
+                  minWidth: chartWidth,
+                  minHeight: containerHeight,
+                }}
+              >
+                <HighchartsReact
+                  ref={chartRef}
+                  highcharts={Highcharts}
+                  options={options}
+                  containerProps={{ style: { width: "100%", height: "100%" } }}
+                />
               </Box>
             </Box>
           </Stack>
@@ -654,7 +867,19 @@ function ForecastChartCard({ sku, selectedSkuId, skuOptions, onChangeSku, height
         </>
       ) : (
         <Stack sx={{ p: 2 }}>
-          <Box sx={{ border: 1, borderColor: "#e5e7eb", borderRadius: 1, overflow: "auto", minHeight: 0, width: "100%", alignSelf: "flex-start", boxShadow: 0, backgroundColor: "#fff" }}>
+          <Box
+            sx={{
+              border: 1,
+              borderColor: "#e5e7eb",
+              borderRadius: 1,
+              overflow: "auto",
+              minHeight: 0,
+              width: "100%",
+              alignSelf: "flex-start",
+              boxShadow: 0,
+              backgroundColor: "#fff",
+            }}
+          >
             <DisruptionList rowsFromJson={sku?.disruptions || []} />
           </Box>
         </Stack>
@@ -664,8 +889,19 @@ function ForecastChartCard({ sku, selectedSkuId, skuOptions, onChangeSku, height
 }
 
 /* =====================  CITY / LOCATIONS CARD  ===================== */
-const thCell = { fontWeight: 700, fontSize: 13, color: "#334155", backgroundColor: "#eef2f7", borderColor: "#e5e7eb" };
-const tdCell = { fontSize: 13, color: "#374151", borderColor: "#e5e7eb", whiteSpace: "nowrap" };
+const thCell = {
+  fontWeight: 700,
+  fontSize: 13,
+  color: "#334155",
+  backgroundColor: "#eef2f7",
+  borderColor: "#e5e7eb",
+};
+const tdCell = {
+  fontSize: 13,
+  color: "#374151",
+  borderColor: "#e5e7eb",
+  whiteSpace: "nowrap",
+};
 const tdCellLeft = { ...tdCell, minWidth: 160 };
 const subHdr = { fontWeight: 500, color: "#64748b", fontSize: 11, marginLeft: 4 };
 
@@ -673,31 +909,67 @@ function buildWeeklyLocationSeries(sku) {
   const locations = sku?.locations || [];
   const df = sku?.demandForecast || { actual: [], forecast: [] };
 
-  const weeks = Array.from(new Set([...(df.actual || []).map((x) => x.week), ...(df.forecast || []).map((x) => x.week)])).sort((a, b) => a - b);
+  const weeks = Array.from(
+    new Set([
+      ...(df.actual || []).map((x) => x.week),
+      ...(df.forecast || []).map((x) => x.week),
+    ])
+  ).sort((a, b) => a - b);
   const categories = weeks.map((_, i) => `Week ${i + 1}`);
 
   const actualMap = new Map((df.actual || []).map((d) => [d.week, d.units]));
   const forecastMap = new Map((df.forecast || []).map((d) => [d.week, d.units]));
-  const lastActualIdx = weeks.reduce((acc, w, i) => (actualMap.has(w) ? i : acc), -1);
+  const lastActualIdx = weeks.reduce(
+    (acc, w, i) => (actualMap.has(w) ? i : acc),
+    -1
+  );
 
-  const totalDemand = locations.reduce((s, l) => s + Number(l.demandNextWeek || 0), 0);
+  const totalDemand = locations.reduce(
+    (s, l) => s + Number(l.demandNextWeek || 0),
+    0
+  );
   const defaultW = locations.length ? 1 / locations.length : 0;
 
   const series = [];
   locations.forEach((loc) => {
-    const w = totalDemand > 0 ? Number(loc.demandNextWeek || 0) / totalDemand : defaultW;
+    const w =
+      totalDemand > 0
+        ? Number(loc.demandNextWeek || 0) / totalDemand
+        : defaultW;
     const color = getCityColor(loc.name);
 
-    const actual = weeks.map((wk) => (actualMap.has(wk) ? to1((actualMap.get(wk) * w) / 1000) : null));
-    const forecastRaw = weeks.map((wk) => (forecastMap.has(wk) ? to1((forecastMap.get(wk) * w) / 1000) : null));
+    const actual = weeks.map((wk) =>
+      actualMap.has(wk) ? to1((actualMap.get(wk) * w) / 1000) : null
+    );
+    const forecastRaw = weeks.map((wk) =>
+      forecastMap.has(wk) ? to1((forecastMap.get(wk) * w) / 1000) : null
+    );
     const forecastJoined = forecastRaw.map((v, i) => {
       if (i < lastActualIdx) return null;
       if (i === lastActualIdx) return actual[i] ?? v ?? null;
       return v;
     });
 
-    series.push({ name: `${loc.name}`, data: actual, color, lineWidth: 2.5, dashStyle: "Solid", marker: { radius: 3 }, zIndex: 2, connectNulls: true });
-    series.push({ name: `${loc.name}`, data: forecastJoined, color, lineWidth: 2.5, dashStyle: "ShortDot", marker: { enabled: false }, zIndex: 1, connectNulls: true });
+    series.push({
+      name: `${loc.name}`,
+      data: actual,
+      color,
+      lineWidth: 2.5,
+      dashStyle: "Solid",
+      marker: { radius: 3 },
+      zIndex: 2,
+      connectNulls: true,
+    });
+    series.push({
+      name: `${loc.name}`,
+      data: forecastJoined,
+      color,
+      lineWidth: 2.5,
+      dashStyle: "ShortDot",
+      marker: { enabled: false },
+      zIndex: 1,
+      connectNulls: true,
+    });
   });
 
   return { categories, series };
@@ -736,11 +1008,23 @@ function DemandByCityCard({ locations = [], sku }) {
 
   const options = useMemo(
     () => ({
-      chart: { type: "line", spacing: [4, 6, 6, 6], height: containerHeight, width: chartWidth, reflow: true },
+      chart: {
+        type: "line",
+        spacing: [4, 6, 6, 6],
+        height: containerHeight,
+        width: chartWidth,
+        reflow: true,
+      },
       title: { text: "" },
       credits: { enabled: false },
       exporting: { enabled: false },
-      legend: { enabled: true, itemStyle: { fontSize: "11px" }, symbolWidth: 24, layout: "horizontal", align: "center" },
+      legend: {
+        enabled: true,
+        itemStyle: { fontSize: "11px" },
+        symbolWidth: 24,
+        layout: "horizontal",
+        align: "center",
+      },
       xAxis: {
         categories,
         tickLength: 0,
@@ -751,12 +1035,21 @@ function DemandByCityCard({ locations = [], sku }) {
         tickPixelInterval: 80,
       },
       yAxis: {
-        title: { text: "Units (in thousands)", style: { color: "#64748b", fontSize: "12px" } },
+        title: {
+          text: "Units (in thousands)",
+          style: { color: "#64748b", fontSize: "12px" },
+        },
         min: 0,
         gridLineColor: "#e5e7eb",
         labels: { style: { fontSize: "11px" } },
       },
-      tooltip: { shared: true, borderRadius: 6, padding: 8, backgroundColor: "#fff", borderColor: "#e5e7eb" },
+      tooltip: {
+        shared: true,
+        borderRadius: 6,
+        padding: 8,
+        backgroundColor: "#fff",
+        borderColor: "#e5e7eb",
+      },
       plotOptions: { series: { animation: false, marker: { radius: 3 }, lineWidth: 2.5 } },
       series,
       accessibility: { enabled: false },
@@ -803,12 +1096,18 @@ function DemandByCityCard({ locations = [], sku }) {
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#eef2f7" }}>
                   <TableCell sx={thCell}>Location</TableCell>
-                  <TableCell sx={thCell} align="right">Distance<span style={subHdr}>(km)</span></TableCell>
+                  <TableCell sx={thCell} align="right">
+                    Distance<span style={subHdr}>(km)</span>
+                  </TableCell>
                   <TableCell sx={thCell} align="right">Available Qty</TableCell>
-                  <TableCell sx={thCell} align="right">Demand <span style={subHdr}>(Next Week)</span></TableCell>
+                  <TableCell sx={thCell} align="right">
+                    Demand <span style={subHdr}>(Next Week)</span>
+                  </TableCell>
                   <TableCell sx={thCell} align="right">Safety Stock</TableCell>
                   <TableCell sx={thCell} align="right">Excess Qty</TableCell>
-                  <TableCell sx={thCell} align="right">ETA <span style={subHdr}>(Hours)</span></TableCell>
+                  <TableCell sx={thCell} align="right">
+                    ETA <span style={subHdr}>(Hours)</span>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -818,7 +1117,7 @@ function DemandByCityCard({ locations = [], sku }) {
                       <Typography sx={{ fontSize: 13, color: "#111827" }}>
                         {r.name}
                         {r.recommended && (
-                          <Typography component="span" sx={{ top:6, color: "#2563eb", fontSize: 12, ml: 0.5 }}>
+                          <Typography component="span" sx={{ color: "#2563eb", fontSize: 12, ml: 0.5 }}>
                             (Recommended)
                           </Typography>
                         )}
@@ -928,7 +1227,7 @@ const WfTick = ({ x, y, payload }) => {
   const lines = second ? [first, second] : [first];
   return (
     <g transform={`translate(${x},${y})`}>
-      <text textAnchor="middle" fill="#475569" fontSize={11}>
+      <text textAnchor="middle" fill="#475569" fontSize={9}>
         {lines.map((ln, i) => (
           <tspan key={i} x="0" dy={i === 0 ? 0 : 12}>
             {ln}
@@ -961,12 +1260,17 @@ function MetricTile({ title, value, delta }) {
 }
 
 /* =====================  RIGHT PANEL (scrollable)  ===================== */
-function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
+function RecommendationPanel({ symbol, locations, recommended, onCompare, selectedSkuId }) {
   const [recommendationType, setRecommendationType] = useState("recommended");
   const [summaryTabValue, setSummaryTabValue] = useState(0);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const settingsOpen = Boolean(anchorEl);
+
+  // Transfer confirmation dialog state
+  const [transferOpen, setTransferOpen] = useState(false);
+  const handleRequestTransfer = () => setTransferOpen(true);
+  const closeTransfer = () => setTransferOpen(false);
 
   const limits = useMemo(() => {
     const obj = {};
@@ -1007,7 +1311,7 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
       { name: "Projected Revenue", value: Number(logistics.projectedRevenue || 0) / scale },
       { name: "Additional Revenue", value: Number(logistics.additionalRevenue || 0) / scale },
       { name: "Logistic Cost", value: Number(logistics.logisticCost || 0) / scale },
-      { name: "Labor/Handling Cost", value: Number(logistics.laborHandlingCost || 0) / scale },
+      { name: "Labor Cost", value: Number(logistics.laborHandlingCost || 0) / scale },
       { name: "Transaction Cost", value: Number(logistics.transactionCost || 0) / scale },
     ];
     return stepsRaw;
@@ -1100,22 +1404,46 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
         overflow: "hidden",
         width: { xs: "100%", md: RIGHT_W },
         height: "100%",
-        minHeight: 0,          // <-- allow internal scroll area to work
+        minHeight: 0,
         display: "flex",
         flexDirection: "column",
         flexShrink: 0,
       }}
     >
-      <Stack sx={{ p: 1.5, borderBottom: 1, borderColor: "grey.300", flexShrink: 0 }} direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+      <Stack
+        sx={{ p: 1.5, borderBottom: 1, borderColor: "grey.300", flexShrink: 0 }}
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={1}
+      >
         <Stack direction="row" alignItems="center" gap={0.5}>
-          <RadioGroup value={recommendationType} onChange={(e) => setRecommendationType(e.target.value)} row>
-            <FormControlLabel value="recommended" control={<RadioAlias size="small" />} label={<Typography fontSize={12}>Recommended</Typography>} />
-            <FormControlLabel value="customize" control={<RadioAlias size="small" />} label={<Typography fontSize={12}>Customize</Typography>} />
+          <RadioGroup
+            value={recommendationType}
+            onChange={(e) => setRecommendationType(e.target.value)}
+            row
+          >
+            <FormControlLabel
+              value="recommended"
+              control={<RadioAlias size="small" />}
+              label={<Typography fontSize={12}>Recommended</Typography>}
+            />
+            <FormControlLabel
+              value="customize"
+              control={<RadioAlias size="small" />}
+              label={<Typography fontSize={12}>Customize</Typography>}
+            />
           </RadioGroup>
 
           {usingCustomized && (
             <Tooltip title="Adjust quantities">
-              <IconButton aria-label="Adjust quantities" size="small" onClick={openSettings} sx={{ ml: 0.5 }}>
+              <IconButton
+                aria-label="Adjust quantities"
+                size="small"
+                onClick={openSettings}
+                sx={{ ml: 0.5 }}
+              >
                 <Tune fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -1123,10 +1451,20 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
         </Stack>
 
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" size="small" sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }} onClick={onCompare}>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}
+            onClick={onCompare}
+          >
             Compare Simulation
           </Button>
-          <Button variant="contained" size="small" sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}
+            onClick={handleRequestTransfer}
+          >
             Request Transfer
           </Button>
         </Stack>
@@ -1139,24 +1477,44 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
         onClose={closeSettings}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{ sx: { p: 1, borderRadius: 2, boxShadow: "0 8px 24px rgba(0,0,0,.12)", width: 320, maxHeight: 420, overflow: "auto" } }}
+        PaperProps={{
+          sx: {
+            p: 1,
+            borderRadius: 2,
+            boxShadow: "0 8px 24px rgba(0,0,0,.12)",
+            width: 320,
+            maxHeight: 420,
+            overflow: "auto",
+          },
+        }}
       >
         {(locations || []).map((loc) => {
           const lim = limits[loc.name] || { min: 0, max: 0 };
-          const val = Math.min(Math.max(Number(custom[loc.name] || 0), lim.min), lim.max);
+          const val = Math.min(
+            Math.max(Number(custom[loc.name] || 0), lim.min),
+            lim.max
+          );
           return (
             <Stack key={loc.name} sx={{ p: 1 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>{loc.name}</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
+                {loc.name}
+              </Typography>
               <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.25 }}>
-                <Typography sx={{ fontSize: 11, color: "#64748b" }}>{lim.min}</Typography>
-                <Typography sx={{ fontSize: 11, color: "#64748b" }}>{lim.max}</Typography>
+                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+                  {lim.min}
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
+                  {lim.max}
+                </Typography>
               </Stack>
               <Slider
                 size="small"
                 value={val}
                 min={lim.min}
                 max={lim.max}
-                onChange={(_, v) => setCustom((c) => ({ ...c, [loc.name]: Number(v) }))}
+                onChange={(_, v) =>
+                  setCustom((c) => ({ ...c, [loc.name]: Number(v) }))
+                }
                 sx={{ "& .MuiSlider-thumb": { width: 12, height: 12 } }}
               />
               <TextField
@@ -1187,14 +1545,20 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", px: 1.5, pb: 1.5 }}>
         <Box sx={{ width: "100%" }}>
           {summaryTabValue === 0 ? (
-            <Stack direction="row" spacing={1.25} sx={{ alignItems: "stretch", flexWrap: "wrap", mt: 2 }}>
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "stretch", flexWrap: "wrap" }}>
               <Card sx={{ flex: 1, minWidth: 260, backgroundColor: "#e7f0ff", border: "1px solid #cfe1ff", boxShadow: 0 }}>
                 <CardContent sx={{ p: 1.25 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#1d4ed8", mb: 2, mt: 1 }}>Recommended</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#1d4ed8", mb: 1 }}>
+                    Recommended
+                  </Typography>
                   <Stack spacing={0.5} sx={{ mb: 1 }}>
                     <Stack direction="row" justifyContent="space-between">
-                      <Typography sx={{ fontSize: 12, color: "#0f172a" }}>{recommended?.name ?? "-"}</Typography>
-                      <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{fmtQty(recommended?.qty ?? 0)} Qty</Typography>
+                      <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
+                        {recommended?.name ?? "-"}
+                      </Typography>
+                      <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                        {fmtQty(recommended?.qty ?? 0)} Qty
+                      </Typography>
                     </Stack>
                   </Stack>
                   <Stack spacing={1}>
@@ -1207,12 +1571,18 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
               {usingCustomized && customizedCities.length > 0 && (
                 <Card sx={{ flex: 1, minWidth: 260, backgroundColor: "#fff", border: "1px solid #bfdbfe", boxShadow: 0 }}>
                   <CardContent sx={{ p: 1.25 }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a", mb: 1 }}>Customized</Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a", mb: 1 }}>
+                      Customized
+                    </Typography>
                     <Stack spacing={0.75}>
                       {customizedCities.map((c) => (
                         <Stack key={c.name} direction="row" justifyContent="space-between">
-                          <Typography sx={{ fontSize: 12, color: "#0f172a" }}>{c.name}:</Typography>
-                          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{fmtQty(c.qty)} Qty</Typography>
+                          <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
+                            {c.name}:
+                          </Typography>
+                          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                            {fmtQty(c.qty)} Qty
+                          </Typography>
                         </Stack>
                       ))}
                     </Stack>
@@ -1230,7 +1600,18 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
                       label={city}
                       size="small"
                       sx={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", "& .MuiChip-label": { fontSize: 12, color: "#111827", fontWeight: 600 } }}
-                      icon={<span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 9999, background: getCityColor(city), marginLeft: 6 }} />}
+                      icon={
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 10,
+                            height: 10,
+                            borderRadius: 9999,
+                            background: getCityColor(city),
+                            marginLeft: 6,
+                          }}
+                        />
+                      }
                     />
                   ))}
                 </Stack>
@@ -1272,16 +1653,23 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
                                     {cityParts.map(({ city, val }) => (
                                       <div key={city} style={{ fontSize: 12, color: "#334155", display: "flex", gap: 6, alignItems: "center" }}>
                                         <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: 9999, background: getCityColor(city) }} />
-                                        <span>{city}: {val}{suffix}</span>
+                                        <span>
+                                          {city}: {val}
+                                          {suffix}
+                                        </span>
                                       </div>
                                     ))}
                                   </div>
                                 ) : (
                                   <div style={{ fontSize: 12, color: "#334155", marginBottom: 6 }}>
-                                    Change: {to1(p0.raw)}{suffix}
+                                    Change: {to1(p0.raw)}
+                                    {suffix}
                                   </div>
                                 )}
-                                <div style={{ fontSize: 12, color: "#64748b" }}>Cumulative: {to1(p0.cumulative)}{suffix}</div>
+                                <div style={{ fontSize: 12, color: "#64748b" }}>
+                                  Cumulative: {to1(p0.cumulative)}
+                                  {suffix}
+                                </div>
                               </div>
                             );
                           }}
@@ -1301,8 +1689,16 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
                           ))
                         ) : (
                           <Bar dataKey="delta" stackId="wf" isAnimationActive={false} barSize={26}>
-                            {(wfData || []).map((d, i) => <Cell key={i} fill={colorForStep(d.name, d.kind, d.raw)} />)}
-                            <LabelList dataKey="raw" position="top" offset={6} formatter={(v) => `${to1(v)}${getMoneyUnit(symbol).suffix}`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
+                            {(wfData || []).map((d, i) => (
+                              <Cell key={i} fill={colorForStep(d.name, d.kind, d.raw)} />
+                            ))}
+                            <LabelList
+                              dataKey="raw"
+                              position="top"
+                              offset={6}
+                              formatter={(v) => `${to1(v)}${getMoneyUnit(symbol).suffix}`}
+                              style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }}
+                            />
                           </Bar>
                         )}
                       </BarChart>
@@ -1327,47 +1723,93 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare }) {
 
                   <CardContent sx={{ p: 1.25 }}>
                     <Grid container spacing={1}>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Profit" value={fmtMoney(recommended.profit)} delta={`${recommended.profitMargin}%`} /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="ETA" value={recommended.eta} /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Logistic Cost" value={fmtMoney(recommended.logisticCost)} delta="-15%" /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Labor/Handling" value={fmtMoney(recommended.laborHandlingCost)} delta="-15%" /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Revenue" value={fmtMoney(recommended.revenue)} delta="24%" /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Total Cost" value={fmtMoney(recommended.totalCost)} delta="10%" /></Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <MetricTile title="Profit" value={fmtMoney(recommended.profit)} delta={`${recommended.profitMargin}%`} />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <MetricTile title="ETA" value={recommended.eta} />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <MetricTile title="Logistic Cost" value={fmtMoney(recommended.logisticCost)} delta="-15%" />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <MetricTile title="Labor/Handling" value={fmtMoney(recommended.laborHandlingCost)} delta="-15%" />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <MetricTile title="Revenue" value={fmtMoney(recommended.revenue)} delta="24%" />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <MetricTile title="Total Cost" value={fmtMoney(recommended.totalCost)} delta="10%" />
+                      </Grid>
                     </Grid>
                   </CardContent>
                 </Card>
               )}
 
-              {usingCustomized && customizedCities.map((c) => (
-                <Card key={c.name} sx={{ border: 1, borderColor: "#e5e7eb", boxShadow: 0, mb: 1.0 }}>
-                  <Stack sx={{ px: 1.5, py: 1, bgcolor: "#fff", borderBottom: "1px solid #eef2f7" }} direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                    <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
-                      {c.name}{" "}
-                      <Typography component="span" sx={{ color: "#6b7280", ml: 0.5, fontWeight: 700 }}>
-                        (Customized)
+              {usingCustomized &&
+                customizedCities.map((c) => (
+                  <Card key={c.name} sx={{ border: 1, borderColor: "#e5e7eb", boxShadow: 0, mb: 1.0 }}>
+                    <Stack sx={{ px: 1.5, py: 1, bgcolor: "#fff", borderBottom: "1px solid #eef2f7" }} direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                      <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
+                        {c.name}{" "}
+                        <Typography component="span" sx={{ color: "#6b7280", ml: 0.5, fontWeight: 700 }}>
+                          (Customized)
+                        </Typography>
                       </Typography>
-                    </Typography>
-                    <Typography sx={{ fontSize: 13, color: "#334155" }}>
-                      Qty: <strong>{fmtInt(c.qty)}</strong>
-                    </Typography>
-                  </Stack>
+                      <Typography sx={{ fontSize: 13, color: "#334155" }}>
+                        Qty: <strong>{fmtInt(c.qty)}</strong>
+                      </Typography>
+                    </Stack>
 
-                  <CardContent sx={{ p: 1.25 }}>
-                    <Grid container spacing={1}>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Profit" value={fmtMoney(c.profit)} delta={`${to1(c.profitMargin)}%`} /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="ETA" value={c.eta} /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Logistic Cost" value={fmtMoney(c.logisticCost)} /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Labor/Handling" value={fmtMoney(c.laborHandlingCost)} /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Revenue" value={fmtMoney(c.revenue)} /></Grid>
-                      <Grid item xs={12} sm={6} md={4}><MetricTile title="Total Cost" value={fmtMoney(c.totalCost)} /></Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardContent sx={{ p: 1.25 }}>
+                      <Grid container spacing={1}>
+                        <Grid item xs={12} sm={6} md={4}>
+                          <MetricTile title="Profit" value={fmtMoney(c.profit)} delta={`${to1(c.profitMargin)}%`} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                          <MetricTile title="ETA" value={c.eta} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                          <MetricTile title="Logistic Cost" value={fmtMoney(c.logisticCost)} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                          <MetricTile title="Labor/Handling" value={fmtMoney(c.laborHandlingCost)} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                          <MetricTile title="Revenue" value={fmtMoney(c.revenue)} />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                          <MetricTile title="Total Cost" value={fmtMoney(c.totalCost)} />
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                ))}
             </>
           )}
         </Box>
       </Box>
+
+      {/* ✅ Request Transfer success dialog */}
+      <Dialog open={transferOpen} onClose={closeTransfer}>
+        <DialogContent sx={{ textAlign: "center", px: 4, py: 3 }}>
+          <CheckCircleOutline sx={{ fontSize: 42, color: "#22c55e", mb: 1 }} />
+          <Typography sx={{ color: "#111827", fontWeight: 600, mb: 0.5 }}>
+            Request Stock (SKU: {selectedSkuId || "-"})
+          </Typography>
+          <Typography sx={{ color: "#111827", mb: 1 }}>
+            Transfer to Region 1
+          </Typography>
+          <Typography sx={{ color: "#22c55e", fontWeight: 700, mb: 2 }}>
+            Submitted Successfully
+          </Typography>
+          <DialogActions sx={{ justifyContent: "center", p: 0 }}>
+            <Button variant="contained" onClick={closeTransfer} sx={{ minWidth: 96 }}>
+              Ok
+            </Button>
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -1419,22 +1861,34 @@ function MainContentSection() {
 
   const skus = scenarioData?.skus || [];
   const [selectedSkuId, setSelectedSkuId] = useState(skus[0]?.id || "");
-  const currentSku = useMemo(() => skus.find((s) => s.id === selectedSkuId) || skus[0], [skus, selectedSkuId]);
+  const currentSku = useMemo(
+    () => skus.find((s) => s.id === selectedSkuId) || skus[0],
+    [skus, selectedSkuId]
+  );
 
-  const skuOptions = useMemo(() => skus.map((s) => ({ value: s.id, label: s.name })), [skus]);
+  const skuOptions = useMemo(
+    () => skus.map((s) => ({ value: s.id, label: s.name })),
+    [skus]
+  );
 
-  const scenarios = useMemo(() => scenariosForSku(scenarioData, currentSku), [currentSku]);
+  const scenarios = useMemo(
+    () => scenariosForSku(scenarioData, currentSku),
+    [currentSku]
+  );
   const [selectedScenario, setSelectedScenario] = useState(scenarios[0] || null);
   useEffect(() => setSelectedScenario(scenarios[0] || null), [scenarios]);
 
   const [showSim, setShowSim] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Only allow collapsing in Compare Simulation. Otherwise force expanded.
+  const effectiveCollapsed = showSim ? sidebarCollapsed : false;
+
   const layoutCols = showSim
-    ? `${sidebarCollapsed ? COLLAPSED_W : SIDEBAR_W} 1fr`
+    ? `${effectiveCollapsed ? COLLAPSED_W : SIDEBAR_W} 1fr`
     : lgDown
-      ? `${sidebarCollapsed ? COLLAPSED_W : SIDEBAR_W} 1fr`
-      : `${sidebarCollapsed ? COLLAPSED_W : SIDEBAR_W} minmax(0, 1fr) ${RIGHT_W}`;
+    ? `${effectiveCollapsed ? COLLAPSED_W : SIDEBAR_W} 1fr`
+    : `${effectiveCollapsed ? COLLAPSED_W : SIDEBAR_W} minmax(0, 1fr) ${RIGHT_W}`;
 
   return (
     <Box
@@ -1460,9 +1914,9 @@ function MainContentSection() {
           scenarios={scenarios}
           selectedScenario={selectedScenario}
           setSelectedScenario={setSelectedScenario}
-          collapsed={sidebarCollapsed}
+          collapsed={effectiveCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-          allowToggle={!showSim}
+          allowToggle={showSim}
           forceCollapsed={false}
         />
       </Box>
@@ -1473,9 +1927,26 @@ function MainContentSection() {
           <NewRecommendationScreen onBack={() => setShowSim(false)} />
         </Box>
       ) : (
-        <Box sx={{ minWidth: 0, height: "100%", overflowY: "auto", overflowX: "hidden", display: "grid", gridTemplateRows: "minmax(260px, 1fr) minmax(260px, 1fr)", gap: 1, minHeight: 0 }}>
+        <Box
+          sx={{
+            minWidth: 0,
+            height: "100%",
+            overflowY: "auto",
+            overflowX: "hidden",
+            display: "grid",
+            gridTemplateRows: "minmax(260px, 1fr) minmax(260px, 1fr)",
+            gap: 1,
+            minHeight: 0,
+          }}
+        >
           <Box sx={{ minHeight: 0, display: "flex" }}>
-            <ForecastChartCard sku={currentSku} selectedSkuId={selectedSkuId} skuOptions={skuOptions} onChangeSku={setSelectedSkuId} height={180} />
+            <ForecastChartCard
+              sku={currentSku}
+              selectedSkuId={selectedSkuId}
+              skuOptions={skuOptions}
+              onChangeSku={setSelectedSkuId}
+              height={180}
+            />
           </Box>
           <Box sx={{ minHeight: 0, display: "flex" }}>
             <DemandByCityCard locations={currentSku?.locations || []} sku={currentSku} height={170} />
@@ -1488,9 +1959,9 @@ function MainContentSection() {
         <Box
           sx={{
             minWidth: 0,
-            minHeight: 0,      // <-- allow shrinking
-            height: "100%",    // <-- make this a true column container
-            display: "flex",   // <-- so child card can stretch and then scroll inside
+            minHeight: 0,
+            height: "100%",
+            display: "flex",
             gridColumn: { xs: "1 / -1", lg: "auto" },
           }}
         >
@@ -1499,6 +1970,7 @@ function MainContentSection() {
             locations={currentSku?.locations || []}
             recommended={currentSku?.recommendedLocation || null}
             onCompare={() => setShowSim(true)}
+            selectedSkuId={selectedSkuId}
           />
         </Box>
       )}

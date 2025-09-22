@@ -286,7 +286,7 @@ export default function NewRecommendationScreen({ onBack }) {
           sx={{
             position: "absolute",
             left: isSm ? 0 : "0%",
-            top: 65,
+            top: 38,
             width: isSm ? "100%" : "33.333%",
             display: "flex",
             justifyContent: "center",

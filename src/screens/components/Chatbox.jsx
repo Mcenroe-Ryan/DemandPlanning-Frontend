@@ -24,12 +24,12 @@ const ChatBot = ({ onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasPrefilledFirst, setHasPrefilledFirst] = useState(false);
   const [scriptFinished, setScriptFinished] = useState(false);
-  const [botIsTyping, setBotIsTyping] = useState(false); // ✅ NEW lock
+  const [botIsTyping, setBotIsTyping] = useState(false); 
 
   const fullMessages = [
     {
       id: 1,
-      text: "Hello..! Supreeth, how can I help you?",
+      text: "Hello..! John, how can I help you?",
       isBot: true,
       timestamp: new Date(),
     },
