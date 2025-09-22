@@ -533,7 +533,6 @@ export default function ForecastChart({
         })),
       },
       // (future sections hidden)
-        // (future sections hidden)
       // {
       //   id: 2,
       //   title: "External Factors",
