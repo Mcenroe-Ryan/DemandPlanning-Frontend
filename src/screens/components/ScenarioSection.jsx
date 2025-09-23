@@ -53,6 +53,8 @@ import Tune from "@mui/icons-material/Tune";
 import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
+import OpenInFull from "@mui/icons-material/OpenInFull";
+import Close from "@mui/icons-material/Close";
 
 import {
   BarChart,
@@ -73,7 +75,7 @@ import NewRecommendationScreen from "./ScenarioSimulation";
 import scenarioData from "../assets/supply_chain_data.json";
 
 /* ===== Layout constants ===== */
-const MAX_APP_WIDTH = 1600;
+const MAX_APP_WIDTH = 1900;
 const SIDEBAR_W = "clamp(280px, 18vw, 320px)";
 const COLLAPSED_W = "52px";
 const RIGHT_W = "clamp(360px, 28vw, 640px)";
@@ -365,7 +367,13 @@ function SidebarBox({
                       label={s.type}
                       size="small"
                       sx={{
-                        ...(getTypeChipColor(s.typeColor)),
+                        backgroundColor:
+                          (s.typeColor === "info" && "#2196f3") ||
+                          (s.typeColor === "error" && "#ff9800") ||
+                          (s.typeColor === "success" && "#4caf50") ||
+                          (s.typeColor === "primary" && "#9c27b0") ||
+                          "#f5f5f5",
+                        color: "#fff",
                         fontSize: 9,
                         fontWeight: 500,
                         height: 18,
@@ -836,7 +844,6 @@ function ForecastChartCard({
             }}
           >
             <Box
-              ref={containerRef}
               sx={{
                 flex: 1,
                 minHeight: 200,
@@ -848,14 +855,11 @@ function ForecastChartCard({
             >
               <Box
                 sx={{
-                  width: chartWidth,
-                  height: containerHeight,
-                  minWidth: chartWidth,
-                  minHeight: containerHeight,
+                  width: "100%",
+                  height: "100%",
                 }}
               >
                 <HighchartsReact
-                  ref={chartRef}
                   highcharts={Highcharts}
                   options={options}
                   containerProps={{ style: { width: "100%", height: "100%" } }}
@@ -1222,7 +1226,8 @@ function buildStackedWaterfall(steps, perCityQty, recoQty, includeTotal = true, 
 
 const WfTick = ({ x, y, payload }) => {
   const value = String(payload.value || "");
-  const [first, ...rest] = value.split(" ");
+  const constSplit = value.split(" ");
+  const [first, ...rest] = constSplit;
   const second = rest.join(" ");
   const lines = second ? [first, second] : [first];
   return (
@@ -1259,6 +1264,183 @@ function MetricTile({ title, value, delta }) {
   );
 }
 
+/* =====================  ✨ WATERFALL CHART COMPONENT (reusable)  ===================== */
+function WaterfallChart({
+  usingCustomized,
+  activeCities,
+  wfData,
+  wfStackedRows,
+  symbol,
+  height = 260,
+}) {
+  const data = usingCustomized && activeCities.length ? wfStackedRows : wfData;
+
+  return (
+    <div style={{ width: "100%", height, marginTop: 8 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          margin={{ top: 28, right: 12, bottom: 8, left: -1 }}
+          barCategoryGap={8}
+        >
+          <CartesianGrid stroke="#eef2f7" vertical />
+          <XAxis
+            dataKey="name"
+            interval={0}
+            minTickGap={0}
+            tickMargin={12}
+            height={44}
+            tick={<WfTick />}
+            axisLine={{ stroke: "#e5e7eb" }}
+            tickLine={false}
+            padding={{ left: -1, right: 0 }}
+          />
+          <YAxis
+            width={36}
+            domain={["auto", "auto"]}
+            tick={{ fontSize: 11, fill: "#475569" }}
+            axisLine={{ stroke: "#e5e7eb" }}
+            tickLine={false}
+            tickMargin={2}
+            tickFormatter={(v) => `${to1(v)}`}
+            label={{
+              value: getMoneyUnit(symbol).axis,
+              angle: -90,
+              position: "insideLeft",
+              offset: 6,
+              fill: "#64748b",
+              fontSize: 11,
+            }}
+          />
+          <ReferenceLine y={0} stroke="#94a3b8" />
+          <RTooltip
+            content={({ active, payload, label }) => {
+              if (!active || !payload?.length) return null;
+              const p0 = payload[0]?.payload || {};
+              const { suffix } = getMoneyUnit(symbol);
+              const cityParts = (payload || [])
+                .filter((pp) => String(pp.dataKey || "").startsWith("city_"))
+                .map((pp) => ({
+                  city: String(pp.dataKey).replace("city_", ""),
+                  val: to1(pp.value || 0),
+                }))
+                .filter((x) => Math.abs(x.val) > 0);
+
+              return (
+                <div
+                  style={{
+                    padding: 8,
+                    background: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 8,
+                  }}
+                >
+                  <div
+                    style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}
+                  >
+                    {label}
+                  </div>
+                  {cityParts.length > 0 ? (
+                    <div style={{ marginBottom: 6 }}>
+                      {cityParts.map(({ city, val }) => (
+                        <div
+                          key={city}
+                          style={{
+                            fontSize: 12,
+                            color: "#334155",
+                            display: "flex",
+                            gap: 6,
+                            alignItems: "center",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 9,
+                              height: 9,
+                              borderRadius: 9999,
+                              background: getCityColor(city),
+                            }}
+                          />
+                          <span>
+                            {city}: {val}
+                            {suffix}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "#334155",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Change: {to1(p0.raw)}
+                      {suffix}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 12, color: "#64748b" }}>
+                    Cumulative: {to1(p0.cumulative)}
+                    {suffix}
+                  </div>
+                </div>
+              );
+            }}
+          />
+          {/* Base (offset) */}
+          <Bar
+            dataKey="base"
+            stackId="wf"
+            fill="transparent"
+            isAnimationActive={false}
+            barSize={26}
+          />
+          {/* Stacked vs single */}
+          {usingCustomized && activeCities.length ? (
+            activeCities.map((city) => (
+              <Bar
+                key={city}
+                dataKey={`city_${city}`}
+                stackId="wf"
+                isAnimationActive={false}
+                barSize={26}
+                fill={getCityColor(city)}
+              >
+                <LabelList
+                  dataKey={`city_${city}`}
+                  position="top"
+                  offset={6}
+                  formatter={(v) =>
+                    Math.abs(v) > 0
+                      ? `${to1(v)}${getMoneyUnit(symbol).suffix}`
+                      : ""
+                  }
+                  style={{ fontSize: 10, fill: "#111827", fontWeight: 600 }}
+                />
+              </Bar>
+            ))
+          ) : (
+            <Bar dataKey="delta" stackId="wf" isAnimationActive={false} barSize={26}>
+              {(wfData || []).map((d, i) => (
+                <Cell key={i} fill={colorForStep(d.name, d.kind, d.raw)} />
+              ))}
+              <LabelList
+                dataKey="raw"
+                position="top"
+                offset={6}
+                formatter={(v) => `${to1(v)}${getMoneyUnit(symbol).suffix}`}
+                style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }}
+              />
+            </Bar>
+          )}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 /* =====================  RIGHT PANEL (scrollable)  ===================== */
 function RecommendationPanel({ symbol, locations, recommended, onCompare, selectedSkuId }) {
   const [recommendationType, setRecommendationType] = useState("recommended");
@@ -1271,6 +1453,9 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare, select
   const [transferOpen, setTransferOpen] = useState(false);
   const handleRequestTransfer = () => setTransferOpen(true);
   const closeTransfer = () => setTransferOpen(false);
+
+  // NEW: fullscreen Waterfall dialog state
+  const [wfFullscreenOpen, setWfFullscreenOpen] = useState(false);
 
   const limits = useMemo(() => {
     const obj = {};
@@ -1617,93 +1802,38 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare, select
                 </Stack>
               )}
 
+              {/* NEW: header row with fullscreen trigger */}
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 0.75 }}
+              >
+                <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
+                  Waterfall
+                </Typography>
+                <Tooltip title="Open fullscreen">
+                  <IconButton
+                    size="small"
+                    onClick={() => setWfFullscreenOpen(true)}
+                    aria-label="Open waterfall fullscreen"
+                    sx={{ border: "1px solid #e5e7eb" }}
+                  >
+                    <OpenInFull fontSize="inherit" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+
               <Card sx={{ mb: 1.5 }}>
                 <CardContent sx={{ p: 1.25 }}>
-                  <div style={{ width: "100%", height: 260, marginTop: 8 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={usingCustomized && activeCities.length ? wfStackedRows : wfData} margin={{ top: 28, right: 12, bottom: 8, left: -1 }} barCategoryGap={8}>
-                        <CartesianGrid stroke="#eef2f7" vertical />
-                        <XAxis dataKey="name" interval={0} minTickGap={0} tickMargin={12} height={44} tick={<WfTick />} axisLine={{ stroke: "#e5e7eb" }} tickLine={false} padding={{ left: -1, right: 0 }} />
-                        <YAxis
-                          width={36}
-                          domain={["auto", "auto"]}
-                          tick={{ fontSize: 11, fill: "#475569" }}
-                          axisLine={{ stroke: "#e5e7eb" }}
-                          tickLine={false}
-                          tickMargin={2}
-                          tickFormatter={(v) => `${to1(v)}`}
-                          label={{ value: getMoneyUnit(symbol).axis, angle: -90, position: "insideLeft", offset: 6, fill: "#64748b", fontSize: 11 }}
-                        />
-                        <ReferenceLine y={0} stroke="#94a3b8" />
-                        <RTooltip
-                          content={({ active, payload, label }) => {
-                            if (!active || !payload?.length) return null;
-                            const p0 = payload[0]?.payload || {};
-                            const { suffix } = getMoneyUnit(symbol);
-                            const cityParts = (payload || [])
-                              .filter((pp) => String(pp.dataKey || "").startsWith("city_"))
-                              .map((pp) => ({ city: String(pp.dataKey).replace("city_", ""), val: to1(pp.value || 0) }))
-                              .filter((x) => Math.abs(x.val) > 0);
-
-                            return (
-                              <div style={{ padding: 8, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8 }}>
-                                <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>{label}</div>
-                                {cityParts.length > 0 ? (
-                                  <div style={{ marginBottom: 6 }}>
-                                    {cityParts.map(({ city, val }) => (
-                                      <div key={city} style={{ fontSize: 12, color: "#334155", display: "flex", gap: 6, alignItems: "center" }}>
-                                        <span style={{ display: "inline-block", width: 9, height: 9, borderRadius: 9999, background: getCityColor(city) }} />
-                                        <span>
-                                          {city}: {val}
-                                          {suffix}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div style={{ fontSize: 12, color: "#334155", marginBottom: 6 }}>
-                                    Change: {to1(p0.raw)}
-                                    {suffix}
-                                  </div>
-                                )}
-                                <div style={{ fontSize: 12, color: "#64748b" }}>
-                                  Cumulative: {to1(p0.cumulative)}
-                                  {suffix}
-                                </div>
-                              </div>
-                            );
-                          }}
-                        />
-                        <Bar dataKey="base" stackId="wf" fill="transparent" isAnimationActive={false} barSize={26} />
-                        {usingCustomized && activeCities.length ? (
-                          activeCities.map((city) => (
-                            <Bar key={city} dataKey={`city_${city}`} stackId="wf" isAnimationActive={false} barSize={26} fill={getCityColor(city)}>
-                              <LabelList
-                                dataKey={`city_${city}`}
-                                position="top"
-                                offset={6}
-                                formatter={(v) => (Math.abs(v) > 0 ? `${to1(v)}${getMoneyUnit(symbol).suffix}` : "")}
-                                style={{ fontSize: 10, fill: "#111827", fontWeight: 600 }}
-                              />
-                            </Bar>
-                          ))
-                        ) : (
-                          <Bar dataKey="delta" stackId="wf" isAnimationActive={false} barSize={26}>
-                            {(wfData || []).map((d, i) => (
-                              <Cell key={i} fill={colorForStep(d.name, d.kind, d.raw)} />
-                            ))}
-                            <LabelList
-                              dataKey="raw"
-                              position="top"
-                              offset={6}
-                              formatter={(v) => `${to1(v)}${getMoneyUnit(symbol).suffix}`}
-                              style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }}
-                            />
-                          </Bar>
-                        )}
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <WaterfallChart
+                    usingCustomized={usingCustomized}
+                    activeCities={activeCities}
+                    wfData={wfData}
+                    wfStackedRows={wfStackedRows}
+                    symbol={symbol}
+                    height={260}
+                  />
                 </CardContent>
               </Card>
 
@@ -1730,13 +1860,13 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare, select
                         <MetricTile title="ETA" value={recommended.eta} />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
+                        <MetricTile title="Revenue" value={fmtMoney(recommended.revenue)} delta="24%" />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
                         <MetricTile title="Logistic Cost" value={fmtMoney(recommended.logisticCost)} delta="-15%" />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
                         <MetricTile title="Labor/Handling" value={fmtMoney(recommended.laborHandlingCost)} delta="-15%" />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <MetricTile title="Revenue" value={fmtMoney(recommended.revenue)} delta="24%" />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
                         <MetricTile title="Total Cost" value={fmtMoney(recommended.totalCost)} delta="10%" />
@@ -1769,14 +1899,14 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare, select
                         <Grid item xs={12} sm={6} md={4}>
                           <MetricTile title="ETA" value={c.eta} />
                         </Grid>
+                         <Grid item xs={12} sm={6} md={4}>
+                          <MetricTile title="Revenue" value={fmtMoney(c.revenue)} />
+                        </Grid>
                         <Grid item xs={12} sm={6} md={4}>
                           <MetricTile title="Logistic Cost" value={fmtMoney(c.logisticCost)} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
                           <MetricTile title="Labor/Handling" value={fmtMoney(c.laborHandlingCost)} />
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
-                          <MetricTile title="Revenue" value={fmtMoney(c.revenue)} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
                           <MetricTile title="Total Cost" value={fmtMoney(c.totalCost)} />
@@ -1808,6 +1938,49 @@ function RecommendationPanel({ symbol, locations, recommended, onCompare, select
               Ok
             </Button>
           </DialogActions>
+        </DialogContent>
+      </Dialog>
+
+      {/* ✨ NEW: Fullscreen Waterfall dialog */}
+      <Dialog
+        open={wfFullscreenOpen}
+        onClose={() => setWfFullscreenOpen(false)}
+        fullWidth
+        maxWidth="lg"
+        PaperProps={{
+          sx: { borderRadius: 2, overflow: "hidden" },
+        }}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{
+            px: 2,
+            py: 1,
+            borderBottom: "1px solid #e5e7eb",
+            bgcolor: "#f8fafc",
+          }}
+        >
+          <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#0f172a" }}>
+            Waterfall — {usingCustomized ? "Customized Allocation" : "Recommended"}
+          </Typography>
+          <IconButton onClick={() => setWfFullscreenOpen(false)}>
+            <Close />
+          </IconButton>
+        </Stack>
+
+        <DialogContent sx={{ p: 2 }}>
+          <Box sx={{ width: "100%", height: { xs: 420, sm: 520, md: 640 } }}>
+            <WaterfallChart
+              usingCustomized={usingCustomized}
+              activeCities={activeCities}
+              wfData={wfData}
+              wfStackedRows={wfStackedRows}
+              symbol={symbol}
+              height={Math.min(700, typeof window !== "undefined" ? window.innerHeight * 0.75 : 640)}
+            />
+          </Box>
         </DialogContent>
       </Dialog>
     </Card>
