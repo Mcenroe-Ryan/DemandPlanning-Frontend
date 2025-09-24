@@ -255,7 +255,7 @@ export default function NewRecommendationScreen({ onBack }) {
     <Box sx={{ bgcolor: "#E2E8F0", minHeight: "100vh", p: 1 }}>
       <Box sx={{ maxWidth: 1800, mx: "auto", position: "relative" }}>{/* ↑ 1500 → 1800 */}
         {/* top bar */}
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+        {/* <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
           <Button
             variant="outlined"
             size="small"
@@ -264,7 +264,9 @@ export default function NewRecommendationScreen({ onBack }) {
           >
             Back
           </Button>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Stack direction="row" spacing={1} flexWrap="wrap"> */}
+           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ flex: 1 }}>
             {chips.map((c, i) => (
               <Chip
                 key={`${c}-${i}`}
@@ -279,6 +281,14 @@ export default function NewRecommendationScreen({ onBack }) {
               />
             ))}
           </Stack>
+             <Button
+            variant="outlined"
+            size="small"
+            sx={{ textTransform: "none", borderRadius: 2, px: 2, ml: 1 }}
+            onClick={handleBack}
+          >
+            Back
+          </Button>
         </Stack>
 
         {/* Recommended label absolute above first card */}
