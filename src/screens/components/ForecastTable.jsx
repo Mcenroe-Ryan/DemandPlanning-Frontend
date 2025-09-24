@@ -104,9 +104,7 @@ async function updateConsensusForecastAPI(payload) {
 
   return _consensusInFlightPromise;
 }
-/* ----------------------------------------------------------- */
 
-// Helper: Revenue forecast label by country
 function getRevenueForecastLabel(selectedCountry) {
   if (
     (Array.isArray(selectedCountry) && selectedCountry.includes("USA")) ||
@@ -126,7 +124,6 @@ const OPTIONAL_ROWS = [
   "On Hand",
 ];
 
-// Month mapping to avoid Date.parse issues
 const MONTH_MAP = {
   JAN: 0,
   FEB: 1,
@@ -595,7 +592,6 @@ function buildISOWeekLabelsBetween(startDateStr, endDateStr) {
   }
   return out;
 }
-// ------------------------------------------------------
 
 export default function ForecastTable({
   selectedCountry,
@@ -752,6 +748,8 @@ export default function ForecastTable({
 
   const STICKY_W = 240;
   const COL_W = 110;
+  const weeklySelectedRangeActive =
+    period === "W" && Boolean(startDate && endDate);
 
   const realWidth = STICKY_W + visibleColumns.length * COL_W;
   const fillerCount = Math.max(
@@ -1573,7 +1571,10 @@ export default function ForecastTable({
                                 pendingPayload: payload,
                               });
 
-                              setTimeout(() => setIsPreparingConfirm(false), 200);
+                              setTimeout(
+                                () => setIsPreparingConfirm(false),
+                                200
+                              );
                               blurTimeoutRef.current = null;
                             }, 500);
                           }}
@@ -1729,7 +1730,9 @@ export default function ForecastTable({
           </IconButton>
 
           <IconButton size="small">
-            <ShareIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
+            <ShareIcon
+              sx={{ width: 20, height: 20, color: "text.secondary" }}
+            />
           </IconButton>
 
           <IconButton size="small" onClick={handleDownloadTable}>
@@ -1760,6 +1763,8 @@ export default function ForecastTable({
               countryName={selectedCountry}
               showForecast={showForecast}
               setErrorSnackbar={setErrorSnackbar}
+              isWeekly={period === "W"}
+              selectedRangeActive={weeklySelectedRangeActive}
             />
           )}
           {renderForecastTable()}
@@ -1779,6 +1784,8 @@ export default function ForecastTable({
               countryName={selectedCountry}
               showForecast={showForecast}
               setErrorSnackbar={setErrorSnackbar}
+                            isWeekly={period === "W"}
+              selectedRangeActive={weeklySelectedRangeActive}
             />
           )}
         </>

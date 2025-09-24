@@ -78,7 +78,7 @@ import scenarioData from "../assets/supply_chain_data.json";
 const MAX_APP_WIDTH = 1900;
 const SIDEBAR_W = "clamp(280px, 18vw, 320px)";
 const COLLAPSED_W = "52px";
-const RIGHT_W = "clamp(360px, 28vw, 640px)";
+const RIGHT_W = "clamp(420px, 34vw, 760px)";
 const GRAPH_HEIGHT = 200;
 
 /* ---- Mobile chart enhancer (drag/zoom + scrollbars) ---- */
@@ -525,7 +525,6 @@ function ChartSectionHeader({
 }
 
 /* =====================  DISRUPTIONS  ===================== */
-// function DisruptionList({ rowsFromJson }) {
 function DisruptionList({ rowsFromJson, onCountChange }) {
   const [rows, setRows] = useState(
     (rowsFromJson || []).map((r, i) => ({
@@ -536,14 +535,6 @@ function DisruptionList({ rowsFromJson, onCountChange }) {
     }))
   );
   useEffect(() => {
-    // setRows(
-    //   (rowsFromJson || []).map((r, i) => ({
-    //     id: i + 1,
-    //     checked: !!r.selected,
-    //     dateStr: r.date,
-    //     message: `${r.location}: ${r.description}`,
-    //   }))
-    // );
     const next = (rowsFromJson || []).map((r, i) => ({
       id: i + 1,
       checked: !!r.selected,
@@ -554,10 +545,6 @@ function DisruptionList({ rowsFromJson, onCountChange }) {
     onCountChange?.(next.filter((r) => !r.checked).length);
   }, [rowsFromJson]);
 
-  // const toggle = (id) =>
-  //   setRows((prev) =>
-  //     prev.map((r) => (r.id === id ? { ...r, checked: !r.checked } : r))
-  //   );
   const toggle = (id) =>
     setRows((prev) => {
       const next = prev.map((r) =>
@@ -616,8 +603,7 @@ function DisruptionList({ rowsFromJson, onCountChange }) {
   );
 }
 
-/* =====================  FORECAST CHART CARD  ===================== */
-function ForecastChartCard({
+function ForecastChartSection({
   sku,
   selectedSkuId,
   skuOptions,
@@ -626,16 +612,15 @@ function ForecastChartCard({
   width,
 }) {
   const [mainTabValue, setMainTabValue] = useState(0);
-  // live count of un-checked disruptions
   const [activeDisruptions, setActiveDisruptions] = useState(
     (sku?.disruptions || []).filter((d) => !d.selected).length
   );
-  // reset when SKU changes
   useEffect(() => {
     setActiveDisruptions(
       (sku?.disruptions || []).filter((d) => !d.selected).length
     );
   }, [sku]);
+
   const theme = useTheme();
   const upLg = useMediaQuery(theme.breakpoints.up("lg"));
   const upXl = useMediaQuery(theme.breakpoints.up("xl"));
@@ -658,13 +643,15 @@ function ForecastChartCard({
     const updateDimensions = () => {
       const rect = containerRef.current.getBoundingClientRect();
       const availableHeight = Math.max(100, height);
-      const target =
-        typeof width === "number"
-          ? width
-          : typeof width === "string"
-          ? rect.width
-          : rect.width - 40;
-      const availableWidth = Math.max(300, Math.min(target, rect.width - 40));
+      // const target =
+      //   typeof width === "number"
+      //     ? width
+      //     : typeof width === "string"
+      //     ? rect.width
+      //     : rect.width - 40;
+      // const availableWidth = Math.max(300, Math.min(target, rect.width - 40));
+      const target = typeof width === "number" ? width : rect.width;
+const availableWidth = Math.max(300, Math.min(target, rect.width));
       setContainerHeight(availableHeight);
       setContainerWidth(availableWidth);
       if (chartRef.current?.chart) {
@@ -805,7 +792,9 @@ function ForecastChartCard({
   ];
 
   return (
-    <Card
+    <Box
+      component="section"
+      ref={containerRef}
       sx={{
         backgroundColor: "#fff",
         border: 1,
@@ -817,6 +806,7 @@ function ForecastChartCard({
         flexDirection: "column",
         minHeight: 0,
       }}
+      aria-label="Demand forecast section"
     >
       <Stack
         direction="row"
@@ -834,30 +824,16 @@ function ForecastChartCard({
         <Tabs value={mainTabValue} onChange={(_, v) => setMainTabValue(v)}>
           <Tab
             label="Demand"
-            sx={{
-              textTransform: "none",
-              fontSize: 13,
-              fontWeight: 600,
-              minHeight: 36,
-              px: 2,
-            }}
+            sx={{ textTransform: "none", fontSize: 13, fontWeight: 600, minHeight: 36, px: 2 }}
           />
           <Tab
             label={
               <Stack direction="row" spacing={1.5} alignItems="center">
-                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-                  Disruption
-                </Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Disruption</Typography>
                 <Badge
                   badgeContent={activeDisruptions}
                   color="error"
-                  sx={{
-                    "& .MuiBadge-badge": {
-                      fontSize: 9,
-                      height: 16,
-                      minWidth: 16,
-                    },
-                  }}
+                  sx={{ "& .MuiBadge-badge": { fontSize: 9, height: 16, minWidth: 16 } }}
                 />
               </Stack>
             }
@@ -877,15 +853,7 @@ function ForecastChartCard({
             skuOptions={skuOptions}
             onChangeSku={onChangeSku}
           />
-          <Stack
-            sx={{
-              p: 2,
-              flex: "0 0 auto",
-              minHeight: 0,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+          <Stack sx={{ p: 2, flex: "0 0 auto", minHeight: 0, display: "flex", flexDirection: "column" }}>
             <Box
               sx={{
                 width: width ?? "100%",
@@ -896,13 +864,9 @@ function ForecastChartCard({
                 backgroundColor: "#fff",
               }}
             >
-              <Box
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
+              <Box sx={{ width: "100%", height: "100%" }}>
                 <HighchartsReact
+                  ref={chartRef}
                   highcharts={Highcharts}
                   options={options}
                   containerProps={{ style: { width: "100%", height: "100%" } }}
@@ -931,9 +895,10 @@ function ForecastChartCard({
           </Box>
         </Stack>
       )}
-    </Card>
+    </Box>
   );
 }
+
 
 /* =====================  CITY / LOCATIONS CARD  ===================== */
 const thCell = {
@@ -1029,7 +994,7 @@ function buildWeeklyLocationSeries(sku) {
   return { categories, series };
 }
 
-function DemandByCityCard({ locations = [], sku, height = 300, width }) {
+function DemandByCitySection({ locations = [], sku, height = 300, width }) {
   const [tab, setTab] = useState(0);
 
   const weekly = useMemo(() => buildWeeklyLocationSeries(sku), [sku]);
@@ -1047,13 +1012,8 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
     const updateDimensions = () => {
       const rect = containerRef.current.getBoundingClientRect();
       const availableHeight = Math.max(120, height);
-      const target =
-        typeof width === "number"
-          ? width
-          : typeof width === "string"
-          ? rect.width
-          : rect.width - 40;
-      const availableWidth = Math.max(300, Math.min(target, rect.width - 40));
+      const target = typeof width === "number" ? width : rect.width;
+const availableWidth = Math.max(300, Math.min(target, rect.width));
       setContainerHeight(availableHeight);
       setContainerWidth(availableWidth);
       if (chartRef.current?.chart) {
@@ -1126,7 +1086,8 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
   );
 
   return (
-    <Card
+    <Box
+      component="section"
       ref={containerRef}
       sx={{
         backgroundColor: "#fff",
@@ -1139,41 +1100,19 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
         flexDirection: "column",
         minHeight: 0,
       }}
+      aria-label="Demand by city section"
     >
       <Stack
-        sx={{
-          px: 1.5,
-          pt: 1,
-          borderBottom: 1,
-          borderColor: "grey.200",
-          flexShrink: 0,
-        }}
+        sx={{ px: 1.5, pt: 1, borderBottom: 1, borderColor: "grey.200", flexShrink: 0 }}
       >
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36 }}>
-          <Tab
-            label="Graph"
-            sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }}
-          />
-          <Tab
-            label="Data Table"
-            sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }}
-          />
+          <Tab label="Graph" sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }} />
+          <Tab label="Data Table" sx={{ textTransform: "none", minHeight: 36, fontSize: 13 }} />
         </Tabs>
       </Stack>
 
-      <Stack
-        sx={{
-          p: 2,
-          flex: 1,
-          minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{ fontSize: 14, fontWeight: 600, mb: 1, flexShrink: 0 }}
-        >
+      <Stack sx={{ p: 2, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <Typography variant="h6" sx={{ fontSize: 14, fontWeight: 600, mb: 1, flexShrink: 0 }}>
           Demand
         </Typography>
 
@@ -1188,13 +1127,7 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
               backgroundColor: "#fff",
             }}
           >
-            <Box
-              sx={{
-                width: chartWidth,
-                height: containerHeight,
-                minHeight: 120,
-              }}
-            >
+            <Box sx={{ width: chartWidth, height: containerHeight, minHeight: 120 }}>
               <HighchartsReact
                 ref={chartRef}
                 highcharts={Highcharts}
@@ -1216,6 +1149,7 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
               boxShadow: 0,
             }}
           >
+            {/* table body unchanged */}
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#eef2f7" }}>
@@ -1223,18 +1157,12 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
                   <TableCell sx={thCell} align="right">
                     Distance<span style={subHdr}>(km)</span>
                   </TableCell>
-                  <TableCell sx={thCell} align="right">
-                    Available Qty
-                  </TableCell>
+                  <TableCell sx={thCell} align="right">Available Qty</TableCell>
                   <TableCell sx={thCell} align="right">
                     Demand <span style={subHdr}>(Next Week)</span>
                   </TableCell>
-                  <TableCell sx={thCell} align="right">
-                    Safety Stock
-                  </TableCell>
-                  <TableCell sx={thCell} align="right">
-                    Excess Qty
-                  </TableCell>
+                  <TableCell sx={thCell} align="right">Safety Stock</TableCell>
+                  <TableCell sx={thCell} align="right">Excess Qty</TableCell>
                   <TableCell sx={thCell} align="right">
                     ETA <span style={subHdr}>(Hours)</span>
                   </TableCell>
@@ -1246,42 +1174,25 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
                     key={`${r.name}-${idx}`}
                     sx={{
                       "& td": { borderColor: "#e5e7eb" },
-                      backgroundColor: r.recommended
-                        ? "rgba(37,99,235,0.08)"
-                        : "transparent",
+                      backgroundColor: r.recommended ? "rgba(37,99,235,0.08)" : "transparent",
                     }}
                   >
                     <TableCell sx={tdCellLeft}>
                       <Typography sx={{ fontSize: 13, color: "#111827" }}>
                         {r.name}
                         {r.recommended && (
-                          <Typography
-                            component="span"
-                            sx={{ color: "#2563eb", fontSize: 12, ml: 0.5 }}
-                          >
+                          <Typography component="span" sx={{ color: "#2563eb", fontSize: 12, ml: 0.5 }}>
                             (Recommended)
                           </Typography>
                         )}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {fmtInt(r.distance)}
-                    </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {fmtInt(r.availableQty)}
-                    </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {fmtInt(r.demandNextWeek)}
-                    </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {fmtInt(r.safetyStock)}
-                    </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {fmtInt(r.excessQty)}
-                    </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {fmtInt(r.eta)}
-                    </TableCell>
+                    <TableCell sx={tdCell} align="right">{fmtInt(r.distance)}</TableCell>
+                    <TableCell sx={tdCell} align="right">{fmtInt(r.availableQty)}</TableCell>
+                    <TableCell sx={tdCell} align="right">{fmtInt(r.demandNextWeek)}</TableCell>
+                    <TableCell sx={tdCell} align="right">{fmtInt(r.safetyStock)}</TableCell>
+                    <TableCell sx={tdCell} align="right">{fmtInt(r.excessQty)}</TableCell>
+                    <TableCell sx={tdCell} align="right">{fmtInt(r.eta)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -1289,7 +1200,7 @@ function DemandByCityCard({ locations = [], sku, height = 300, width }) {
           </TableContainer>
         )}
       </Stack>
-    </Card>
+    </Box>
   );
 }
 
@@ -1476,187 +1387,6 @@ function MetricTile({ title, value, delta }) {
   );
 }
 
-/* =====================  WATERFALL CHART COMPONENT (reusable)  ===================== */
-// function WaterfallChart({
-//   usingCustomized,
-//   activeCities,
-//   wfData,
-//   wfStackedRows,
-//   symbol,
-//   height = 260,
-// }) {
-//   const data = usingCustomized && activeCities.length ? wfStackedRows : wfData;
-
-//   return (
-//     <div style={{ width: "100%", height, marginTop: 8 }}>
-//       <ResponsiveContainer width="100%" height="100%">
-//         <BarChart
-//           data={data}
-//           margin={{ top: 28, right: 12, bottom: 8, left: -1 }}
-//           barCategoryGap={8}
-//         >
-//           <CartesianGrid stroke="#eef2f7" vertical />
-//           <XAxis
-//             dataKey="name"
-//             interval={0}
-//             minTickGap={0}
-//             tickMargin={12}
-//             height={44}
-//             tick={<WfTick />}
-//             axisLine={{ stroke: "#e5e7eb" }}
-//             tickLine={false}
-//             padding={{ left: -1, right: 0 }}
-//           />
-//           <YAxis
-//             width={36}
-//             domain={["auto", "auto"]}
-//             tick={{ fontSize: 11, fill: "#475569" }}
-//             axisLine={{ stroke: "#e5e7eb" }}
-//             tickLine={false}
-//             tickMargin={2}
-//             tickFormatter={(v) => `${to1(v)}`}
-//             label={{
-//               value: getMoneyUnit(symbol).axis,
-//               angle: -90,
-//               position: "insideLeft",
-//               offset: 6,
-//               fill: "#64748b",
-//               fontSize: 11,
-//             }}
-//           />
-//           <ReferenceLine y={0} stroke="#94a3b8" />
-//           <RTooltip
-//             content={({ active, payload, label }) => {
-//               if (!active || !payload?.length) return null;
-//               const p0 = payload[0]?.payload || {};
-//               const { suffix } = getMoneyUnit(symbol);
-//               const cityParts = (payload || [])
-//                 .filter((pp) => String(pp.dataKey || "").startsWith("city_"))
-//                 .map((pp) => ({
-//                   city: String(pp.dataKey).replace("city_", ""),
-//                   val: to1(pp.value || 0),
-//                 }))
-//                 .filter((x) => Math.abs(x.val) > 0);
-
-//               return (
-//                 <div
-//                   style={{
-//                     padding: 8,
-//                     background: "#fff",
-//                     border: "1px solid #e5e7eb",
-//                     borderRadius: 8,
-//                   }}
-//                 >
-//                   <div
-//                     style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}
-//                   >
-//                     {label}
-//                   </div>
-//                   {cityParts.length > 0 ? (
-//                     <div style={{ marginBottom: 6 }}>
-//                       {cityParts.map(({ city, val }) => (
-//                         <div
-//                           key={city}
-//                           style={{
-//                             fontSize: 12,
-//                             color: "#334155",
-//                             display: "flex",
-//                             gap: 6,
-//                             alignItems: "center",
-//                           }}
-//                         >
-//                           <span
-//                             style={{
-//                               display: "inline-block",
-//                               width: 9,
-//                               height: 9,
-//                               borderRadius: 9999,
-//                               background: getCityColor(city),
-//                             }}
-//                           />
-//                           <span>
-//                             {city}: {val}
-//                             {suffix}
-//                           </span>
-//                         </div>
-//                       ))}
-//                     </div>
-//                   ) : (
-//                     <div
-//                       style={{
-//                         fontSize: 12,
-//                         color: "#334155",
-//                         marginBottom: 6,
-//                       }}
-//                     >
-//                       Change: {to1(p0.raw)}
-//                       {suffix}
-//                     </div>
-//                   )}
-//                   <div style={{ fontSize: 12, color: "#64748b" }}>
-//                     Cumulative: {to1(p0.cumulative)}
-//                     {suffix}
-//                   </div>
-//                 </div>
-//               );
-//             }}
-//           />
-//           {/* Base (offset) */}
-//           <Bar
-//             dataKey="base"
-//             stackId="wf"
-//             fill="transparent"
-//             isAnimationActive={false}
-//             barSize={26}
-//           />
-//           {/* Stacked vs single */}
-//           {usingCustomized && activeCities.length ? (
-//             activeCities.map((city) => (
-//               <Bar
-//                 key={city}
-//                 dataKey={`city_${city}`}
-//                 stackId="wf"
-//                 isAnimationActive={false}
-//                 barSize={26}
-//                 fill={getCityColor(city)}
-//               >
-//                 <LabelList
-//                   dataKey={`city_${city}`}
-//                   position="top"
-//                   offset={6}
-//                   formatter={(v) =>
-//                     Math.abs(v) > 0
-//                       ? `${to1(v)}${getMoneyUnit(symbol).suffix}`
-//                       : ""
-//                   }
-//                   style={{ fontSize: 10, fill: "#111827", fontWeight: 600 }}
-//                 />
-//               </Bar>
-//             ))
-//           ) : (
-//             <Bar
-//               dataKey="delta"
-//               stackId="wf"
-//               isAnimationActive={false}
-//               barSize={26}
-//             >
-//               {(wfData || []).map((d, i) => (
-//                 <Cell key={i} fill={colorForStep(d.name, d.kind, d.raw)} />
-//               ))}
-//               <LabelList
-//                 dataKey="raw"
-//                 position="top"
-//                 offset={6}
-//                 formatter={(v) => `${to1(v)}${getMoneyUnit(symbol).suffix}`}
-//                 style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }}
-//               />
-//             </Bar>
-//           )}
-//         </BarChart>
-//       </ResponsiveContainer>
-//     </div>
-//   );
-// }
 /* =====================  WATERFALL CHART COMPONENT (reusable)  ===================== */
 function WaterfallChart({
   usingCustomized,
@@ -1847,15 +1577,15 @@ function WaterfallChart({
   );
 }
 
-
-
-/* =====================  RIGHT PANEL (scrollable)  ===================== */
+// =====================  RECOMMENDATION PANEL (UPDATED)  =====================
 function RecommendationPanel({
   symbol,
   locations,
   recommended,
   onCompare,
   selectedSkuId,
+  onToggleFull,   // NEW: toggles full-width layout
+  isFull,         // NEW: whether panel is currently full-width
 }) {
   const [recommendationType, setRecommendationType] = useState("recommended");
   const [summaryTabValue, setSummaryTabValue] = useState(0);
@@ -1903,7 +1633,6 @@ function RecommendationPanel({
     : Number(recommended?.qty || 0);
 
   const { scale } = getMoneyUnit(symbol);
-
   const getLoc = useCallback(
     (name) => (locations || []).find((l) => l.name === name),
     [locations]
@@ -1916,26 +1645,11 @@ function RecommendationPanel({
 
   const BASELINE_STEPS_NORM = useMemo(() => {
     const stepsRaw = [
-      {
-        name: "Projected Revenue",
-        value: Number(logistics.projectedRevenue || 0) / scale,
-      },
-      {
-        name: "Additional Revenue",
-        value: Number(logistics.additionalRevenue || 0) / scale,
-      },
-      {
-        name: "Logistic Cost",
-        value: Number(logistics.logisticCost || 0) / scale,
-      },
-      {
-        name: "Labor Cost",
-        value: Number(logistics.laborHandlingCost || 0) / scale,
-      },
-      {
-        name: "Transaction Cost",
-        value: Number(logistics.transactionCost || 0) / scale,
-      },
+      { name: "Projected Revenue", value: Number(logistics.projectedRevenue || 0) / scale },
+      { name: "Additional Revenue", value: Number(logistics.additionalRevenue || 0) / scale },
+      { name: "Logistic Cost", value: Number(logistics.logisticCost || 0) / scale },
+      { name: "Labor Cost", value: Number(logistics.laborHandlingCost || 0) / scale },
+      { name: "Transaction Cost", value: Number(logistics.transactionCost || 0) / scale },
     ];
     return stepsRaw;
   }, [logistics, scale]);
@@ -1943,22 +1657,16 @@ function RecommendationPanel({
   const stepsForQty = (qty) => {
     const reco = Number(recommended?.qty || 0);
     const mult = reco > 0 ? qty / reco : 0;
-    return BASELINE_STEPS_NORM.map((s) => ({
-      ...s,
-      value: to1(s.value * mult),
-    }));
+    return BASELINE_STEPS_NORM.map((s) => ({ ...s, value: to1(s.value * mult) }));
   };
 
-  const stepsFeedingChart = useMemo(
-    () => stepsForQty(qtyFeedingChart),
-    [qtyFeedingChart]
-  );
+  const stepsFeedingChart = useMemo(() => stepsForQty(qtyFeedingChart), [qtyFeedingChart]);
   const wfData = useMemo(
     () => buildWaterfall(stepsFeedingChart, true, "Simulated Revenue"),
     [stepsFeedingChart]
   );
 
-  // Stacked WF data for Customize
+  // Stacked WF for Customize
   const { rows: wfStackedRows, activeCities } = useMemo(() => {
     if (!usingCustomized) return { rows: [], activeCities: [] };
     const recoQty = Number(recommended?.qty || 0);
@@ -1987,7 +1695,6 @@ function RecommendationPanel({
 
       const baseQty = Number(recommended?.qty || 0) || 1;
       const m = Number(qty || 0) / baseQty;
-
       const safeMul = (v) => Number(v || 0) * m;
 
       const totalCostRaw =
@@ -2006,7 +1713,6 @@ function RecommendationPanel({
       const profitScaled = safeMul(profitRaw);
       const totalCostScaled = safeMul(totalCostRaw);
       const revenueScaled = safeMul(revenueRaw);
-
       const pm = revenueScaled > 0 ? (profitScaled / revenueScaled) * 100 : 0;
 
       return {
@@ -2026,13 +1732,8 @@ function RecommendationPanel({
   const customizedCities = useMemo(
     () =>
       Object.entries(custom || [])
-        .filter(
-          ([name, q]) => Number(q) > 0 && name !== (recommended?.name || "")
-        )
-        .map(([name, qty]) => {
-          const met = computeCustomMetrics(name, qty);
-          return { name, qty: Number(qty), ...met };
-        }),
+        .filter(([name, q]) => Number(q) > 0 && name !== (recommended?.name || ""))
+        .map(([name, qty]) => ({ name, qty: Number(qty), ...computeCustomMetrics(name, qty) })),
     [custom, recommended?.name, computeCustomMetrics]
   );
 
@@ -2046,7 +1747,7 @@ function RecommendationPanel({
         borderColor: "grey.300",
         borderRadius: 1,
         overflow: "hidden",
-        width: { xs: "100%", md: RIGHT_W },
+        width: "100%",
         height: "100%",
         minHeight: 0,
         display: "flex",
@@ -2103,6 +1804,14 @@ function RecommendationPanel({
           >
             Compare Simulation
           </Button>
+          {/* <Button
+            variant="outlined"
+            size="small"
+            sx={{ fontSize: 11, textTransform: "none", py: 0.5, px: 1.5 }}
+            onClick={onToggleFull}
+          >
+            {isFull ? "Exit Full Width" : "Full Width"}
+          </Button> */}
           <Button
             variant="contained"
             size="small"
@@ -2142,17 +1851,9 @@ function RecommendationPanel({
               <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 0.5 }}>
                 {loc.name}
               </Typography>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                sx={{ mb: 0.25 }}
-              >
-                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
-                  {lim.min}
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: "#64748b" }}>
-                  {lim.max}
-                </Typography>
+              <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.25 }}>
+                <Typography sx={{ fontSize: 11, color: "#64748b" }}>{lim.min}</Typography>
+                <Typography sx={{ fontSize: 11, color: "#64748b" }}>{lim.max}</Typography>
               </Stack>
               <Slider
                 size="small"
@@ -2175,10 +1876,7 @@ function RecommendationPanel({
                   })
                 }
                 fullWidth
-                sx={{
-                  mt: 0.5,
-                  "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 },
-                }}
+                sx={{ mt: 0.5, "& .MuiOutlinedInput-input": { py: 0.6, fontSize: 13 } }}
               />
               <Divider sx={{ my: 1 }} />
             </Stack>
@@ -2186,56 +1884,18 @@ function RecommendationPanel({
         })}
       </Popover>
 
-      <Tabs
-        value={summaryTabValue}
-        onChange={(_, v) => setSummaryTabValue(v)}
-        sx={{ px: 1 }}
-      >
-        <Tab
-          label={<Typography fontSize={12}>Summary</Typography>}
-          sx={{ textTransform: "none", minHeight: 36 }}
-        />
-        <Tab
-          label={<Typography fontSize={12}>Details</Typography>}
-          sx={{ textTransform: "none", minHeight: 36 }}
-        />
+      <Tabs value={summaryTabValue} onChange={(_, v) => setSummaryTabValue(v)} sx={{ px: 1 }}>
+        <Tab label={<Typography fontSize={12}>Summary</Typography>} sx={{ textTransform: "none", minHeight: 36 }} />
+        <Tab label={<Typography fontSize={12}>Details</Typography>} sx={{ textTransform: "none", minHeight: 36 }} />
       </Tabs>
 
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          overflowX: "hidden",
-          px: 1.5,
-          pb: 1.5,
-        }}
-      >
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", px: 1.5, pb: 1.5 }}>
         <Box sx={{ width: "100%" }}>
           {summaryTabValue === 0 ? (
-            <Stack
-              direction="row"
-              spacing={1.25}
-              sx={{ alignItems: "stretch", flexWrap: "wrap" }}
-            >
-              <Card
-                sx={{
-                  flex: 1,
-                  minWidth: 260,
-                  backgroundColor: "#e7f0ff",
-                  border: "1px solid #cfe1ff",
-                  boxShadow: 0,
-                }}
-              >
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "stretch", flexWrap: "wrap" }}>
+              <Card sx={{ flex: 1, minWidth: 260, backgroundColor: "#e7f0ff", border: "1px solid #cfe1ff", boxShadow: 0 }}>
                 <CardContent sx={{ p: 1.25 }}>
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: 14,
-                      color: "#1d4ed8",
-                      mb: 1,
-                    }}
-                  >
+                  <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#1d4ed8", mb: 1 }}>
                     Recommended
                   </Typography>
                   <Stack spacing={0.5} sx={{ mb: 1 }}>
@@ -2260,39 +1920,16 @@ function RecommendationPanel({
               </Card>
 
               {usingCustomized && customizedCities.length > 0 && (
-                <Card
-                  sx={{
-                    flex: 1,
-                    minWidth: 260,
-                    backgroundColor: "#fff",
-                    border: "1px solid #bfdbfe",
-                    boxShadow: 0,
-                  }}
-                >
+                <Card sx={{ flex: 1, minWidth: 260, backgroundColor: "#fff", border: "1px solid #bfdbfe", boxShadow: 0 }}>
                   <CardContent sx={{ p: 1.25 }}>
-                    <Typography
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: 14,
-                        color: "#0f172a",
-                        mb: 1,
-                      }}
-                    >
+                    <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a", mb: 1 }}>
                       Customized
                     </Typography>
                     <Stack spacing={0.75}>
                       {customizedCities.map((c) => (
-                        <Stack
-                          key={c.name}
-                          direction="row"
-                          justifyContent="space-between"
-                        >
-                          <Typography sx={{ fontSize: 12, color: "#0f172a" }}>
-                            {c.name}:
-                          </Typography>
-                          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                            {fmtQty(c.qty)} Qty
-                          </Typography>
+                        <Stack key={c.name} direction="row" justifyContent="space-between">
+                          <Typography sx={{ fontSize: 12, color: "#0f172a" }}>{c.name}:</Typography>
+                          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{fmtQty(c.qty)} Qty</Typography>
                         </Stack>
                       ))}
                     </Stack>
@@ -2303,11 +1940,7 @@ function RecommendationPanel({
           ) : (
             <>
               {usingCustomized && activeCities.length > 0 && (
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{ mb: 1, flexWrap: "wrap" }}
-                >
+                <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: "wrap" }}>
                   {activeCities.map((city) => (
                     <Chip
                       key={city}
@@ -2316,11 +1949,7 @@ function RecommendationPanel({
                       sx={{
                         backgroundColor: "#fff",
                         border: "1px solid #e5e7eb",
-                        "& .MuiChip-label": {
-                          fontSize: 12,
-                          color: "#111827",
-                          fontWeight: 600,
-                        },
+                        "& .MuiChip-label": { fontSize: 12, color: "#111827", fontWeight: 600 },
                       }}
                       icon={
                         <span
@@ -2339,15 +1968,8 @@ function RecommendationPanel({
                 </Stack>
               )}
 
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mb: 0.75 }}
-              >
-                <Typography
-                  sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}
-                >
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.75 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
                   Waterfall Graph
                 </Typography>
                 <Tooltip title="Open fullscreen">
@@ -2376,34 +1998,17 @@ function RecommendationPanel({
               </Card>
 
               {recommended && (
-                <Card
-                  sx={{
-                    border: 1,
-                    borderColor: "#dbeafe",
-                    boxShadow: 0,
-                    mb: customizedCities.length ? 1.25 : 0,
-                  }}
-                >
+                <Card sx={{ border: 1, borderColor: "#dbeafe", boxShadow: 0, mb: customizedCities.length ? 1.25 : 0 }}>
                   <Stack
-                    sx={{
-                      px: 1.5,
-                      py: 1,
-                      bgcolor: "#eaf2ff",
-                      borderBottom: "1px solid #dbeafe",
-                    }}
+                    sx={{ px: 1.5, py: 1, bgcolor: "#eaf2ff", borderBottom: "1px solid #dbeafe" }}
                     direction="row"
                     alignItems="center"
                     spacing={1}
                     flexWrap="wrap"
                   >
-                    <Typography
-                      sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}
-                    >
+                    <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
                       {recommended.name}{" "}
-                      <Typography
-                        component="span"
-                        sx={{ color: "#2563eb", ml: 0.5, fontWeight: 700 }}
-                      >
+                      <Typography component="span" sx={{ color: "#2563eb", ml: 0.5, fontWeight: 700 }}>
                         (Recommended)
                       </Typography>
                     </Typography>
@@ -2415,42 +2020,22 @@ function RecommendationPanel({
                   <CardContent sx={{ p: 1.25 }}>
                     <Grid container spacing={1}>
                       <Grid item xs={12} sm={6} md={4}>
-                        <MetricTile
-                          title="Profit"
-                          value={fmtMoney(recommended.profit)}
-                          delta={`${recommended.profitMargin}%`}
-                        />
+                        <MetricTile title="Profit" value={fmtMoney(recommended.profit)} delta={`${recommended.profitMargin}%`} />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
                         <MetricTile title="ETA" value={recommended.eta} />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
-                        <MetricTile
-                          title="Revenue"
-                          value={fmtMoney(recommended.revenue)}
-                          delta="24%"
-                        />
+                        <MetricTile title="Revenue" value={fmtMoney(recommended.revenue)} delta="24%" />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
-                        <MetricTile
-                          title="Logistic Cost"
-                          value={fmtMoney(recommended.logisticCost)}
-                          delta="-15%"
-                        />
+                        <MetricTile title="Logistic Cost" value={fmtMoney(recommended.logisticCost)} delta="-15%" />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
-                        <MetricTile
-                          title="Labor/Handling"
-                          value={fmtMoney(recommended.laborHandlingCost)}
-                          delta="-15%"
-                        />
+                        <MetricTile title="Labor/Handling" value={fmtMoney(recommended.laborHandlingCost)} delta="-15%" />
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
-                        <MetricTile
-                          title="Total Cost"
-                          value={fmtMoney(recommended.totalCost)}
-                          delta="10%"
-                        />
+                        <MetricTile title="Total Cost" value={fmtMoney(recommended.totalCost)} delta="10%" />
                       </Grid>
                     </Grid>
                   </CardContent>
@@ -2459,35 +2044,17 @@ function RecommendationPanel({
 
               {usingCustomized &&
                 customizedCities.map((c) => (
-                  <Card
-                    key={c.name}
-                    sx={{
-                      border: 1,
-                      borderColor: "#e5e7eb",
-                      boxShadow: 0,
-                      mb: 1.0,
-                    }}
-                  >
+                  <Card key={c.name} sx={{ border: 1, borderColor: "#e5e7eb", boxShadow: 0, mb: 1.0 }}>
                     <Stack
-                      sx={{
-                        px: 1.5,
-                        py: 1,
-                        bgcolor: "#fff",
-                        borderBottom: "1px solid #eef2f7",
-                      }}
+                      sx={{ px: 1.5, py: 1, bgcolor: "#fff", borderBottom: "1px solid #eef2f7" }}
                       direction="row"
                       alignItems="center"
                       spacing={1}
                       flexWrap="wrap"
                     >
-                      <Typography
-                        sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}
-                      >
+                      <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>
                         {c.name}{" "}
-                        <Typography
-                          component="span"
-                          sx={{ color: "#6b7280", ml: 0.5, fontWeight: 700 }}
-                        >
+                        <Typography component="span" sx={{ color: "#6b7280", ml: 0.5, fontWeight: 700 }}>
                           (Customized)
                         </Typography>
                       </Typography>
@@ -2499,38 +2066,22 @@ function RecommendationPanel({
                     <CardContent sx={{ p: 1.25 }}>
                       <Grid container spacing={1}>
                         <Grid item xs={12} sm={6} md={4}>
-                          <MetricTile
-                            title="Profit"
-                            value={fmtMoney(c.profit)}
-                            delta={`${to1(c.profitMargin)}%`}
-                          />
+                          <MetricTile title="Profit" value={fmtMoney(c.profit)} delta={`${to1(c.profitMargin)}%`} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
                           <MetricTile title="ETA" value={c.eta} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
-                          <MetricTile
-                            title="Revenue"
-                            value={fmtMoney(c.revenue)}
-                          />
+                          <MetricTile title="Revenue" value={fmtMoney(c.revenue)} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
-                          <MetricTile
-                            title="Logistic Cost"
-                            value={fmtMoney(c.logisticCost)}
-                          />
+                          <MetricTile title="Logistic Cost" value={fmtMoney(c.logisticCost)} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
-                          <MetricTile
-                            title="Labor/Handling"
-                            value={fmtMoney(c.laborHandlingCost)}
-                          />
+                          <MetricTile title="Labor/Handling" value={fmtMoney(c.laborHandlingCost)} />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
-                          <MetricTile
-                            title="Total Cost"
-                            value={fmtMoney(c.totalCost)}
-                          />
+                          <MetricTile title="Total Cost" value={fmtMoney(c.totalCost)} />
                         </Grid>
                       </Grid>
                     </CardContent>
@@ -2554,11 +2105,7 @@ function RecommendationPanel({
             Submitted Successfully
           </Typography>
           <DialogActions sx={{ justifyContent: "center", p: 0 }}>
-            <Button
-              variant="contained"
-              onClick={closeTransfer}
-              sx={{ minWidth: 96 }}
-            >
+            <Button variant="contained" onClick={closeTransfer} sx={{ minWidth: 96 }}>
               Ok
             </Button>
           </DialogActions>
@@ -2570,24 +2117,16 @@ function RecommendationPanel({
         onClose={() => setWfFullscreenOpen(false)}
         fullWidth
         maxWidth="lg"
-        PaperProps={{
-          sx: { borderRadius: 2, overflow: "hidden" },
-        }}
+        PaperProps={{ sx: { borderRadius: 2, overflow: "hidden" } }}
       >
         <Stack
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{
-            px: 2,
-            py: 1,
-            borderBottom: "1px solid #e5e7eb",
-            bgcolor: "#f8fafc",
-          }}
+          sx={{ px: 2, py: 1, borderBottom: "1px solid #e5e7eb", bgcolor: "#f8fafc" }}
         >
           <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#0f172a" }}>
-            Waterfall —{" "}
-            {usingCustomized ? "Customized Allocation" : "Recommended"}
+            Waterfall — {usingCustomized ? "Customized Allocation" : "Recommended"}
           </Typography>
           <IconButton onClick={() => setWfFullscreenOpen(false)}>
             <Close />
@@ -2602,10 +2141,7 @@ function RecommendationPanel({
               wfData={wfData}
               wfStackedRows={wfStackedRows}
               symbol={symbol}
-              height={Math.min(
-                700,
-                typeof window !== "undefined" ? window.innerHeight * 0.75 : 640
-              )}
+              height={Math.min(700, typeof window !== "undefined" ? window.innerHeight * 0.75 : 640)}
             />
           </Box>
         </DialogContent>
@@ -2613,6 +2149,7 @@ function RecommendationPanel({
     </Card>
   );
 }
+
 
 /* =====================  DATA ADAPTERS  ===================== */
 const typeColorByCategory = (cat = "") => {
@@ -2656,7 +2193,7 @@ function scenariosForSku(data, sku) {
   }));
 }
 
-/* =====================  MAIN LAYOUT  ===================== */
+// =====================  MAIN CONTENT SECTION (UPDATED)  =====================
 function MainContentSection() {
   const theme = useTheme();
   const lgDown = useMediaQuery(theme.breakpoints.down("lg"));
@@ -2673,27 +2210,18 @@ function MainContentSection() {
     [skus]
   );
 
-  const scenarios = useMemo(
-    () => scenariosForSku(scenarioData, currentSku),
-    [currentSku]
-  );
-  const [selectedScenario, setSelectedScenario] = useState(
-    scenarios[0] || null
-  );
+  const scenarios = useMemo(() => scenariosForSku(scenarioData, currentSku), [currentSku]);
+  const [selectedScenario, setSelectedScenario] = useState(scenarios[0] || null);
   useEffect(() => setSelectedScenario(scenarios[0] || null), [scenarios]);
 
   const [showSim, setShowSim] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [panelFull, setPanelFull] = useState(false); // NEW: full-width panel toggle
 
   const effectiveCollapsed = showSim ? sidebarCollapsed : false;
 
-  const layoutCols = showSim
-    ? `${effectiveCollapsed ? COLLAPSED_W : SIDEBAR_W} 1fr`
-    : lgDown
-    ? `${effectiveCollapsed ? COLLAPSED_W : SIDEBAR_W} 1fr`
-    : `${
-        effectiveCollapsed ? COLLAPSED_W : SIDEBAR_W
-      } minmax(0, 1fr) ${RIGHT_W}`;
+  // OUTER GRID: Sidebar | Content
+  const layoutCols = `${effectiveCollapsed ? COLLAPSED_W : SIDEBAR_W} 1fr`;
 
   return (
     <Box
@@ -2713,6 +2241,7 @@ function MainContentSection() {
         minHeight: 0,
       }}
     >
+      {/* Sidebar */}
       <Box sx={{ minWidth: 0, minHeight: 0 }}>
         <SidebarBox
           scenarios={scenarios}
@@ -2725,19 +2254,14 @@ function MainContentSection() {
         />
       </Box>
 
-      {/* Middle */}
+      {/* Content area */}
       {showSim ? (
-        <Box
-          sx={{
-            minWidth: 0,
-            height: "100%",
-            overflowY: "auto",
-            overflowX: "hidden",
-          }}
-        >
+        <Box sx={{ minWidth: 0, height: "100%", overflowY: "auto", overflowX: "hidden" }}>
           <NewRecommendationScreen onBack={() => setShowSim(false)} />
         </Box>
       ) : (
+        // INNER GRID: 2 columns (Charts | Panel) & 2 rows (Chart1, Chart2).
+        // When panelFull is true, collapse to 1 column and make the panel span full width.
         <Box
           sx={{
             minWidth: 0,
@@ -2745,54 +2269,71 @@ function MainContentSection() {
             overflowY: "auto",
             overflowX: "hidden",
             display: "grid",
-            gridTemplateRows: "minmax(220px, 1fr) minmax(260px, 1fr)",
             gap: 1,
             minHeight: 0,
+            gridTemplateColumns: panelFull
+              ? "1fr"
+              : { xs: "1fr", lg: "minmax(0,2fr) minmax(0,1.2fr)" },
+            gridTemplateRows: "minmax(220px, 1fr) minmax(260px, 1fr)",
+            alignItems: "stretch",
+            pr: { lg: 1 },
           }}
         >
-          <Box sx={{ minHeight: 0, display: "flex" }}>
-            <ForecastChartCard
-              sku={currentSku}
-              selectedSkuId={selectedSkuId}
-              skuOptions={skuOptions}
-              onChangeSku={setSelectedSkuId}
-              height={205}
-              width={745}
-            />
-          </Box>
-          <Box sx={{ minHeight: 0, display: "flex" }}>
-            <DemandByCityCard
-              locations={currentSku?.locations || []}
-              sku={currentSku}
-              height={205}
-              width={745}
-            />
-          </Box>
-        </Box>
-      )}
+          {/* Graph 1 (top-left) */}
+          {!panelFull && (
+            <Box sx={{ minHeight: 0, display: "flex", gridColumn: 1, gridRow: 1 }}>
+              <ForecastChartSection
+                sku={currentSku}
+                selectedSkuId={selectedSkuId}
+                skuOptions={skuOptions}
+                onChangeSku={setSelectedSkuId}
+                height={205}
+                // width="90%"
+              />
+            </Box>
+          )}
 
-      {!showSim && (
-        <Box
-          sx={{
-            minWidth: 0,
-            minHeight: 0,
-            height: "100%",
-            display: "flex",
-            gridColumn: { xs: "1 / -1", lg: "auto" },
-          }}
-        >
-          <RecommendationPanel
-            symbol={currentSku?.symbol || "₹"}
-            locations={currentSku?.locations || []}
-            recommended={currentSku?.recommendedLocation || null}
-            onCompare={() => setShowSim(true)}
-            selectedSkuId={selectedSkuId}
-          />
+          {/* Graph 2 (bottom-left) */}
+          {!panelFull && (
+            <Box sx={{ minHeight: 0, display: "flex", gridColumn: 1, gridRow: 2 }}>
+              <DemandByCitySection
+                locations={currentSku?.locations || []}
+                sku={currentSku}
+                height={205}
+                // width="90%"
+              />
+            </Box>
+          )}
+
+          {/* Recommendation panel — spans full width when panelFull is true */}
+          <Box
+            sx={{
+              minWidth: 0,
+              minHeight: 0,
+              height: "100%",
+              display: "flex",
+              gridColumn: panelFull ? "1" : { xs: "1", lg: "2" },
+              gridRow: panelFull ? "1 / span 2" : { xs: "auto", lg: "1 / span 2" },
+              alignSelf: "start",
+              width: "100%",
+            }}
+          >
+            <RecommendationPanel
+              symbol={currentSku?.symbol || "₹"}
+              locations={currentSku?.locations || []}
+              recommended={currentSku?.recommendedLocation || null}
+              onCompare={() => setShowSim(true)}
+              selectedSkuId={selectedSkuId}
+              onToggleFull={() => setPanelFull((v) => !v)} // pass the toggle
+              isFull={panelFull}
+            />
+          </Box>
         </Box>
       )}
     </Box>
   );
 }
+
 
 /* =====================  ROOT  ===================== */
 export default function DemandMProject() {

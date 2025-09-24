@@ -495,6 +495,7 @@ export default function ForecastChart({
   showForecast,
   setErrorSnackbar,
   isWeekly: isWeeklyProp, // optional override
+  selectedRangeActive,
 }) {
   const chartRef = useRef();
   const gridIconRef = useRef();
@@ -640,149 +641,241 @@ export default function ForecastChart({
     );
   }, [events, countryName]);
 
+
   const createPlotBands = useCallback(
-    (evts, monthsArr, overlayState) =>
-      // Only apply plotBands for monthly charts (the math below maps to month buckets)
-      isWeekly
-        ? []
-        : evts.reduce((acc, ev) => {
-            const s = new Date(ev.start_date);
-            const e = new Date(ev.end_date);
-            const sm = s.toLocaleString("default", {
-              month: "short",
-              year: "2-digit",
-            });
-            const em = e.toLocaleString("default", {
-              month: "short",
-              year: "2-digit",
-            });
-            const sIdx = monthsArr.indexOf(sm);
-            const eIdx = monthsArr.indexOf(em);
+  (evts, monthsArr, overlayState) => {
+    if (!Array.isArray(evts) || !evts.length) return [];
 
-            if (sIdx === -1) return acc;
-            const holiday = ev.event_type === "Holiday";
-            if (holiday ? !overlayState.holidays : !overlayState.promotions)
-              return acc;
+    const wantHoliday = !!overlayState.holidays;
+    const wantPromo = !!overlayState.promotions;
 
-            const dayFrac = (date) => {
-              const year = date.getFullYear();
-              const month = date.getMonth();
-              const day = date.getDate();
-              const max = new Date(year, month + 1, 0).getDate();
-              return (day - 1) / max;
+    // helper: ISO weekday Mon=1..Sun=7
+    const isoWeekday = (date) => {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const wd = d.getUTCDay();
+      return wd === 0 ? 7 : wd;
+    };
+    // fraction across one ISO week (0..~1)
+    const weekFrac = (date) => (isoWeekday(date) - 1) / 7;
+
+    const isHoliday = (ev) => (ev.event_type || "").toLowerCase() === "holiday";
+    const includeEvent = (ev) =>
+      (isHoliday(ev) ? wantHoliday : wantPromo) && (ev.start_date || ev.end_date);
+
+    if (isWeekly) {
+      // Weekly chart: categories are ISO labels like "2025-W36"
+      return evts.reduce((acc, ev) => {
+        if (!includeEvent(ev)) return acc;
+
+        const s = new Date(ev.start_date);
+        const e = new Date(ev.end_date || ev.start_date);
+
+        const sLbl = isoWeekLabelFor(s);
+        const eLbl = isoWeekLabelFor(e);
+
+        const sIdx = monthsArr.indexOf(sLbl);
+        const eIdx = monthsArr.indexOf(eLbl);
+
+        if (sIdx === -1) return acc; // can't map if start week not visible
+
+        // map to fractional positions inside the categorical index
+        const fromPos = sIdx + weekFrac(s) - 0.5;
+
+        let toPos;
+        if (eIdx === -1) {
+          // If end week not in view, draw at least the current week sliver
+          toPos = sIdx + 0.5;
+        } else if (eIdx === sIdx) {
+          // same week: stop somewhere later in the same bucket
+          toPos = sIdx + Math.max(weekFrac(e), weekFrac(s)) - 0.5;
+        } else {
+          // spans multiple weeks: end in the end-week bucket
+          toPos = eIdx + weekFrac(e) - 0.5;
+        }
+
+        const minWidth = 0.05;
+        const width = Math.max(toPos - fromPos, minWidth);
+        const color = isHoliday(ev) ? "#DCFCE7" : "#FFEDD5";
+
+        acc.push({
+          id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sLbl}_${eLbl}`}`,
+          from: fromPos,
+          to: fromPos + width,
+          color,
+          events: {
+            mouseover: function (mouseEvt) {
+              const ch = chartRef.current?.chart;
+              if (!ch) return;
+              if (ch.customTooltip) ch.customTooltip.destroy();
+
+              // date formatting similar to your monthly tooltip logic
+              const names = [];
+              if (Array.isArray(countryName)) names.push(...countryName);
+              else if (typeof countryName === "string") names.push(countryName);
+              if (ev.country_name) names.push(ev.country_name);
+              const all = names.map((t) => t.toLowerCase());
+              const matchAny = (text, keys) => keys.some((k) => text.includes(k));
+              const isUSA = all.some((t) =>
+                matchAny(t, ["usa", "u.s.", "united states", "united states of america", "us"])
+              );
+              const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
+              const formatDate = (d) => {
+                if (isUSA || (!isUSA && !isIndia)) {
+                  return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+                }
+                // India/GB format
+                return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+              };
+
+              const tip = `
+                <div style="padding:8px;font-size:12px;font-family:Inter">
+                  <b>${ev.event_type || "Event"}:</b> ${ev.event_name || "-"}<br/>
+                  <b>Start:</b> ${formatDate(s)}<br/>
+                  <b>End&nbsp;&nbsp;:</b> ${formatDate(e)}<br/>
+                  <b>Country:</b> ${ev.country_name || "N/A"}
+                </div>
+              `;
+
+              const rect = ch.container.getBoundingClientRect();
+              const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
+              const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
+
+              ch.customTooltip = ch.renderer
+                .label(tip, x, y, "round", null, null, true)
+                .attr({
+                  fill: "rgba(255,255,255,0.95)",
+                  stroke: "rgba(51,51,51,0.3)",
+                  "stroke-width": 1,
+                  r: 3,
+                  padding: 8,
+                  zIndex: 999,
+                })
+                .css({
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
+                })
+                .add();
+            },
+            mouseout: function () {
+              const ch = chartRef.current?.chart;
+              if (ch?.customTooltip) {
+                ch.customTooltip.destroy();
+                ch.customTooltip = null;
+              }
+            },
+          },
+        });
+
+        return acc;
+      }, []);
+    }
+
+    // Monthly chart (your original logic, kept intact)
+    return evts.reduce((acc, ev) => {
+      if (!includeEvent(ev)) return acc;
+
+      const s = new Date(ev.start_date);
+      const e = new Date(ev.end_date || ev.start_date);
+
+      const sm = s.toLocaleString("default", { month: "short", year: "2-digit" });
+      const em = e.toLocaleString("default", { month: "short", year: "2-digit" });
+
+      const sIdx = monthsArr.indexOf(sm);
+      const eIdx = monthsArr.indexOf(em);
+      if (sIdx === -1) return acc;
+
+      const dayFrac = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
+        const max = new Date(year, month + 1, 0).getDate();
+        return (day - 1) / max;
+      };
+
+      const minWidth = 0.05;
+      const fromPos = sIdx + dayFrac(s) - 0.5;
+      const toPos =
+        eIdx === -1
+          ? sIdx + 0.5
+          : eIdx === sIdx
+          ? sIdx + dayFrac(e) - 0.5
+          : eIdx + dayFrac(e) - 0.5;
+
+      const width = Math.max(toPos - fromPos, minWidth);
+      const color = isHoliday(ev) ? "#DCFCE7" : "#FFEDD5";
+
+      acc.push({
+        id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sm}_${em}`}`,
+        from: fromPos,
+        to: fromPos + width,
+        color,
+        events: {
+          // reuse the same tooltip behavior
+          mouseover: function (mouseEvt) {
+            const ch = chartRef.current?.chart;
+            if (!ch) return;
+            if (ch.customTooltip) ch.customTooltip.destroy();
+
+            const names = [];
+            if (Array.isArray(countryName)) names.push(...countryName);
+            else if (typeof countryName === "string") names.push(countryName);
+            if (ev.country_name) names.push(ev.country_name);
+            const all = names.map((t) => t.toLowerCase());
+            const matchAny = (text, keys) => keys.some((k) => text.includes(k));
+            const isUSA = all.some((t) =>
+              matchAny(t, ["usa", "u.s.", "united states", "united states of america", "us"])
+            );
+            const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
+            const formatDate = (d) => {
+              if (isUSA || (!isUSA && !isIndia)) {
+                return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+              }
+              return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
             };
-            const minWidth = 0.05;
-            const fromPos = sIdx + dayFrac(s) - 0.5;
-            const toPos =
-              eIdx === -1
-                ? sIdx + 0.5
-                : eIdx === sIdx
-                ? sIdx + dayFrac(e) - 0.5
-                : eIdx + dayFrac(e) - 0.5;
-            const wid = Math.max(toPos - fromPos, minWidth);
 
-            acc.push({
-              id: `${ev.event_type.toLowerCase()}_${ev.event_id}`,
-              from: fromPos,
-              to: fromPos + wid,
-              color: holiday ? "#DCFCE7" : "#FFEDD5",
-              events: {
-                mouseover: function (mouseEvt) {
-                  const ch = chartRef.current?.chart;
-                  if (!ch) return;
-                  if (ch.customTooltip) ch.customTooltip.destroy();
+            const tip = `
+              <div style="padding:8px;font-size:12px;font-family:Inter">
+                <b>${ev.event_type || "Event"}:</b> ${ev.event_name || "-"}<br/>
+                <b>Start:</b> ${formatDate(s)}<br/>
+                <b>End&nbsp;&nbsp;:</b> ${formatDate(e)}<br/>
+                <b>Country:</b> ${ev.country_name || "N/A"}
+              </div>
+            `;
 
-                  const names = [];
-                  if (Array.isArray(countryName)) names.push(...countryName);
-                  else if (typeof countryName === "string")
-                    names.push(countryName);
-                  if (ev.country_name) names.push(ev.country_name);
-                  const all = names.map((t) => t.toLowerCase());
+            const rect = ch.container.getBoundingClientRect();
+            const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
+            const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
 
-                  const matchAny = (text, keys) =>
-                    keys.some((k) => text.includes(k));
-                  const isUSA = all.some((t) =>
-                    matchAny(t, [
-                      "usa",
-                      "u.s.",
-                      "united states",
-                      "united states of america",
-                      "us",
-                    ])
-                  );
-                  const isIndia = all.some((t) =>
-                    matchAny(t, ["india", "bharat"])
-                  );
+            ch.customTooltip = ch.renderer
+              .label(tip, x, y, "round", null, null, true)
+              .attr({
+                fill: "rgba(255,255,255,0.95)",
+                stroke: "rgba(51,51,51,0.3)",
+                "stroke-width": 1,
+                r: 3,
+                padding: 8,
+                zIndex: 999,
+              })
+              .css({
+                boxShadow: "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
+              })
+              .add();
+          },
+          mouseout: function () {
+            const ch = chartRef.current?.chart;
+            if (ch?.customTooltip) {
+              ch.customTooltip.destroy();
+              ch.customTooltip = null;
+            }
+          },
+        },
+      });
 
-                  const formatDate = (date) => {
-                    if (isUSA && isIndia) {
-                      return date.toLocaleDateString("en-US", {
-                        month: "2-digit",
-                        day: "2-digit",
-                        year: "numeric",
-                      });
-                    } else if (isUSA) {
-                      return date.toLocaleDateString("en-US", {
-                        month: "2-digit",
-                        day: "2-digit",
-                        year: "numeric",
-                      });
-                    } else if (isIndia) {
-                      return date.toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      });
-                    }
-                    return date.toLocaleDateString();
-                  };
+      return acc;
+    }, []);
+  },
+  [isWeekly, countryName]
+);
 
-                  const s = new Date(ev.start_date);
-                  const e = new Date(ev.end_date);
-
-                  const tip = `
-      <div style="padding:8px;font-size:12px;font-family:Inter">
-        <b>${ev.event_type}:</b> ${ev.event_name}<br/>
-        <b>Start:</b> ${formatDate(s)}<br/>
-        <b>End&nbsp;&nbsp;:</b> ${formatDate(e)}<br/>
-        <b>Country:</b> ${ev.country_name || "N/A"}
-      </div>`;
-
-                  const rect = ch.container.getBoundingClientRect();
-                  const x =
-                    (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-                  const y =
-                    (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
-
-                  ch.customTooltip = ch.renderer
-                    .label(tip, x, y, "round", null, null, true)
-                    .attr({
-                      fill: "rgba(255,255,255,0.95)",
-                      stroke: "rgba(51,51,51,0.3)",
-                      "stroke-width": 1,
-                      r: 3,
-                      padding: 8,
-                      zIndex: 999,
-                    })
-                    .css({
-                      boxShadow:
-                        "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
-                    })
-                    .add();
-                },
-                mouseout: function () {
-                  const ch = chartRef.current?.chart;
-                  if (ch?.customTooltip) {
-                    ch.customTooltip.destroy();
-                    ch.customTooltip = null;
-                  }
-                },
-              },
-            });
-            return acc;
-          }, []),
-    [isWeekly, countryName]
-  );
 
   /* ---------- SAFE split index for Monthly or Weekly ---------- */
   const today = new Date();
@@ -881,8 +974,17 @@ export default function ForecastChart({
        - If user likely selected a date range (short weeks array), show FULL range.
        - Otherwise (landing chart), show 6 weeks history + 6 weeks forecast.
     */
-    const dateRangeLikelyActive = months.length <= 30; // heuristic: short => user-selected
-    if (isWeekly && !dateRangeLikelyActive) {
+    // const dateRangeLikelyActive = months.length <= 30; // heuristic: short => user-selected
+    // if (isWeekly && !dateRangeLikelyActive) {
+
+    // Use explicit signal from parent; fallback to old heuristic if undefined
+    // const rangeSelected =
+    //   typeof selectedRangeActive === "boolean"
+    //     ? selectedRangeActive
+    //     : months.length <= 30; // fallback heuristic
+    const rangeSelected = selectedRangeActive ?? true;
+
+    if (isWeekly && !rangeSelected) {
       const WEEKS_WINDOW = 6; // 6 past + 6 future
       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
       const lastIdx = months.length - 1;
@@ -1233,7 +1335,8 @@ export default function ForecastChart({
     const ch = chartRef.current?.chart;
     if (!ch) return;
 
-    if (isWeekly) {
+    // if (isWeekly) {
+    if (isWeekly && !selectedRangeActive) {
       // Look across all rendered series data for non-null points
       const arrays = [
         seriesData.actual,
@@ -1267,8 +1370,16 @@ export default function ForecastChart({
       // monthly: show all
       ch.xAxis[0].setExtremes(null, null, true, false);
     }
-  }, [isWeekly, months, seriesData]);
+  // }, [isWeekly, months, seriesData]);
+  }, [isWeekly, months, seriesData, selectedRangeActive]);
 
+useEffect(() => {
+  const ch = chartRef.current?.chart;
+  if (!ch) return;
+  if (isWeekly && (selectedRangeActive ?? true)) {
+    ch.xAxis[0].setExtremes(null, null, true, false);
+  }
+}, [isWeekly, selectedRangeActive, months?.length]);
   return (
     <Box
       sx={{
