@@ -1,3 +1,4 @@
+//new version for scrollable
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box,
@@ -70,16 +71,13 @@ async function updateConsensusForecastAPI(payload) {
   const key = makeDedupeKey(payload);
 
   if (now - _lastUpdateTimestamp < 2000) {
-    // console.log("Blocked by time-based protection (2 seconds)");
     throw new Error("Update too soon - please wait");
   }
 
   if (_consensusInFlightKey === key && _consensusInFlightPromise) {
-    // console.log("Blocked by key-based protection, returning existing promise");
     return _consensusInFlightPromise;
   }
 
-  // console.log("Executing consensus update API call", { key, payload });
   _lastUpdateTimestamp = now;
   _consensusInFlightKey = key;
 
@@ -187,17 +185,11 @@ function formatNumberByCountry(value, country) {
   ) {
     return value;
   }
-  if (
-    Array.isArray(country) &&
-    country.includes("India") &&
-    country.includes("USA")
-  ) {
+  if (Array.isArray(country) && country.includes("India") && country.includes("USA")) {
     return Number(value).toLocaleString("en-US");
   }
   if (
-    (Array.isArray(country) &&
-      country.length === 1 &&
-      country[0] === "India") ||
+    (Array.isArray(country) && country.length === 1 && country[0] === "India") ||
     country === "India"
   ) {
     return Number(value).toLocaleString("en-IN");
@@ -467,9 +459,7 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
             John
           </Typography>
         </Box>
-        <Typography sx={{ fontSize: 11, color: "#94A3B8" }}>
-          4 days ago
-        </Typography>
+        <Typography sx={{ fontSize: 11, color: "#94A3B8" }}>4 days ago</Typography>
       </Box>
 
       <Typography
@@ -504,7 +494,7 @@ function LockCommentPopover({ open, anchorEl, onClose, message }) {
         />
         <input
           disabled
-          placeholder="Replay"
+          placeholder="Reply"
           style={{
             flex: 1,
             border: "none",
@@ -593,6 +583,51 @@ function buildISOWeekLabelsBetween(startDateStr, endDateStr) {
   return out;
 }
 
+/* ===================== NEW: AUTO-SCROLL HELPERS ===================== */
+
+// Pick the nearest column if exact "current" is not present (Monthly)
+function findNearestIndexMonthly(cols) {
+  if (!cols?.length) return -1;
+  const now = new Date();
+  const nowLabel = now.toLocaleString("default", { month: "short", year: "2-digit" });
+  let idx = cols.indexOf(nowLabel);
+  if (idx !== -1) return idx;
+
+  // Fallback by absolute month distance
+  const nowKey = now.getFullYear() * 12 + now.getMonth();
+  let best = { i: 0, d: Infinity };
+  for (let i = 0; i < cols.length; i++) {
+    const d = getMonthDate(cols[i]);
+    if (!d) continue;
+    const dt = new Date(d);
+    const key = dt.getFullYear() * 12 + dt.getMonth();
+    const delta = Math.abs(key - nowKey);
+    if (delta < best.d) best = { i, d: delta };
+  }
+  return best.i;
+}
+
+// Pick the nearest column if exact "current" is not present (Weekly)
+function findNearestIndexWeekly(cols) {
+  if (!cols?.length) return -1;
+  const nowWeek = formatISOWeekLabel(startOfISOWeek(new Date()));
+  let idx = cols.indexOf(nowWeek);
+  if (idx !== -1) return idx;
+
+  // Fallback by absolute day distance
+  const nowStart = startOfISOWeek(new Date());
+  let best = { i: 0, d: Infinity };
+  for (let i = 0; i < cols.length; i++) {
+    const d = weekLabelToDate(cols[i]);
+    if (!d) continue;
+    const delta = Math.abs(d.getTime() - nowStart.getTime());
+    if (delta < best.d) best = { i, d: delta };
+  }
+  return best.i;
+}
+
+/* =================================================================== */
+
 export default function ForecastTable({
   selectedCountry,
   selectedState,
@@ -617,13 +652,7 @@ export default function ForecastTable({
   const REVENUE_LABEL = getRevenueForecastLabel(selectedCountry);
 
   const CORE_ROWS = useMemo(
-    () => [
-      "Actual",
-      "Baseline Forecast",
-      "ML Forecast",
-      "Consensus",
-      REVENUE_LABEL,
-    ],
+    () => ["Actual", "Baseline Forecast", "ML Forecast", "Consensus", REVENUE_LABEL],
     [REVENUE_LABEL]
   );
 
@@ -748,14 +777,10 @@ export default function ForecastTable({
 
   const STICKY_W = 240;
   const COL_W = 110;
-  const weeklySelectedRangeActive =
-    period === "W" && Boolean(startDate && endDate);
+  const weeklySelectedRangeActive = period === "W" && Boolean(startDate && endDate);
 
   const realWidth = STICKY_W + visibleColumns.length * COL_W;
-  const fillerCount = Math.max(
-    0,
-    Math.ceil((containerWidth - realWidth) / COL_W)
-  );
+  const fillerCount = Math.max(0, Math.ceil((containerWidth - realWidth) / COL_W));
   const fillerColumns = useMemo(
     () => Array.from({ length: fillerCount }, (_, i) => `__filler_${i + 1}`),
     [fillerCount]
@@ -868,10 +893,7 @@ export default function ForecastTable({
 
   const fetchForecastData = () => {
     setIsLoading(true);
-    const endpoint =
-      period === "W"
-        ? `${API_BASE_URL}/weekly-forecast`
-        : `${API_BASE_URL}/forecast`;
+    const endpoint = period === "W" ? `${API_BASE_URL}/weekly-forecast` : `${API_BASE_URL}/forecast`;
 
     fetch(endpoint, {
       method: "POST",
@@ -1182,6 +1204,43 @@ export default function ForecastTable({
 
   const isWeekly = period === "W";
 
+  /* ===================== NEW: AUTO-SCROLL CORE ===================== */
+
+  const scrollToCurrentPeriod = React.useCallback(() => {
+    const viewport = containerRef.current;
+    if (!viewport || !visibleColumns?.length) return;
+
+    const index =
+      period === "M"
+        ? findNearestIndexMonthly(visibleColumns)
+        : findNearestIndexWeekly(visibleColumns);
+
+    if (index < 0) return;
+
+    // Center target column while accounting for sticky left area
+    const targetLeft =
+      STICKY_W + index * COL_W - Math.max(0, (viewport.clientWidth - COL_W) / 2);
+
+    const left = Math.max(0, Math.min(targetLeft, viewport.scrollWidth));
+    viewport.scrollTo({ left, behavior: "smooth" });
+  }, [visibleColumns, period, containerRef, /* constants: */ STICKY_W, COL_W]);
+
+  // Trigger on period/columns changes (after data/layout)
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      scrollToCurrentPeriod();
+    });
+  }, [scrollToCurrentPeriod]);
+
+  // Trigger on width changes (window resize, layout changes)
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      scrollToCurrentPeriod();
+    });
+  }, [containerWidth, scrollToCurrentPeriod]);
+
+  /* ================================================================= */
+
   const renderForecastTable = () => (
     <Box
       ref={containerRef}
@@ -1310,9 +1369,7 @@ export default function ForecastTable({
                 const isConsensusRow = label === "Consensus";
 
                 const isEditing =
-                  !isWeekly &&
-                  editingCell.month === m &&
-                  editingCell.row === label;
+                  !isWeekly && editingCell.month === m && editingCell.row === label;
                 const locked = !isWeekly && isConsensusRow && isMonthLocked(m);
                 const isAllowedMonth =
                   !isWeekly &&
@@ -1358,8 +1415,7 @@ export default function ForecastTable({
                       fontWeight: 400,
                       color: "#64748B",
                       minWidth: 110,
-                      cursor:
-                        !isWeekly && isConsensusRow ? "pointer" : "default",
+                      cursor: !isWeekly && isConsensusRow ? "pointer" : "default",
                       position: "relative",
                       zIndex: getCellZIndex(false, shouldHighlight, isEditing),
                       transition: "all 0.3s ease-in-out",
@@ -1377,13 +1433,7 @@ export default function ForecastTable({
                           setEditingCell({ month: m, row: label });
                           setEditValue(value === "-" ? "" : value);
                         }
-                      } else if (
-                        !isWeekly &&
-                        isConsensusRow &&
-                        locked &&
-                        value &&
-                        value !== "-"
-                      ) {
+                      } else if (!isWeekly && isConsensusRow && locked && value && value !== "-") {
                         setLockComment({
                           open: true,
                           anchor: e.currentTarget,
@@ -1392,7 +1442,6 @@ export default function ForecastTable({
                       }
                     }}
                   >
-                    {/* show red corner ONLY for monthly consensus cells */}
                     {!isWeekly && label === "Consensus" && value !== "-" && (
                       <RedTriangleIcon />
                     )}
@@ -1416,45 +1465,37 @@ export default function ForecastTable({
                       />
                     )}
 
-                    {/* Pencil only for monthly editable cell */}
-                    {!isWeekly &&
-                      isConsensusRow &&
-                      isAllowedMonth &&
-                      !locked &&
-                      !isEditing && (
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!validateSingleSKUSelection()) return;
-                            if (!canEditConsensus) setCanEditConsensus(true);
-                            setTimeout(() => {
-                              setEditingCell({ month: m, row: label });
-                              setEditValue(value === "-" ? "" : value);
-                            }, 0);
-                          }}
-                          sx={{
-                            position: "absolute",
-                            left: 8,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            width: 22,
-                            height: 22,
-                            zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
-                            bgcolor: "rgba(15,23,42,0.06)",
-                            borderRadius: "6px",
-                            p: 0,
-                            "&:hover": { bgcolor: "rgba(15,23,42,0.12)" },
-                          }}
-                          aria-label="Edit consensus"
-                          title="Edit consensus"
-                        >
-                          <i
-                            className="bi bi-pencil"
-                            style={{ fontSize: 14, lineHeight: 1 }}
-                          />
-                        </IconButton>
-                      )}
+                    {!isWeekly && isConsensusRow && isAllowedMonth && !locked && !isEditing && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!validateSingleSKUSelection()) return;
+                          if (!canEditConsensus) setCanEditConsensus(true);
+                          setTimeout(() => {
+                            setEditingCell({ month: m, row: label });
+                            setEditValue(value === "-" ? "" : value);
+                          }, 0);
+                        }}
+                        sx={{
+                          position: "absolute",
+                          left: 8,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: 22,
+                          height: 22,
+                          zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
+                          bgcolor: "rgba(15,23,42,0.06)",
+                          borderRadius: "6px",
+                          p: 0,
+                          "&:hover": { bgcolor: "rgba(15,23,42,0.12)" },
+                        }}
+                        aria-label="Edit consensus"
+                        title="Edit consensus"
+                      >
+                        <i className="bi bi-pencil" style={{ fontSize: 14, lineHeight: 1 }} />
+                      </IconButton>
+                    )}
 
                     {isConsensusRow ? (
                       !isWeekly && locked ? (
@@ -1486,10 +1527,7 @@ export default function ForecastTable({
                             zIndex: Z_INDEX_LAYERS.EDITING_CELL,
                           }}
                           autoFocus
-                          disabled={
-                            updatingCell.month === m &&
-                            updatingCell.row === label
-                          }
+                          disabled={updatingCell.month === m && updatingCell.row === label}
                           onChange={(e) => {
                             const newValue = e.target.value;
                             if (newValue !== editValue) {
@@ -1504,27 +1542,17 @@ export default function ForecastTable({
                             e.preventDefault();
                             e.stopPropagation();
 
-                            if (
-                              isPreparingConfirm ||
-                              isSubmittingConfirm ||
-                              confirmationDialog.open
-                            ) {
+                            if (isPreparingConfirm || isSubmittingConfirm || confirmationDialog.open) {
                               return;
                             }
 
                             const currentValue = data?.[m]?.[label];
                             const normalizedEditValue =
-                              editValue === "" || editValue === null
-                                ? null
-                                : Number(editValue);
+                              editValue === "" || editValue === null ? null : Number(editValue);
                             const normalizedCurrentValue =
-                              currentValue === "-" || currentValue === null
-                                ? null
-                                : Number(currentValue);
+                              currentValue === "-" || currentValue === null ? null : Number(currentValue);
 
-                            if (
-                              normalizedEditValue === normalizedCurrentValue
-                            ) {
+                            if (normalizedEditValue === normalizedCurrentValue) {
                               setEditingCell({ month: null, row: null });
                               return;
                             }
@@ -1538,21 +1566,13 @@ export default function ForecastTable({
                                 country_name: Array.isArray(selectedCountry)
                                   ? selectedCountry
                                   : [selectedCountry],
-                                state_name: Array.isArray(selectedState)
-                                  ? selectedState
-                                  : [selectedState],
-                                city_name: Array.isArray(selectedCities)
-                                  ? selectedCities
-                                  : [selectedCities],
-                                plant_name: Array.isArray(selectedPlants)
-                                  ? selectedPlants
-                                  : [selectedPlants],
+                                state_name: Array.isArray(selectedState) ? selectedState : [selectedState],
+                                city_name: Array.isArray(selectedCities) ? selectedCities : [selectedCities],
+                                plant_name: Array.isArray(selectedPlants) ? selectedPlants : [selectedPlants],
                                 category_name: Array.isArray(selectedCategories)
                                   ? selectedCategories
                                   : [selectedCategories],
-                                sku_code: Array.isArray(selectedSKUs)
-                                  ? selectedSKUs
-                                  : [selectedSKUs],
+                                sku_code: Array.isArray(selectedSKUs) ? selectedSKUs : [selectedSKUs],
                                 channel_name: Array.isArray(selectedChannels)
                                   ? selectedChannels
                                   : [selectedChannels],
@@ -1571,10 +1591,7 @@ export default function ForecastTable({
                                 pendingPayload: payload,
                               });
 
-                              setTimeout(
-                                () => setIsPreparingConfirm(false),
-                                200
-                              );
+                              setTimeout(() => setIsPreparingConfirm(false), 200);
                               blurTimeoutRef.current = null;
                             }, 500);
                           }}
@@ -1587,9 +1604,7 @@ export default function ForecastTable({
                           }}
                         />
                       ) : !isWeekly && isAllowedMonth ? (
-                        <span style={{ color: "#1976d2", fontWeight: 500 }}>
-                          {displayValue}
-                        </span>
+                        <span style={{ color: "#1976d2", fontWeight: 500 }}>{displayValue}</span>
                       ) : (
                         displayValue ?? "-"
                       )
@@ -1670,32 +1685,15 @@ export default function ForecastTable({
                 {label}
               </Button>
             ))}
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={0.5}
-              sx={{ ml: 2 }}
-            >
+            <Stack direction="row" alignItems="center" spacing={0.5} sx={{ ml: 2 }}>
               <Checkbox
-                icon={
-                  <CheckBoxOutlineBlankIcon
-                    sx={{ width: 16, height: 16, color: "text.secondary" }}
-                  />
-                }
-                checkedIcon={
-                  <CheckBoxIcon
-                    sx={{ width: 16, height: 16, color: "primary.main" }}
-                  />
-                }
+                icon={<CheckBoxOutlineBlankIcon sx={{ width: 16, height: 16, color: "text.secondary" }} />}
+                checkedIcon={<CheckBoxIcon sx={{ width: 16, height: 16, color: "primary.main" }} />}
                 checked={showForecast}
                 onChange={(e) => setShowForecast(e.target.checked)}
                 sx={{ p: 0 }}
               />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontWeight: 400, fontSize: 14, userSelect: "none" }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400, fontSize: 14, userSelect: "none" }}>
                 Forecast
               </Typography>
             </Stack>
@@ -1704,9 +1702,7 @@ export default function ForecastTable({
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box sx={{ position: "relative" }}>
             <IconButton size="small" onClick={handleAddRowsClick}>
-              <AddBoxOutlinedIcon
-                sx={{ width: 20, height: 20, color: "text.secondary" }}
-              />
+              <AddBoxOutlinedIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
             </IconButton>
 
             <OptionalParamsMenu
@@ -1730,21 +1726,15 @@ export default function ForecastTable({
           </IconButton>
 
           <IconButton size="small">
-            <ShareIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <ShareIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
 
           <IconButton size="small" onClick={handleDownloadTable}>
-            <DownloadIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <DownloadIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
 
           {/* <IconButton size="small">
-            <OpenInFullIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <OpenInFullIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton> */}
         </Stack>
       </Box>
@@ -1784,7 +1774,7 @@ export default function ForecastTable({
               countryName={selectedCountry}
               showForecast={showForecast}
               setErrorSnackbar={setErrorSnackbar}
-                            isWeekly={period === "W"}
+              isWeekly={period === "W"}
               selectedRangeActive={weeklySelectedRangeActive}
             />
           )}
@@ -1797,11 +1787,7 @@ export default function ForecastTable({
         onClose={handleErrorSnackbarClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleErrorSnackbarClose}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleErrorSnackbarClose} severity="error" sx={{ width: "100%" }}>
           {errorSnackbar.message}
         </Alert>
       </Snackbar>
