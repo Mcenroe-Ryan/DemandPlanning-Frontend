@@ -12,7 +12,6 @@ import {
   Divider,
 } from "@mui/material";
 
-/** Microsoft logo component */
 const MicrosoftLogo = () => (
   <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
     <Box
@@ -53,9 +52,7 @@ export default function PermissionConsentDialog({
         },
       }}
     >
-      {/* Shared padding wrapper */}
       <Box sx={{ px: 4, pt: 3, pb: 2 }}>
-        {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <MicrosoftLogo />
           <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#323130" }}>
@@ -64,10 +61,8 @@ export default function PermissionConsentDialog({
         </Box>
         <Divider />
 
-        {/* Body */}
         <DialogContent sx={{ px: 0, pt: 3, pb: 1 }}>
           <Stack spacing={3}>
-            {/* Title Section */}
             <Box>
               <Typography
                 variant="h5"
@@ -86,7 +81,6 @@ export default function PermissionConsentDialog({
               </Typography>
             </Box>
 
-            {/* Permissions List */}
             <Box>
               <Typography
                 sx={{
@@ -138,7 +132,6 @@ export default function PermissionConsentDialog({
               </Stack>
             </Box>
 
-            {/* Consent Checkbox */}
             <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, mt: 1 }}>
               <Checkbox
                 size="small"
@@ -154,7 +147,6 @@ export default function PermissionConsentDialog({
               </Typography>
             </Box>
 
-            {/* Terms and Privacy Notice */}
             <Typography
               variant="body2"
               sx={{
@@ -201,7 +193,6 @@ export default function PermissionConsentDialog({
           </Stack>
         </DialogContent>
 
-        {/* Footer */}
         <DialogActions sx={{ px: 0, pt: 2, gap: 1 }}>
           <Button
             variant="outlined"

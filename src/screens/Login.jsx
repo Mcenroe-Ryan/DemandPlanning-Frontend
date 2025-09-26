@@ -41,7 +41,6 @@ const Login = () => {
   const handleSsoSignIn = () => setConsentOpen(true);
   const handleConsentAccept = () => {
     setConsentOpen(false);
-    // TODO: replace with your real SSO flow/redirect
     navigate("/dashboard");
   };
   const handleConsentCancel = () => setConsentOpen(false);
@@ -99,7 +98,6 @@ const Login = () => {
           overflow: "hidden",
         }}
       >
-        {/* Left card */}
         <Paper
           elevation={0}
           sx={{
@@ -135,7 +133,6 @@ const Login = () => {
           </Stack>
         </Paper>
 
-        {/* Right side form */}
         <Box
           sx={{
             flex: 1,
@@ -143,7 +140,7 @@ const Login = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            transform: "translateY(-32px)", // lift the form up a bit
+            transform: "translateY(-32px)", 
           }}
         >
           <Stack spacing={3} sx={{ width: 360, maxWidth: "90%" }}>
@@ -192,7 +189,6 @@ const Login = () => {
               Sign in
             </Button>
 
-            {/* OR separator */}
             <Stack direction="row" alignItems="center" spacing={1}>
               <Box
                 flex={1}
@@ -209,7 +205,6 @@ const Login = () => {
               />
             </Stack>
 
-            {/* Sign in with SSO */}
             <Button
               variant="contained"
               fullWidth
@@ -248,7 +243,6 @@ const Login = () => {
         </Box>
       </Paper>
 
-      {/* Consent dialog for Login */}
       <PermissionConsentDialog
         open={consentOpen}
         appName="SSO for Demand Planning"
@@ -274,7 +268,6 @@ const LoginSignUp = () => {
   const handleSsoSignUp = () => setConsentOpen(true);
   const handleConsentAccept = () => {
     setConsentOpen(false);
-    // TODO: replace with your real SSO flow/redirect
     navigate("/verify");
   };
   const handleConsentCancel = () => setConsentOpen(false);
@@ -293,7 +286,6 @@ const LoginSignUp = () => {
         overflow: "hidden",
       }}
     >
-      {/* Cloud Images */}
       <Box
         component="img"
         src="https://c.animaapp.com/Xt0WpHb0/img/image-1.png"
@@ -323,7 +315,6 @@ const LoginSignUp = () => {
         }}
       />
 
-      {/* Main Container */}
       <Container maxWidth="xl" sx={{ position: "relative", zIndex: 2 }}>
         <Paper
           elevation={4}
@@ -337,7 +328,6 @@ const LoginSignUp = () => {
             backgroundColor: "rgba(255, 255, 255, 0.15)",
           }}
         >
-          {/* Left Section */}
           <Paper
             elevation={0}
             sx={{
@@ -385,7 +375,6 @@ const LoginSignUp = () => {
             </Typography>
           </Paper>
 
-          {/* Right Section (Form) */}
           <Box sx={{ flex: 1, p: 5 }}>
             <Stack spacing={3}>
               <Typography variant="h6" fontWeight={600} color="#FFFFFF">
@@ -475,7 +464,6 @@ const LoginSignUp = () => {
                 Sign up
               </Button>
 
-              {/* OR separator */}
               <Stack direction="row" alignItems="center" spacing={1}>
                 <Box
                   flex={1}
@@ -492,7 +480,6 @@ const LoginSignUp = () => {
                 />
               </Stack>
 
-              {/* Sign up with SSO */}
               <Button
                 variant="contained"
                 fullWidth
@@ -512,7 +499,6 @@ const LoginSignUp = () => {
           </Box>
         </Paper>
 
-        {/* Footer centered under the paper */}
         <Typography
           variant="caption"
           color="#FFFFFF"
@@ -527,7 +513,6 @@ const LoginSignUp = () => {
         </Typography>
       </Container>
 
-      {/* Consent dialog for Signup */}
       <PermissionConsentDialog
         open={consentOpen}
         appName="SSO for Demand Planning"
@@ -544,10 +529,9 @@ const LoginVerify = () => {
   const handleOtpChange = (index, value) => {
     if (value.length <= 1) {
       const next = [...otpValues];
-      next[index] = value.replace(/\D/g, ""); // digits only
+      next[index] = value.replace(/\D/g, ""); 
       setOtpValues(next);
 
-      // auto-focus next input
       if (value && index < otpValues.length - 1) {
         document.getElementById(`otp-input-${index + 1}`)?.focus();
       }
@@ -555,7 +539,6 @@ const LoginVerify = () => {
   };
 
   const handleVerify = () => {
-    // TODO: Add real OTP validation here if needed
     navigate("/dashboard");
   };
 
@@ -572,7 +555,6 @@ const LoginVerify = () => {
         position: "relative",
       }}
     >
-      {/* Clouds */}
       <Box sx={{ position: "absolute", top: 0, left: 0 }}>
         <img
           src="https://c.animaapp.com/VnOr3e3w/img/image-1.png"
@@ -601,7 +583,6 @@ const LoginVerify = () => {
             padding: 4,
           }}
         >
-          {/* Left panel */}
           <Box
             sx={{
               width: 411,
@@ -644,7 +625,6 @@ const LoginVerify = () => {
             </Stack>
           </Box>
 
-          {/* Right panel */}
           <Box
             sx={{
               width: 409,
@@ -663,7 +643,6 @@ const LoginVerify = () => {
                 number +91 ********26
               </Typography>
 
-              {/* OTP inputs */}
               <Stack direction="row" spacing={2} width="200px">
                 {otpValues.map((val, idx) => (
                   <TextField
@@ -714,7 +693,6 @@ const LoginVerify = () => {
           </Box>
         </Box>
 
-        {/* Footer centered at bottom */}
         <Typography
           variant="caption"
           color="#FFFFFF"

@@ -52,7 +52,6 @@ import StarIcon from "@mui/icons-material/Star";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-/* ---------- Utility: colour-code MAPE ---------- */
 const getMapeColor = (mapeValue) => {
   const v = Number(mapeValue);
   if (isNaN(v)) return "#6B7280";
@@ -61,7 +60,6 @@ const getMapeColor = (mapeValue) => {
   return "#EF4444";
 };
 
-/* ---------- Re-usable typography tokens ---------- */
 const AXIS_LABEL_STYLE = {
   fontFamily: "Poppins",
   fontWeight: 600,
@@ -72,7 +70,6 @@ const AXIS_LABEL_STYLE = {
 };
 const AXIS_TITLE_STYLE = { ...AXIS_LABEL_STYLE };
 
-/* ---------- Custom blue checkbox visuals ---------- */
 const BlueSquare = styled("span")({
   width: 18,
   height: 18,
@@ -106,7 +103,6 @@ const BlueCheckbox = (props) => (
   />
 );
 
-/* ---------- Legend meta data ---------- */
 const LEGEND_CONFIG = [
   { key: "actual", label: "Actual", color: "#DC2626", seriesIndex: 0 },
   { key: "baseline", label: "Baseline", color: "#60A5FA", seriesIndex: 1 },
@@ -137,7 +133,6 @@ const LEGEND_CONFIG = [
   { key: "promotions", label: "Promotions", color: "#F97316", isOverlay: true },
 ];
 
-/* ---------- Menu item for disabled tree sections ---------- */
 const TreeMenuItem = ({ item, disabled }) => (
   <ListItem
     sx={{
@@ -166,7 +161,6 @@ const TreeMenuItem = ({ item, disabled }) => (
   </ListItem>
 );
 
-/* ---------- Collapsible radio / checkbox sections ---------- */
 function TreeMenuSection({ section, modelName, setModelName }) {
   const [open, setOpen] = useState(section.id === 1);
   const toggle = () => !section.disabled && setOpen((v) => !v);
@@ -272,7 +266,6 @@ function TreeMenuSection({ section, modelName, setModelName }) {
   );
 }
 
-/* ---------- Floating tree-menu wrapper ---------- */
 function TreeMenu({
   open,
   onClose,
@@ -299,7 +292,6 @@ function TreeMenu({
     setPos({ top, left });
   }, [open, anchorEl]);
 
-  /* outside-click close */
   useEffect(() => {
     if (!open) return;
     const handler = (e) => !e.target.closest(".tree-menu-float") && onClose();
@@ -338,7 +330,6 @@ function TreeMenu({
   );
 }
 
-/* ---------- Custom Legend ---------- */
 const CustomLegend = ({
   activeKeys,
   onToggle,
@@ -448,14 +439,13 @@ const CustomLegend = ({
   </Box>
 );
 
-/* -------------------- ISO Week Helpers -------------------- */
 const WEEK_LABEL_RE = /^(\d{4})-W(\d{2})$/;
 function getISOWeekParts(date) {
   const d = new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
   );
-  const day = d.getUTCDay() || 7; // Mon=1..Sun=7
-  d.setUTCDate(d.getUTCDate() + 4 - day); // Thursday in current week
+  const day = d.getUTCDay() || 7; 
+  d.setUTCDate(d.getUTCDate() + 4 - day); 
   const year = d.getUTCFullYear();
   const yearStart = new Date(Date.UTC(year, 0, 1));
   const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
@@ -471,7 +461,6 @@ function parseISOWeekLabel(label) {
   const year = Number(m[1]);
   const week = Number(m[2]);
 
-  // Monday of ISO week 1 is the Monday of the week containing Jan 4
   const jan4 = new Date(Date.UTC(year, 0, 4));
   const jan4Day = jan4.getUTCDay() || 7;
   const mondayOfWeek1 = new Date(jan4);
@@ -482,7 +471,6 @@ function parseISOWeekLabel(label) {
   return target;
 }
 
-/* ======================= MAIN COMPONENT ======================= */
 export default function ForecastChart({
   months,
   data,
@@ -494,7 +482,7 @@ export default function ForecastChart({
   countryName,
   showForecast,
   setErrorSnackbar,
-  isWeekly: isWeeklyProp, // optional override
+  isWeekly: isWeeklyProp, 
   selectedRangeActive,
 }) {
   const chartRef = useRef();
@@ -507,7 +495,6 @@ export default function ForecastChart({
   const [hiddenSeries, setHiddenSeries] = useState({});
   const [events, setEvents] = useState([]);
 
-  // --- Weekly/Monthly detection (fallback to auto-detect) ---
   const autoWeekly =
     Array.isArray(months) &&
     months.length > 0 &&
@@ -649,13 +636,11 @@ export default function ForecastChart({
     const wantHoliday = !!overlayState.holidays;
     const wantPromo = !!overlayState.promotions;
 
-    // helper: ISO weekday Mon=1..Sun=7
     const isoWeekday = (date) => {
       const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
       const wd = d.getUTCDay();
       return wd === 0 ? 7 : wd;
     };
-    // fraction across one ISO week (0..~1)
     const weekFrac = (date) => (isoWeekday(date) - 1) / 7;
 
     const isHoliday = (ev) => (ev.event_type || "").toLowerCase() === "holiday";
@@ -663,7 +648,6 @@ export default function ForecastChart({
       (isHoliday(ev) ? wantHoliday : wantPromo) && (ev.start_date || ev.end_date);
 
     if (isWeekly) {
-      // Weekly chart: categories are ISO labels like "2025-W36"
       return evts.reduce((acc, ev) => {
         if (!includeEvent(ev)) return acc;
 
@@ -676,20 +660,16 @@ export default function ForecastChart({
         const sIdx = monthsArr.indexOf(sLbl);
         const eIdx = monthsArr.indexOf(eLbl);
 
-        if (sIdx === -1) return acc; // can't map if start week not visible
+        if (sIdx === -1) return acc; 
 
-        // map to fractional positions inside the categorical index
         const fromPos = sIdx + weekFrac(s) - 0.5;
 
         let toPos;
         if (eIdx === -1) {
-          // If end week not in view, draw at least the current week sliver
           toPos = sIdx + 0.5;
         } else if (eIdx === sIdx) {
-          // same week: stop somewhere later in the same bucket
           toPos = sIdx + Math.max(weekFrac(e), weekFrac(s)) - 0.5;
         } else {
-          // spans multiple weeks: end in the end-week bucket
           toPos = eIdx + weekFrac(e) - 0.5;
         }
 
@@ -708,7 +688,6 @@ export default function ForecastChart({
               if (!ch) return;
               if (ch.customTooltip) ch.customTooltip.destroy();
 
-              // date formatting similar to your monthly tooltip logic
               const names = [];
               if (Array.isArray(countryName)) names.push(...countryName);
               else if (typeof countryName === "string") names.push(countryName);
@@ -723,7 +702,6 @@ export default function ForecastChart({
                 if (isUSA || (!isUSA && !isIndia)) {
                   return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
                 }
-                // India/GB format
                 return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
               };
 
@@ -769,7 +747,6 @@ export default function ForecastChart({
       }, []);
     }
 
-    // Monthly chart (your original logic, kept intact)
     return evts.reduce((acc, ev) => {
       if (!includeEvent(ev)) return acc;
 
@@ -809,7 +786,6 @@ export default function ForecastChart({
         to: fromPos + width,
         color,
         events: {
-          // reuse the same tooltip behavior
           mouseover: function (mouseEvt) {
             const ch = chartRef.current?.chart;
             if (!ch) return;
@@ -876,8 +852,6 @@ export default function ForecastChart({
   [isWeekly, countryName]
 );
 
-
-  /* ---------- SAFE split index for Monthly or Weekly ---------- */
   const today = new Date();
   const monthlyTodayLabel = today.toLocaleString("default", {
     month: "short",
@@ -886,7 +860,7 @@ export default function ForecastChart({
 
   let safeTodayIdx = -1;
   if (isWeekly) {
-    const wkLbl = isoWeekLabelFor(today); // e.g., 2025-W36
+    const wkLbl = isoWeekLabelFor(today);
     const exact = months.indexOf(wkLbl);
     if (exact !== -1) {
       safeTodayIdx = exact;
@@ -905,7 +879,6 @@ export default function ForecastChart({
     safeTodayIdx = idx === -1 ? (months.length ? months.length - 1 : -1) : idx;
   }
 
-  /* ---------- Series helpers ---------- */
   const seriesData = useMemo(() => {
     if (!months || !months.length) {
       return {
@@ -970,22 +943,10 @@ export default function ForecastChart({
     let consHist = histMask(consFull);
     let consFut = join(histMask(consFull), firstFutureOnly(consFull));
 
-    /* ---- Weekly windowing logic (6 past + 6 future) ----
-       - If user likely selected a date range (short weeks array), show FULL range.
-       - Otherwise (landing chart), show 6 weeks history + 6 weeks forecast.
-    */
-    // const dateRangeLikelyActive = months.length <= 30; // heuristic: short => user-selected
-    // if (isWeekly && !dateRangeLikelyActive) {
-
-    // Use explicit signal from parent; fallback to old heuristic if undefined
-    // const rangeSelected =
-    //   typeof selectedRangeActive === "boolean"
-    //     ? selectedRangeActive
-    //     : months.length <= 30; // fallback heuristic
     const rangeSelected = selectedRangeActive ?? true;
 
     if (isWeekly && !rangeSelected) {
-      const WEEKS_WINDOW = 6; // 6 past + 6 future
+      const WEEKS_WINDOW = 6; 
       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
       const lastIdx = months.length - 1;
 
@@ -1000,7 +961,6 @@ export default function ForecastChart({
       const applyWindow = (arr, from, to) =>
         arr.map((v, i) => (i >= from && i <= to ? v : null));
 
-      // For Actual we want to show the entire visible span (past through future)
       actual = applyWindow(actualFull, histFrom, futTo);
 
       baselineHist = applyWindow(baselineHist, histFrom, histTo);
@@ -1024,7 +984,6 @@ export default function ForecastChart({
     };
   }, [months, data, safeTodayIdx, isWeekly]);
 
-  // -------- Detect if any forecast data exists (to disable legend chips) --------
   const hasBaselineFc = (seriesData.baseline_forecast || []).some(
     (v) => v != null
   );
@@ -1034,7 +993,6 @@ export default function ForecastChart({
   );
   const hasAnyForecastData = hasBaselineFc || hasMlFc || hasConsFc;
 
-  /* ----------------------- PDF download handler ----------------------- */
   const handleDownloadPdf = useCallback(() => {
     const ch = chartRef.current?.chart;
     if (!ch) {
@@ -1152,7 +1110,7 @@ export default function ForecastChart({
       legend: { enabled: false },
       credits: { enabled: false },
       exporting: {
-        enabled: false, // we use our own button
+        enabled: false, 
         fallbackToExportServer: true,
       },
       series: [
@@ -1221,7 +1179,6 @@ export default function ForecastChart({
     ]
   );
 
-  // country check for overlays
   const validateCountrySelection = useCallback(() => {
     if (
       !countryName ||
@@ -1298,10 +1255,9 @@ export default function ForecastChart({
     setHiddenSeries(init);
   }, []);
 
-  // Hide/show all forecast series when the Forecast toggle changes
   useEffect(() => {
     if (showForecast === undefined) return;
-    const forecastIdx = [4, 5, 6]; // BaselineFc, MLFc, ConsFc
+    const forecastIdx = [4, 5, 6];
     const ch = chartRef.current?.chart;
     setHiddenSeries((prev) => {
       const next = { ...prev };
@@ -1330,14 +1286,11 @@ export default function ForecastChart({
   const mapeStr = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
   const mapeColor = getMapeColor(mapeStr);
 
-  /* --- Auto-zoom when weekly --- */
   useEffect(() => {
     const ch = chartRef.current?.chart;
     if (!ch) return;
 
-    // if (isWeekly) {
     if (isWeekly && !selectedRangeActive) {
-      // Look across all rendered series data for non-null points
       const arrays = [
         seriesData.actual,
         seriesData.baseline,
@@ -1360,17 +1313,14 @@ export default function ForecastChart({
       });
 
       if (min !== Infinity && max !== -Infinity) {
-        const pad = 0.5; // small left/right breathing room
+        const pad = 0.5; 
         ch.xAxis[0].setExtremes(min - pad, max + pad, true, false);
       } else {
-        // no data -> reset
         ch.xAxis[0].setExtremes(null, null, true, false);
       }
     } else {
-      // monthly: show all
       ch.xAxis[0].setExtremes(null, null, true, false);
     }
-  // }, [isWeekly, months, seriesData]);
   }, [isWeekly, months, seriesData, selectedRangeActive]);
 
 useEffect(() => {

@@ -31,7 +31,6 @@ import StepConnector, {
 } from "@mui/material/StepConnector";
 import { styled } from "@mui/material/styles";
 
-// Step labels, matching Add New Project
 const steps = [
   { label: "Get started" },
   { label: "Data Source" },
@@ -98,7 +97,7 @@ const CustomStepIcon = (props) => {
 };
 
 export const AddNewProjectSpreadsheet = () => {
-  const [currentStep, setCurrentStep] = useState(2); // Upload File step
+  const [currentStep, setCurrentStep] = useState(2); 
   const navigate = useNavigate();
 
   const handleNext = () => {
@@ -324,7 +323,6 @@ export const AddNewProjectSpreadsheet = () => {
 
   return (
     <Box sx={{ bgcolor: "#eff6ff", minHeight: "100vh", width: "100vw" }}>
-      {/* AppBar */}
       <AppBar position="static" sx={{ bgcolor: "#0F91D2", height: 56 }}>
         <Toolbar
           sx={{
@@ -405,7 +403,6 @@ export const AddNewProjectSpreadsheet = () => {
         <Box
           sx={{ display: "flex", alignItems: "flex-start", minHeight: "70vh" }}
         >
-          {/* Stepper - matches Add New Project */}
           <Box sx={{ width: 250, minHeight: 400, position: "relative", pt: 2 }}>
             <Stepper
               activeStep={currentStep}
@@ -439,7 +436,6 @@ export const AddNewProjectSpreadsheet = () => {
               ))}
             </Stepper>
           </Box>
-          {/* Step Content */}
           <Box sx={{ flex: 1, pl: 8 }}>
             {currentStep === 2 && renderUploadFile()}
             {currentStep === 3 && renderEntitySelection()}

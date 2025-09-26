@@ -17,32 +17,24 @@ import {
   Alert,
 } from "@mui/material";
 
-// Icons
 import FileDownloadOutlined from "@mui/icons-material/FileDownloadOutlined";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import ShareOutlined from "@mui/icons-material/ShareOutlined";
 
-// Custom alert context for global state
 import { useAlert } from "./AlertContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-// Main component
 export const AlertsSection = () => {
-  // Pull alert-related state from context
   const { selectedAlertData, isLoading } = useAlert();
-
-  // UI State
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("month");
   const [selectedModel, setSelectedModel] = useState("");
   const [hcOptions, setHcOptions] = useState(null);
 
-  // Model dropdown state
   const [models, setModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [modelsError, setModelsError] = useState(null);
 
-  // Fetch models list from backend on mount
   useEffect(() => {
     setModelsLoading(true);
     fetch(`${API_BASE_URL}/models`)
@@ -61,13 +53,6 @@ export const AlertsSection = () => {
       });
   }, []);
 
-  // Toggle button values
-  // const timePeriods = [
-  //   { label: "M", value: "month" },
-  //   { label: "W", value: "week" },
-  // ];
-
-  // Transforms forecast data into chart-friendly format
   const transformForecastData = (forecastData) => {
     if (!forecastData) return null;
     const arr = Array.isArray(forecastData) ? forecastData : [forecastData];
@@ -90,7 +75,6 @@ export const AlertsSection = () => {
     return { categories, actualUnits, mlForecast };
   };
 
-  // Fallback chart config when no data available
   const getDefaultOptions = () => ({
     title: { text: null },
     chart: {
@@ -145,7 +129,6 @@ export const AlertsSection = () => {
     legend: { enabled: false },
   });
 
-  // Update Highcharts options whenever alert data changes
   useEffect(() => {
     if (!selectedAlertData || !selectedAlertData.forecastData) {
       setHcOptions(getDefaultOptions());
@@ -160,7 +143,6 @@ export const AlertsSection = () => {
       return;
     }
 
-    // Create plot band for alert period
     const plotBands = selectedAlert
       ? [
           {
@@ -199,7 +181,6 @@ export const AlertsSection = () => {
         ]
       : [];
 
-    // Filter invalid band (date not found)
     const validPlotBands = plotBands.filter(
       (band) => band.from !== -1 && band.to !== 0
     );
@@ -208,7 +189,6 @@ export const AlertsSection = () => {
     const maxVal = Math.max(...actualUnits, ...mlForecast);
     const yMax = Math.ceil((maxVal * 1.2) / 100) * 100 || 500;
 
-    // Final chart config
     const newOptions = {
       title: { text: null },
       chart: {
@@ -279,7 +259,6 @@ export const AlertsSection = () => {
     setHcOptions(newOptions);
   }, [selectedAlertData]);
 
-  // Handlers for toggle and dropdown
   const handleTimePeriodChange = (event, newValue) => {
     if (newValue !== null) setSelectedTimePeriod(newValue);
   };
@@ -289,7 +268,6 @@ export const AlertsSection = () => {
 
   return (
     <Paper>
-      {/* Filter & Action Controls */}
       <Box
         sx={{
           display: "flex",
@@ -302,7 +280,6 @@ export const AlertsSection = () => {
           borderColor: "grey.300",
         }}
       >
-        {/* Time toggle */}
         <ToggleButtonGroup
           value={selectedTimePeriod}
           exclusive
@@ -334,14 +311,8 @@ export const AlertsSection = () => {
             },
           }}
         >
-          {/* {timePeriods.map((period) => (
-            <ToggleButton key={period.value} value={period.value}>
-              {period.label}
-            </ToggleButton>
-          ))} */}
         </ToggleButtonGroup>
 
-        {/* Model select + icons */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {modelsLoading ? (
             <CircularProgress size={20} />
@@ -376,7 +347,6 @@ export const AlertsSection = () => {
               ))}
             </Select>
           )}
-          {/* Share / Download Buttons */}
           <Button size="small" sx={{ minWidth: 0, p: 0 }}>
             <ShareOutlined fontSize="small" />
           </Button>
@@ -386,14 +356,12 @@ export const AlertsSection = () => {
         </Box>
       </Box>
 
-      {/* Error Message */}
       {selectedAlertData && selectedAlertData.error && (
         <Alert severity="error" sx={{ m: 2 }}>
           {selectedAlertData.error}
         </Alert>
       )}
 
-      {/* Loading spinner */}
       {isLoading && (
         <Box
           sx={{
@@ -408,7 +376,6 @@ export const AlertsSection = () => {
         </Box>
       )}
 
-      {/* Render chart if data is ready */}
       {hasChartArea && hcOptions && (
         <Box sx={{ px: 2, py: 2 }}>
           <HighchartsReact

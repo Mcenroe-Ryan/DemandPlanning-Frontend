@@ -123,22 +123,22 @@ const SideNavBar = ({ open, onClose }) => {
         {menuItems.map((item, index) => (
           <ListItem
             key={index}
-            button={item.enabled} // Only clickable if enabled
+            button={item.enabled} 
             onClick={() => item.enabled && item.path && navigate(item.path)}
             sx={{
               py: 0.5,
               px: 1,
               borderRadius: 1,
-              opacity: item.enabled ? 1 : 0.5, // Visual indication of disabled state
+              opacity: item.enabled ? 1 : 0.5, 
               cursor: item.enabled ? "pointer" : "not-allowed",
               "&:hover": item.enabled ? { bgcolor: "action.hover" } : {},
-              pointerEvents: item.enabled ? "auto" : "none", // Disable mouse events for disabled items
+              pointerEvents: item.enabled ? "auto" : "none", 
             }}
           >
             <ListItemIcon 
               sx={{ 
                 minWidth: 32,
-                color: item.enabled ? "inherit" : "text.disabled" // Gray out icons for disabled items
+                color: item.enabled ? "inherit" : "text.disabled" 
               }}
             >
               {item.icon}
@@ -148,7 +148,7 @@ const SideNavBar = ({ open, onClose }) => {
               primaryTypographyProps={{
                 fontSize: 14,
                 fontWeight: 500,
-                color: item.enabled ? "text.primary" : "text.disabled", // Gray out text for disabled items
+                color: item.enabled ? "text.primary" : "text.disabled", 
               }}
             />
           </ListItem>

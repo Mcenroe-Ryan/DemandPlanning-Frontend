@@ -1,25 +1,40 @@
 import React, { useMemo, useState } from "react";
 import {
-  Box, Stack, Button, Chip, Typography, Card, CardContent,
-  Divider, Slider, TextField, useTheme, useMediaQuery
+  Box,
+  Stack,
+  Button,
+  Chip,
+  Typography,
+  Card,
+  CardContent,
+  Divider,
+  Slider,
+  TextField,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine,
-  LabelList, ResponsiveContainer, Cell
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ReferenceLine,
+  LabelList,
+  ResponsiveContainer,
+  Cell,
 } from "recharts";
 
-/* ---------- shared styles ---------- */
 const card = {
   backgroundColor: "#fff",
-  borderRadius: 2,
+  borderRadius: 8,
   border: "1px solid #E5E7EB",
   boxShadow: "0 1px 0 rgba(0,0,0,0.02)",
 };
 
 const kGreen = "#16a34a";
-const kBlue  = "#3b82f6";
+const kBlue = "#3b82f6";
 
-/* ---------- mock data ---------- */
 const PANELS = [
   {
     id: "bhuj",
@@ -72,10 +87,11 @@ const PANELS = [
   },
 ];
 
-/* ---------- helpers ---------- */
 const buildWaterfall = (steps) => {
   let run = steps[0].v;
-  const out = [{ name: steps[0].name, base: 0, delta: Math.abs(steps[0].v), raw: steps[0].v }];
+  const out = [
+    { name: steps[0].name, base: 0, delta: Math.abs(steps[0].v), raw: steps[0].v },
+  ];
   for (let i = 1; i < steps.length; i += 1) {
     const next = run + steps[i].v;
     const base = Math.min(run, next);
@@ -87,19 +103,18 @@ const buildWaterfall = (steps) => {
 };
 const barFill = (d) => (d.total ? "#93c5fd" : d.raw >= 0 ? "#86efac" : "#fca5a5");
 
-/* ---------- small stat row ---------- */
 function StatRow({ label, value, suffix }) {
   return (
     <Stack direction="row" justifyContent="space-between" sx={{ py: 0.75 }}>
       <Typography sx={{ fontSize: 13, color: "#334155" }}>{label}</Typography>
       <Typography sx={{ fontSize: 13, color: "#111827", fontWeight: 600 }}>
-        {value} {suffix ? <Typography component="span" sx={{ color: "#64748b" }}>{suffix}</Typography> : null}
+        {value}{" "}
+        {suffix ? <Typography component="span" sx={{ color: "#64748b" }}>{suffix}</Typography> : null}
       </Typography>
     </Stack>
   );
 }
 
-/* ---------- two-line X-axis tick with smaller font ---------- */
 const TwoLineTick = ({ x, y, payload }) => {
   const raw = String(payload?.value ?? "").replace(/\s*\n\s*/g, " ").trim();
   const parts = raw.split(/\s+/);
@@ -110,13 +125,14 @@ const TwoLineTick = ({ x, y, payload }) => {
 
   return (
     <text x={x} y={y} textAnchor="middle" fill="#475569" fontSize={size}>
-      <tspan x={x} dy="0">{first}</tspan>
+      <tspan x={x} dy="0">
+        {first}
+      </tspan>
       {second && <tspan x={x} dy={lineGap}>{second}</tspan>}
     </text>
   );
 };
 
-/* ---------- one location card ---------- */
 function LocationPanel({ panel }) {
   const [qty, setQty] = useState(panel.qty);
   const wfData = useMemo(() => buildWaterfall(panel.wf), [panel.wf]);
@@ -125,20 +141,23 @@ function LocationPanel({ panel }) {
     <Card
       sx={{
         ...card,
-        flex: "1 1 420px",   // ← wider base width
-        minWidth: 420,       // ← ensure each card can grow wider
+        flex: {
+          xs: "1 1 100%",
+          sm: "1 1 calc(50% - 10px)",
+          lg: "1 1 calc(33.333% - 10px)",
+        },
+        minWidth: 0, 
         borderColor: panel.highlight ? kBlue : "#E5E7EB",
         boxShadow: panel.highlight ? `0 0 0 3px rgba(59,130,246,.15)` : undefined,
       }}
     >
       <CardContent sx={{ p: 1.5 }}>
-        {/* header */}
         <Box
           sx={{
             mb: 1,
             px: 1.25,
             py: 0.75,
-            borderRadius: 1.5,
+            borderRadius: 12,
             bgcolor: "#e7f0ff",
             border: "1px solid #cfe1ff",
             textAlign: "center",
@@ -149,7 +168,6 @@ function LocationPanel({ panel }) {
           {panel.name}
         </Box>
 
-        {/* slider + qty */}
         <Box sx={{ px: 0.5, mb: 1.25 }}>
           <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.25 }}>
             <Typography sx={{ fontSize: 11, color: "#64748b" }}>{panel.sliderMin}</Typography>
@@ -181,7 +199,6 @@ function LocationPanel({ panel }) {
           />
         </Box>
 
-        {/* stats */}
         <Divider />
         <Box sx={{ py: 1 }}>
           <StatRow label="Distance" value={panel.stats.distance} suffix="(km)" />
@@ -191,7 +208,6 @@ function LocationPanel({ panel }) {
           <StatRow label="ETA" value={panel.stats.eta} />
         </Box>
 
-        {/* mini waterfall */}
         <Box sx={{ height: 260, pt: 3 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={wfData} margin={{ bottom: 10 }}>
@@ -210,12 +226,21 @@ function LocationPanel({ panel }) {
                 tick={{ fontSize: 10, fill: "#475569" }}
                 axisLine={{ stroke: "#e5e7eb" }}
                 tickLine={false}
-                label={{ value: "₹ (Lakhs)", angle: -90, position: "insideLeft", offset: 8, fill: "#64748b", fontSize: 10 }}
+                label={{
+                  value: "₹ (Lakhs)",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: 8,
+                  fill: "#64748b",
+                  fontSize: 10,
+                }}
               />
               <ReferenceLine y={0} stroke="#94a3b8" />
               <Bar dataKey="base" stackId="wf" fill="transparent" isAnimationActive={false} />
               <Bar dataKey="delta" stackId="wf" isAnimationActive={false}>
-                {wfData.map((d, i) => <Cell key={i} fill={barFill(d)} />)}
+                {wfData.map((d, i) => (
+                  <Cell key={i} fill={barFill(d)} />
+                ))}
                 <LabelList
                   dataKey="raw"
                   position="top"
@@ -227,13 +252,24 @@ function LocationPanel({ panel }) {
           </ResponsiveContainer>
         </Box>
 
-        {/* footer KPIs */}
         <Stack direction="row" justifyContent="space-between" sx={{ mt: 1.25 }}>
           <Typography sx={{ fontWeight: 700, color: "#111827", fontSize: 14 }}>
-            Revenue: <Typography component="span" sx={{ fontWeight: 800 }}>{panel.totals.revenue}</Typography>
+            Revenue:{" "}
+            <Typography component="span" sx={{ fontWeight: 800 }}>
+              {panel.totals.revenue}
+            </Typography>
           </Typography>
-          <Typography sx={{ fontWeight: 700, color: panel.highlight ? kGreen : "#eab308", fontSize: 14 }}>
-            Profit: <Typography component="span" sx={{ fontWeight: 800 }}>{panel.totals.profit}</Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: panel.highlight ? kGreen : "#eab308",
+              fontSize: 14,
+            }}
+          >
+            Profit:{" "}
+            <Typography component="span" sx={{ fontWeight: 800 }}>
+              {panel.totals.profit}
+            </Typography>
           </Typography>
         </Stack>
       </CardContent>
@@ -242,7 +278,7 @@ function LocationPanel({ panel }) {
 }
 
 export default function NewRecommendationScreen({ onBack }) {
-  const [chips, setChips] = useState(["Locations", "Bhuj", "Ahemdhabad", "Bhavnagar"]);
+  const [chips, setChips] = useState(["Locations", "Bhuj", "Ahmedabad", "Bhavnagar"]);
   const theme = useTheme();
   const isSm = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -252,20 +288,9 @@ export default function NewRecommendationScreen({ onBack }) {
   };
 
   return (
-    <Box sx={{ bgcolor: "#E2E8F0", minHeight: "100vh", p: 1 }}>
-      <Box sx={{ maxWidth: 1800, mx: "auto", position: "relative" }}>{/* ↑ 1500 → 1800 */}
-        {/* top bar */}
-        {/* <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ textTransform: "none", borderRadius: 2, px: 2 }}
-            onClick={handleBack}
-          >
-            Back
-          </Button>
-          <Stack direction="row" spacing={1} flexWrap="wrap"> */}
-           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+    <Box sx={{ bgcolor: "#E2E8F0", minHeight: "100vh", p: 12 / 12 }}>
+      <Box sx={{ maxWidth: 1800, mx: "auto", position: "relative" }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
           <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ flex: 1 }}>
             {chips.map((c, i) => (
               <Chip
@@ -281,7 +306,7 @@ export default function NewRecommendationScreen({ onBack }) {
               />
             ))}
           </Stack>
-             <Button
+          <Button
             variant="outlined"
             size="small"
             sx={{ textTransform: "none", borderRadius: 2, px: 2, ml: 1 }}
@@ -291,17 +316,16 @@ export default function NewRecommendationScreen({ onBack }) {
           </Button>
         </Stack>
 
-        {/* Recommended label absolute above first card */}
         <Box
           sx={{
             position: "absolute",
-            left: isSm ? 0 : "0%",
+            left: 0,
             top: 38,
-            width: isSm ? "100%" : "33.333%",
+            width: { xs: "100%", lg: "33.333%" },
             display: "flex",
             justifyContent: "center",
             pointerEvents: "none",
-            zIndex: 3
+            zIndex: 3,
           }}
         >
           <Typography
@@ -312,7 +336,7 @@ export default function NewRecommendationScreen({ onBack }) {
               background: "#E2E8F0",
               px: 2,
               py: 0.5,
-              borderRadius: 1.5,
+              borderRadius: 12,
               boxShadow: "0 2px 4px rgba(59,130,246,0.05)",
             }}
           >
@@ -320,7 +344,12 @@ export default function NewRecommendationScreen({ onBack }) {
           </Typography>
         </Box>
 
-        <Stack direction={isSm ? "column" : "row"} spacing={1.25} alignItems="stretch" sx={{ mt: 6 }}>
+        <Stack
+          direction={isSm ? "column" : "row"}
+          spacing={1.25}
+          alignItems="stretch"
+          sx={{ mt: 6, flexWrap: "wrap" }}
+        >
           {PANELS.map((p) => (
             <LocationPanel key={p.id} panel={p} />
           ))}

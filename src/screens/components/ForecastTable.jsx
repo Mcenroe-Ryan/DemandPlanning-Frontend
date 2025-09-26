@@ -34,7 +34,6 @@ import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-// Z-INDEX LAYERS for proper stacking
 const Z_INDEX_LAYERS = {
   TABLE_CELL: 1,
   STICKY_COLUMN: 3,
@@ -45,7 +44,6 @@ const Z_INDEX_LAYERS = {
   EDITING_CELL: 10,
 };
 
-/* -------- ENHANCED CONSENSUS UPDATE PROTECTION -------- */
 let _consensusInFlightKey = null;
 let _consensusInFlightPromise = null;
 let _lastUpdateTimestamp = 0;
@@ -530,12 +528,11 @@ const getCellZIndex = (isSticky, isHighlighted, isEditing) => {
   return Z_INDEX_LAYERS.TABLE_CELL;
 };
 
-// ---- ISO WEEK HELPERS (for weekly 6 past + 6 future) ----
 function startOfISOWeek(d0 = new Date()) {
   const d = new Date(d0);
   d.setHours(0, 0, 0, 0);
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // back to Monday
+  const diff = day === 0 ? -6 : 1 - day; 
   d.setDate(d.getDate() + diff);
   return d;
 }
@@ -553,7 +550,6 @@ function weekLabelToDate(label) {
   return target;
 }
 
-// ---------- Dedicated ISO week builder ----------
 function getISOWeekInfo(d0) {
   const d = new Date(Date.UTC(d0.getFullYear(), d0.getMonth(), d0.getDate()));
   const day = d.getUTCDay() || 7;
@@ -583,9 +579,6 @@ function buildISOWeekLabelsBetween(startDateStr, endDateStr) {
   return out;
 }
 
-/* ===================== NEW: AUTO-SCROLL HELPERS ===================== */
-
-// Pick the nearest column if exact "current" is not present (Monthly)
 function findNearestIndexMonthly(cols) {
   if (!cols?.length) return -1;
   const now = new Date();
@@ -593,7 +586,6 @@ function findNearestIndexMonthly(cols) {
   let idx = cols.indexOf(nowLabel);
   if (idx !== -1) return idx;
 
-  // Fallback by absolute month distance
   const nowKey = now.getFullYear() * 12 + now.getMonth();
   let best = { i: 0, d: Infinity };
   for (let i = 0; i < cols.length; i++) {
@@ -607,14 +599,12 @@ function findNearestIndexMonthly(cols) {
   return best.i;
 }
 
-// Pick the nearest column if exact "current" is not present (Weekly)
 function findNearestIndexWeekly(cols) {
   if (!cols?.length) return -1;
   const nowWeek = formatISOWeekLabel(startOfISOWeek(new Date()));
   let idx = cols.indexOf(nowWeek);
   if (idx !== -1) return idx;
 
-  // Fallback by absolute day distance
   const nowStart = startOfISOWeek(new Date());
   let best = { i: 0, d: Infinity };
   for (let i = 0; i < cols.length; i++) {
@@ -625,8 +615,6 @@ function findNearestIndexWeekly(cols) {
   }
   return best.i;
 }
-
-/* =================================================================== */
 
 export default function ForecastTable({
   selectedCountry,
@@ -656,7 +644,7 @@ export default function ForecastTable({
     [REVENUE_LABEL]
   );
 
-  const [period, setPeriod] = useState("M"); // "M" | "W"
+  const [period, setPeriod] = useState("M");
   const [showForecast, setShowForecast] = useState(true);
   const [optionalRows, setOptionalRows] = useState([]);
   const [data, setData] = useState(null);
@@ -1204,8 +1192,6 @@ export default function ForecastTable({
 
   const isWeekly = period === "W";
 
-  /* ===================== NEW: AUTO-SCROLL CORE ===================== */
-
   const scrollToCurrentPeriod = React.useCallback(() => {
     const viewport = containerRef.current;
     if (!viewport || !visibleColumns?.length) return;
@@ -1217,7 +1203,6 @@ export default function ForecastTable({
 
     if (index < 0) return;
 
-    // Center target column while accounting for sticky left area
     const targetLeft =
       STICKY_W + index * COL_W - Math.max(0, (viewport.clientWidth - COL_W) / 2);
 
@@ -1225,21 +1210,17 @@ export default function ForecastTable({
     viewport.scrollTo({ left, behavior: "smooth" });
   }, [visibleColumns, period, containerRef, /* constants: */ STICKY_W, COL_W]);
 
-  // Trigger on period/columns changes (after data/layout)
   useEffect(() => {
     requestAnimationFrame(() => {
       scrollToCurrentPeriod();
     });
   }, [scrollToCurrentPeriod]);
 
-  // Trigger on width changes (window resize, layout changes)
   useEffect(() => {
     requestAnimationFrame(() => {
       scrollToCurrentPeriod();
     });
   }, [containerWidth, scrollToCurrentPeriod]);
-
-  /* ================================================================= */
 
   const renderForecastTable = () => (
     <Box
@@ -1642,7 +1623,6 @@ export default function ForecastTable({
 
   return (
     <>
-      {/* Header Bar */}
       <Box
         mt={0}
         display="flex"
@@ -1732,10 +1712,6 @@ export default function ForecastTable({
           <IconButton size="small" onClick={handleDownloadTable}>
             <DownloadIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
-
-          {/* <IconButton size="small">
-            <OpenInFullIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
-          </IconButton> */}
         </Stack>
       </Box>
 

@@ -26,7 +26,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Shared months
 const months = [
   "Apr",
   "May",
@@ -42,7 +41,6 @@ const months = [
   "Mar",
 ];
 
-// -------- Demand Chart Data --------
 const demandChartData = [
   { month: "Apr", FY_2023: 6, FY_2024: 13 },
   { month: "May", FY_2023: -1, FY_2024: 12 },
@@ -58,7 +56,6 @@ const demandChartData = [
   { month: "Mar", FY_2023: 0, FY_2024: 0 },
 ];
 
-// -------- Revenue Chart Data --------
 const revenueChartData = [
   { month: "Apr", FY_2023: 7, FY_2024: 7 },
   { month: "May", FY_2023: 6, FY_2024: 11 },
@@ -74,7 +71,6 @@ const revenueChartData = [
   { month: "Mar", FY_2023: 10, FY_2024: 4 },
 ];
 
-// -------- Table Data --------
 const baselineDemandData = [
   7120, 7089, 8209, 7933, 8315, 10271, 11051, 6989, 7088, 7454, 7666, 8192,
 ];
@@ -158,7 +154,6 @@ const revenueComparisonData = [
   },
 ];
 
-// Color mapping function for table values
 const getValueColor = (value) => {
   const colorMap = {
     "-5": "#FA4545",
@@ -191,7 +186,6 @@ const getValueColor = (value) => {
   return colorMap[value.toString()] || "#FFFFFF";
 };
 
-// Standard border style for all cells
 const cellBorderStyle = {
   borderTop: "0px",
   borderRight: "0px",
@@ -199,7 +193,6 @@ const cellBorderStyle = {
   borderLeft: "1px solid #D2D2D3",
 };
 
-// Special border style for Baseline FY 2022 rows
 const baselineCellBorderStyle = {
   borderTop: "1px solid #F0F0F0",
   borderRight: "0px",
@@ -207,7 +200,6 @@ const baselineCellBorderStyle = {
   borderLeft: "1px solid #D2D2D3",
 };
 
-// -------- Custom Tooltip --------
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -249,7 +241,6 @@ export const AnalyticsFrameSection = () => {
         backgroundColor: "#E2E8F0",
       }}
     >
-      {/* Charts Section - Always Side by Side */}
       <Box
         sx={{
           display: "flex",
@@ -258,7 +249,6 @@ export const AnalyticsFrameSection = () => {
           width: "100%",
         }}
       >
-        {/* Demand Chart - Fixed Size, Always Left */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Paper
             elevation={0}
@@ -384,7 +374,6 @@ export const AnalyticsFrameSection = () => {
           </Paper>
         </Box>
 
-        {/* Revenue Chart - Fixed Size, Always Right */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Paper
             elevation={0}
@@ -511,7 +500,6 @@ export const AnalyticsFrameSection = () => {
         </Box>
       </Box>
 
-      {/* Data Table Section */}
       <TableContainer
         component={Paper}
         elevation={0}
@@ -569,7 +557,6 @@ export const AnalyticsFrameSection = () => {
           </TableHead>
 
           <TableBody>
-            {/* Baseline FY 2022 Demand - WITH TOP BORDER */}
             <TableRow>
               <TableCell
                 sx={{
@@ -610,7 +597,6 @@ export const AnalyticsFrameSection = () => {
               ))}
             </TableRow>
 
-            {/* Demand Comparison Rows - WITH COLORS */}
             <TableRow>
               <TableCell
                 sx={{
@@ -701,7 +687,6 @@ export const AnalyticsFrameSection = () => {
               ))}
             </TableRow>
 
-            {/* Spacer Row */}
             <TableRow>
               <TableCell
                 colSpan={14}
@@ -709,7 +694,6 @@ export const AnalyticsFrameSection = () => {
               />
             </TableRow>
 
-            {/* Baseline FY 2022 Revenue - WITH TOP BORDER */}
             <TableRow>
               <TableCell
                 sx={{
@@ -750,7 +734,6 @@ export const AnalyticsFrameSection = () => {
               ))}
             </TableRow>
 
-            {/* Revenue Comparison Rows - WITH COLORS */}
             <TableRow>
               <TableCell
                 sx={{

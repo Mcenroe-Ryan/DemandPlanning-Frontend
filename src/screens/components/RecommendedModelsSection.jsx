@@ -29,7 +29,6 @@ import {
   InputAdornment,
 } from "@mui/material";
 
-/* ─────────────────── CONSTANTS ─────────────────── */
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const metrics = [
@@ -61,14 +60,13 @@ const transformModelData = (rows) =>
       },
     }));
 
-/* ─────────────────── GRAPH UP ARROW ICON ─────────────────── */
 function GraphUpArrowIcon({ positive }) {
   return (
     <i
       className="bi bi-graph-up-arrow"
       style={{
         fontSize: 14,
-        color: positive ? "#2e7d32" : "#d32f2f", // MUI success / error palette
+        color: positive ? "#2e7d32" : "#d32f2f", 
         display: "inline-block",
         lineHeight: 1,
       }}
@@ -76,7 +74,6 @@ function GraphUpArrowIcon({ positive }) {
   );
 }
 
-/* ─────────────────── ADD MODEL DROPDOWN ─────────────────── */
 function AddModelDropdown({ selected = [], onChange }) {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +84,6 @@ function AddModelDropdown({ selected = [], onChange }) {
       .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
       .then((data) => {
         setModels(data);
-        // Auto-select all models when they're loaded
         if (onChange && data.length > 0) {
           const allModelIds = data.map((m) => m.id);
           onChange(allModelIds);
@@ -97,7 +93,6 @@ function AddModelDropdown({ selected = [], onChange }) {
       .finally(() => setLoading(false));
   }, [onChange]);
 
-  // Filter models based on search term
   const filteredModels = useMemo(() => {
     if (!searchTerm) return models;
     return models.filter((m) =>
@@ -120,7 +115,6 @@ function AddModelDropdown({ selected = [], onChange }) {
 
   return (
     <Box>
-      {/* Smaller Search Field */}
       <Box sx={{ p: 0.5, borderBottom: "1px solid #e0e0e0" }}>
         <TextField
           size="small"
@@ -155,8 +149,6 @@ function AddModelDropdown({ selected = [], onChange }) {
           }}
         />
       </Box>
-
-      {/* Smaller Models List */}
       <List dense sx={{ maxHeight: 140, overflow: "auto", py: 0 }}>
         {filteredModels.length === 0 ? (
           <ListItem>
@@ -201,8 +193,6 @@ function AddModelDropdown({ selected = [], onChange }) {
     </Box>
   );
 }
-
-/* ─────────────────── MINI-CHART POP-UP ─────────────────── */
 function FvaVsStatsPopup({ modelId, metricType, onClose }) {
   const [series, setSeries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -252,7 +242,6 @@ function FvaVsStatsPopup({ modelId, metricType, onClose }) {
     };
   }, [modelId, metricType]);
 
-  /* chart sizing */
   const maxVal = useMemo(() => Math.max(...series, 1), [series]);
   const barHeights = useMemo(
     () => series.map((v) => Math.round((v / maxVal) * 89)),
@@ -312,7 +301,6 @@ function FvaVsStatsPopup({ modelId, metricType, onClose }) {
         )}
       </Paper>
 
-      {/* close button */}
       <IconButton
         size="small"
         onClick={onClose}
@@ -332,7 +320,6 @@ function FvaVsStatsPopup({ modelId, metricType, onClose }) {
   );
 }
 
-/* ─────────────────── EXPLAIN-FRAME ─────────────────── */
 function ExplainFrame({ modelName, modelId, onClose }) {
   const [featuresData, setFeaturesData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -529,7 +516,6 @@ function ExplainFrame({ modelName, modelId, onClose }) {
   );
 }
 
-/* ─────────────────── MAIN SECTION ─────────────────── */
 export default function ModelComparisonSection() {
   const [rows, setRows] = useState([]);
   const [loadErr, setLoadErr] = useState(null);
@@ -631,7 +617,6 @@ export default function ModelComparisonSection() {
 
             return (
               <Box key={model.id} sx={{ position: "relative" }}>
-                {/* Recommended label - positioned above the first card */}
                 {isFirstCard && (
                   <Box
                     sx={{
@@ -771,7 +756,7 @@ export default function ModelComparisonSection() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: 1, // Added gap for spacing between icon and text
+                        gap: 1, 
                         bgcolor: shouldBeBlue ? "#1976d2" : "#CBD5E1",
                         borderBottom: "1px solid",
                         borderColor: "divider",
@@ -825,7 +810,6 @@ export default function ModelComparisonSection() {
               Add Model
             </Typography>
 
-            {/* Custom dropdown trigger button - always shows "Select Models" */}
             <Button
               variant="outlined"
               onClick={handleDropdownClick}
@@ -844,8 +828,6 @@ export default function ModelComparisonSection() {
             >
               Select Models
             </Button>
-
-            {/* Smaller Dropdown popper */}
             <Popper
               open={dropdownOpen}
               anchorEl={anchorEl}

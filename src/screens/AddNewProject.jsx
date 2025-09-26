@@ -251,7 +251,6 @@ export const AddNewProject = () => {
       </AppBar>
 
       <Container maxWidth="xl" sx={{ mt: 5, display: "flex" }}>
-        {/* Stepper */}
         <Box sx={{ width: 250, minHeight: 400, position: "relative", pt: 2 }}>
           <Stepper
             activeStep={stepIndex}
@@ -285,7 +284,6 @@ export const AddNewProject = () => {
             ))}
           </Stepper>
         </Box>
-        {/* Content */}
         <Box sx={{ flexGrow: 1, pl: 8 }}>
           {stepIndex === 0 && (
             <Stack spacing={3} maxWidth={600}>
@@ -359,7 +357,6 @@ export const AddNewProject = () => {
                       border: "1px solid #94a3b8",
                       cursor: "pointer",
                     }}
-                    // ADDED: Spreadsheet navigation
                     onClick={() => {
                       if (source.name === "Spreadsheet") {
                         navigate("/spreadsheet");

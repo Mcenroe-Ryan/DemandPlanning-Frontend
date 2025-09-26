@@ -254,14 +254,6 @@ const UnifiedDashboardPage = () => {
           </Stack>
         ) : (
           <Stack spacing={1} alignItems="flex-end" sx={{ minWidth: 170 }}>
-            {/* <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              sx={{ width: 170 }}
-              onClick={() => navigate("/addNewProject")}
-            >
-              ADD NEW PROJECT
-            </Button> */}
             <Stack direction="row" spacing={2}>
               <Button
                 variant="outlined"
@@ -272,13 +264,10 @@ const UnifiedDashboardPage = () => {
                 Add New Project
               </Button>
             </Stack>
-            {/* The divider for visual separation, but only in the actions stack for spacing */}
           </Stack>
         )}
       </Box>
-      {/* Full width divider below action bar */}
       <Divider sx={{ bgcolor: "#E5E7EB", height: 1, width: "100%", my: 0 }} />
-      {/* Side-by-side EDIT and DELETE buttons below divider, only on My Work Items tab */}
       {tabValue === 1 && (
         <Box sx={{ display: "flex", justifyContent: "flex-end", px: 2, pt: 1 }}>
           <Stack direction="row" spacing={1}>
@@ -295,7 +284,6 @@ const UnifiedDashboardPage = () => {
               startIcon={<DeleteOutlineIcon />}
               sx={{ width: 170 }}
               onClick={() => {
-                /* TODO: Add delete logic */
               }}
             >
               DELETE
@@ -303,7 +291,6 @@ const UnifiedDashboardPage = () => {
           </Stack>
         </Box>
       )}
-      {/* Projects or Work Items */}
       {tabValue === 0 ? (
         <Stack direction="row" spacing={4} sx={{ p: 3 }}>
           {projects.map((p) => (
@@ -356,7 +343,6 @@ const UnifiedDashboardPage = () => {
                   </Box>
                 </Typography>
               </Stack>
-              {/* Dots or icons row in bottom right */}
               <Box
                 sx={{
                   position: "absolute",
@@ -479,7 +465,6 @@ const UnifiedDashboardPage = () => {
           ))}
         </Box>
       )}
-      {/* Dialogs */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
         <DialogTitle>Edit Project</DialogTitle>
         <DialogContent>

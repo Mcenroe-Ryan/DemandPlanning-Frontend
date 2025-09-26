@@ -27,7 +27,6 @@ import Highcharts from "highcharts";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-// CustomLegend Component
 const CustomLegend = ({
   legendConfig = [],
   activeKeys = [],
@@ -125,7 +124,6 @@ const CustomLegend = ({
   </Box>
 );
 
-// Legend Configuration
 const LEGEND_CONFIG = [
   {
     key: "actual",
@@ -142,7 +140,6 @@ const LEGEND_CONFIG = [
   },
 ];
 
-// Chart rendering component
 const ForecastChart = ({ data, selectedAlert }) => {
   const chartRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
@@ -176,7 +173,6 @@ const ForecastChart = ({ data, selectedAlert }) => {
       ]
     : [];
 
-  // Legend Toggle Handler
   const handleLegendToggle = (key) => {
     const cfg = LEGEND_CONFIG.find((item) => item.key === key);
     if (!cfg || !chartInstance) return;
@@ -357,7 +353,6 @@ const ForecastChart = ({ data, selectedAlert }) => {
   );
 };
 
-// Main Component
 export const ChartSection = () => {
   const { selectAlert } = useAlert();
 
@@ -469,7 +464,6 @@ export const ChartSection = () => {
     }
   };
 
-  //  API function to update is_checked status
   const updateCheckedStatus = async (id, newValue) => {
     try {
       const res = await fetch(`${API_BASE_URL}/forecast-error/${id}`, {
@@ -486,7 +480,6 @@ export const ChartSection = () => {
     }
   };
 
-  // selected alert + default error message for landing chart
   useEffect(() => {
     (async () => {
       try {
@@ -505,16 +498,14 @@ export const ChartSection = () => {
 
         setAlertsData(rows);
 
-        // Use is_checked from API
         setCheckedItems(
           Object.fromEntries(alerts.map((a) => [a.id, !!a.is_checked]))
         );
 
-        // the first (oldest) row as default, set BOTH selection and error message
         if (rows.length) {
           const defaultRow = rows[0];
           setSelectedAlertId(defaultRow.id);
-          setErrorMessage(defaultRow.message); // <-- NEW: show default error on landing
+          setErrorMessage(defaultRow.message); 
           await fetchForecastData(defaultRow.rawData);
         }
       } catch (err) {
@@ -575,8 +566,6 @@ export const ChartSection = () => {
       elevation={0}
       sx={{ width: "100%", border: 1, borderColor: "grey.300" }}
     >
-      {/* Controls */}
-      {/* Controls */}
       <Box
         sx={{
           display: "grid",
@@ -591,7 +580,6 @@ export const ChartSection = () => {
           columnGap: 1,
         }}
       >
-        {/* Left: M/W toggle */}
         <Box sx={{ justifySelf: "start" }}>
           <ToggleButtonGroup
             value={selectedTimePeriod}
@@ -617,12 +605,8 @@ export const ChartSection = () => {
               },
             }}
           >
-            {/* <ToggleButton value="month"></ToggleButton>
-      <ToggleButton value="week"></ToggleButton> */}
           </ToggleButtonGroup>
         </Box>
-
-        {/* Center: Error message (always centered) */}
         <Box sx={{ justifySelf: "center" }}>
           {errorMessage && (
             <Alert
@@ -642,7 +626,6 @@ export const ChartSection = () => {
           )}
         </Box>
 
-        {/* Right: Model selector + actions */}
         <Box
           sx={{
             justifySelf: "end",
@@ -690,12 +673,10 @@ export const ChartSection = () => {
         </Box>
       </Box>
 
-      {/* Chart */}
       <Box sx={{ p: 2, pb: 0 }}>
         <ForecastChart data={forecastData} selectedAlert={selectedAlert} />
       </Box>
 
-      {/* Header */}
       <Box sx={styles.header}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <InfoIcon sx={{ width: 13, height: 13 }} />
@@ -709,7 +690,6 @@ export const ChartSection = () => {
         <KeyboardArrowDownIcon sx={{ width: 16, height: 16 }} />
       </Box>
 
-      {/* Alert List */}
       <Box sx={styles.alertList}>
         {alertsData.length === 0 ? (
           <Box sx={styles.noAlerts}>
@@ -743,19 +723,15 @@ export const ChartSection = () => {
                   sx={{ p: 0, width: 16, height: 16, ml: 0.5, mr: 1 }}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    // Optimistically update UI
                     setCheckedItems((prev) => ({ ...prev, [row.id]: checked }));
 
-                    // Persist change to backend
                     updateCheckedStatus(row.id, checked).then((saved) => {
                       if (saved === null) {
-                        // API failed – revert UI
                         setCheckedItems((prev) => ({
                           ...prev,
                           [row.id]: !checked,
                         }));
                       } else if (saved !== checked) {
-                        // API responded with different value – sync UI
                         setCheckedItems((prev) => ({
                           ...prev,
                           [row.id]: saved,

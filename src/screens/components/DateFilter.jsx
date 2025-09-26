@@ -20,8 +20,8 @@ export default function DateFilter({ onDateChange, disabled = false }) {
 
   const defaultRange = [
     {
-      startDate: sixMonthsBack, // 6 months historical
-      endDate: sixMonthsAhead, // 6 months forecast
+      startDate: sixMonthsBack, 
+      endDate: sixMonthsAhead, 
       key: "selection",
     },
   ];
@@ -32,10 +32,9 @@ export default function DateFilter({ onDateChange, disabled = false }) {
 
   // Inputs start empty so placeholders show
   const [hasUserSelected, setHasUserSelected] = useState(false);
-  const [startInput, setStartInput] = useState(""); // empty -> shows placeholder
-  const [endInput, setEndInput] = useState(""); // empty -> shows placeholder
+  const [startInput, setStartInput] = useState(""); 
+  const [endInput, setEndInput] = useState(""); 
 
-  // Dynamic placeholders + today's date
   const placeholderStart = format(sixMonthsBack, "MM/dd/yyyy");
   const placeholderEnd = format(sixMonthsAhead, "MM/dd/yyyy");
   const placeholderToday = format(now, "MM/dd/yyyy");
@@ -147,18 +146,11 @@ export default function DateFilter({ onDateChange, disabled = false }) {
         }}
         disableRestoreFocus
       >
-        {/* Context row: show dynamic hints incl. Today */}
         <Stack spacing={0.25} sx={{ mb: 1 }}>
           <Typography variant="caption" color="text.secondary">
-            {/* Today: <strong>{placeholderToday}</strong> */}
             Today: {placeholderToday}
           </Typography>
-          {/* <Typography variant="caption" color="text.secondary">
-            Default window: <strong>{placeholderStart}</strong> → <strong>{placeholderEnd}</strong>
-          </Typography> */}
         </Stack>
-
-        {/* <Divider sx={{ mb: 1 }} /> */}
 
         {/* Start & End Date Input Row */}
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
@@ -175,7 +167,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
               variant="outlined"
               value={startInput}
               onChange={handleStartChange}
-              placeholder={placeholderStart} // dynamic past 6 months
+              placeholder={placeholderStart}
               sx={{
                 "& .MuiOutlinedInput-root": { height: 30 },
                 "& input": { padding: "4px 6px", fontSize: 12 },
@@ -197,7 +189,7 @@ export default function DateFilter({ onDateChange, disabled = false }) {
               variant="outlined"
               value={endInput}
               onChange={handleEndChange}
-              placeholder={placeholderEnd} // dynamic next 6 months
+              placeholder={placeholderEnd} 
               sx={{
                 "& .MuiOutlinedInput-root": { height: 30 },
                 "& input": { padding: "4px 6px", fontSize: 12 },

@@ -141,7 +141,6 @@ export const ImportProfilesData = () => {
       setIsGenerating(false);
       setShowMessage(true);
       
-      // Auto-hide message after 10 seconds
       setTimeout(() => {
         setShowMessage(false);
       }, 10000);
@@ -504,7 +503,6 @@ export const ImportProfilesData = () => {
       <Box sx={{ p: 2 }}>
         {!showDetails ? (
           <>
-            {/* Import Profiles Card */}
             <Card sx={{ p: 2, mb: 2 }}>
               <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
                 Import Profiles
@@ -634,7 +632,6 @@ export const ImportProfilesData = () => {
               </TableContainer>
             </Card>
 
-            {/* Generate Data Card */}
             <Card sx={{ p: 2 }}>
               <Stack
                 direction="row"
@@ -669,7 +666,6 @@ export const ImportProfilesData = () => {
                 </Button>
               </Stack>
               
-              {/* Generation Result Message */}
               {renderGenerationMessage()}
             </Card>
           </>

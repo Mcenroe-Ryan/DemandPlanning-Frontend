@@ -40,7 +40,6 @@ export default function OptionalParamsMenu({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open, onClose]);
 
-  // Filter options by search query (case-insensitive contains)
   const filteredOptions = PARAM_OPTIONS.filter((opt) =>
     opt.toLowerCase().includes(search.toLowerCase())
   );
@@ -56,7 +55,6 @@ export default function OptionalParamsMenu({
     onChange(selected.length === PARAM_OPTIONS.length ? [] : PARAM_OPTIONS);
   };
 
-  // Close dropdown when user presses Escape
   const handleKeyDown = (e) => {
     if (e.key === "Escape") onClose();
   };
@@ -79,8 +77,6 @@ export default function OptionalParamsMenu({
   }}
   onKeyDown={handleKeyDown}
 >
-
-      {/* Header */}
       <Box
         sx={{
           px: 2,
@@ -123,8 +119,6 @@ export default function OptionalParamsMenu({
           }}
         />
       </Box>
-
-      {/* Options List */}
       <List
         dense
         sx={{
@@ -133,7 +127,6 @@ export default function OptionalParamsMenu({
           overflowY: "auto",
         }}
       >
-        {/* All Option */}
         <ListItem disablePadding>
           <ListItemButton
             onClick={handleSelectAll}
@@ -175,8 +168,6 @@ export default function OptionalParamsMenu({
             />
           </ListItemButton>
         </ListItem>
-
-        {/* Individual Options */}
         {filteredOptions.length === 0 ? (
           <Box
             sx={{
