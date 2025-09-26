@@ -46,8 +46,7 @@ import ChatBot from "./components/Chatbox";
 import { AnalyticsFrameSection } from "./components/AnalyticsFrameSection";
 import ScenarioSection from "./components/ScenarioSection";
 
-// const API_BASE_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 function getSelectedNames(selectedIds, options, optionKey, displayKey) {
   return options
