@@ -1320,15 +1320,18 @@ function buildStackedWaterfall(
   let running = 0;
   const rows = [];
 
+  const cityTotals = Object.fromEntries(activeCities.map((c) => [c, 0]));
+
   steps.forEach((st, idx) => {
     const sign = st.value >= 0 ? 1 : -1;
+
     const cityVals = {};
     let totalThisStep = 0;
-
     activeCities.forEach((city) => {
       const mult = recoQty > 0 ? Number(perCityQty[city] || 0) / recoQty : 0;
-      const v = to1(Math.abs(st.value) * mult) * sign;
-      cityVals[`city_${city}`] = v;
+      const v = to1(Math.abs(st.value) * mult) * sign; 
+      cityVals[city] = v;
+      cityTotals[city] += v; 
       totalThisStep += v;
     });
 
@@ -1342,10 +1345,7 @@ function buildStackedWaterfall(
         cumulative: to1(running),
         stackAbs: Math.abs(totalThisStep),
         ...Object.fromEntries(
-          activeCities.map((c) => [
-            `city_${c}`,
-            Math.abs(cityVals[`city_${c}`] || 0),
-          ])
+          activeCities.map((c) => [`city_${c}`, Math.abs(cityVals[c] || 0)])
         ),
       });
       return;
@@ -1364,7 +1364,9 @@ function buildStackedWaterfall(
       ...Object.fromEntries(
         activeCities.map((c) => [
           `city_${c}`,
-          Math.abs(cityVals[`city_${c}`] || 0) * (totalThisStep >= 0 ? 1 : -1),
+          (cityVals[c] || 0) >= 0
+            ? Math.abs(cityVals[c] || 0)
+            : -Math.abs(cityVals[c] || 0),
         ])
       ),
     });
@@ -1374,6 +1376,8 @@ function buildStackedWaterfall(
 
   if (includeTotal) {
     const total = to1(running);
+    const signTotal = total >= 0 ? 1 : -1;
+
     rows.push({
       name: totalLabel,
       base: 0,
@@ -1381,6 +1385,12 @@ function buildStackedWaterfall(
       kind: "total",
       cumulative: total,
       stackAbs: Math.abs(total),
+      ...Object.fromEntries(
+        activeCities.map((c) => [
+          `city_${c}`,
+          Math.abs(cityTotals[c] || 0) * signTotal,
+        ])
+      ),
     });
   }
 
