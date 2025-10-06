@@ -691,6 +691,7 @@ function ForecastChartSection({
         reflow: true,
         height: containerHeight,
         width: chartWidth,
+        spacingRight: 18,
       },
       title: { text: "" },
       credits: { enabled: false },
@@ -883,8 +884,10 @@ function ForecastChartSection({
           <Divider sx={{ mx: 1, mb: 1 }} />
         </>
       ) : (
-        <Stack sx={{ p: 2 }}>
-          <Box
+        // <Stack sx={{ p: 2 }}>
+        //     <DisruptionList rowsFromJson={sku?.disruptions || []} />        
+        // </Stack>
+         <Box
             sx={{
               border: 1,
               borderColor: "#e5e7eb",
@@ -899,7 +902,6 @@ function ForecastChartSection({
           >
             <DisruptionList rowsFromJson={sku?.disruptions || []} />
           </Box>
-        </Stack>
       )}
     </Box>
   );
@@ -1071,6 +1073,7 @@ function DemandByCitySection({ locations = [], sku, height = 300, width }) {
         },
         min: 0,
         gridLineColor: "#e5e7eb",
+        showLastLabel: true,
         labels: { style: { fontSize: "11px" } },
       },
       tooltip: {
@@ -2383,8 +2386,7 @@ function RecommendationPanel({
           }}
         >
           <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#0f172a" }}>
-            Waterfall —{" "}
-            {usingCustomized ? "Customized Allocation" : "Recommended"}
+            Waterfall 
           </Typography>
           <IconButton onClick={() => setWfFullscreenOpen(false)}>
             <Close />
