@@ -78,6 +78,8 @@ const SIDEBAR_W = "clamp(280px, 18vw, 320px)";
 const COLLAPSED_W = "52px";
 const RIGHT_W = "clamp(420px, 34vw, 760px)";
 const GRAPH_HEIGHT = 200;
+const ACTUAL_COLOR = "#0891b2";
+const FORECAST_COLOR = "#64748b";
 
 const enhanceForMobileDrag = (opts, isSmall, graphHeight) => {
   if (!isSmall) return opts;
@@ -420,14 +422,116 @@ const legendItems = [
   },
 ];
 
+// function ChartSectionHeader({
+//   header,
+//   selectedSkuId,
+//   skuOptions,
+//   onChangeSku,
+// }) {
+//   const labelSx = { fontWeight: 600, color: "#475569", fontSize: 12 };
+//   const valueSx = { color: "#475569", fontSize: 12, ml: 0.5 };
+
+//   return (
+//     <Stack spacing={1.25} sx={{ p: 1.25 }}>
+//       <Stack
+//         direction="row"
+//         alignItems="center"
+//         spacing={1.25}
+//         flexWrap="nowrap"
+//         sx={{ overflowX: "auto", pb: 0.25 }}
+//       >
+//         {header.map((item, idx) => (
+//           <Stack
+//             key={idx}
+//             direction="row"
+//             alignItems="center"
+//             sx={{ whiteSpace: "nowrap" }}
+//           >
+//             {idx > 0 && (
+//               <Divider
+//                 orientation="vertical"
+//                 flexItem
+//                 sx={{ mx: 1, height: 16 }}
+//               />
+//             )}
+//             <Typography variant="body2" sx={labelSx}>
+//               {item.label}
+//             </Typography>
+//             <Typography variant="body2" sx={valueSx}>
+//               {item.value}
+//             </Typography>
+//           </Stack>
+//         ))}
+//         <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />
+//         <Stack direction="row" alignItems="center" spacing={0.5}>
+//           <Typography variant="body2" sx={labelSx}>
+//             SKU:
+//           </Typography>
+//           <FormControl size="small">
+//             <Select
+//               value={selectedSkuId}
+//               onChange={(e) => onChangeSku(e.target.value)}
+//               sx={{
+//                 height: 24,
+//                 width: 160,
+//                 "& .MuiSelect-select": {
+//                   p: "2px 8px",
+//                   fontSize: 12,
+//                   color: "#2563eb",
+//                   textDecoration: "underline",
+//                 },
+//                 "& .MuiOutlinedInput-notchedOutline": {
+//                   borderColor: "#cbd5e1",
+//                   borderRadius: "3px",
+//                 },
+//               }}
+//             >
+//               {skuOptions.map((o) => (
+//                 <MenuItem key={o.value} value={o.value}>
+//                   {o.value} — {o.label}
+//                 </MenuItem>
+//               ))}
+//             </Select>
+//           </FormControl>
+//         </Stack>
+//       </Stack>
+
+//       <Stack direction="row" spacing={1} flexWrap="wrap">
+//         {legendItems.map((item) => (
+//           <Chip
+//             key={item.id}
+//             icon={item.indicator}
+//             label={item.label}
+//             variant="outlined"
+//             sx={{
+//               backgroundColor: "#eff6ff",
+//               borderColor: "#cbd5e1",
+//               borderRadius: "5px",
+//               height: 26,
+//               "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+//               "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+//             }}
+//           />
+//         ))}
+//       </Stack>
+//     </Stack>
+//   );
+// }
+
 function ChartSectionHeader({
   header,
   selectedSkuId,
   skuOptions,
   onChangeSku,
+  // NEW (optional): interactive legend wiring
+  legendConfig, // { actual: { on, color }, forecast: { on, color } }
+  onToggleLegend, // (key: 'actual' | 'forecast') => void
 }) {
   const labelSx = { fontWeight: 600, color: "#475569", fontSize: 12 };
   const valueSx = { color: "#475569", fontSize: 12, ml: 0.5 };
+
+  const hasInteractiveLegend =
+    legendConfig && typeof onToggleLegend === "function";
 
   return (
     <Stack spacing={1.25} sx={{ p: 1.25 }}>
@@ -460,7 +564,9 @@ function ChartSectionHeader({
             </Typography>
           </Stack>
         ))}
+
         <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />
+
         <Stack direction="row" alignItems="center" spacing={0.5}>
           <Typography variant="body2" sx={labelSx}>
             SKU:
@@ -495,22 +601,82 @@ function ChartSectionHeader({
       </Stack>
 
       <Stack direction="row" spacing={1} flexWrap="wrap">
-        {legendItems.map((item) => (
-          <Chip
-            key={item.id}
-            icon={item.indicator}
-            label={item.label}
-            variant="outlined"
-            sx={{
-              backgroundColor: "#eff6ff",
-              borderColor: "#cbd5e1",
-              borderRadius: "5px",
-              height: 26,
-              "& .MuiChip-label": { fontSize: 12, color: "#475569" },
-              "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
-            }}
-          />
-        ))}
+        {hasInteractiveLegend ? (
+          <>
+            <Chip
+              onClick={() => onToggleLegend("actual")}
+              clickable
+              icon={
+                <FiberManualRecord
+                  sx={{ fontSize: 10, color: legendConfig.actual.color }}
+                />
+              }
+              label="Actual"
+              variant={legendConfig.actual.on ? "outlined" : "filled"}
+              sx={{
+                backgroundColor: legendConfig.actual.on ? "#eff6ff" : "#e2e8f0",
+                borderColor: legendConfig.actual.color,
+                borderRadius: "5px",
+                height: 26,
+                "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+              }}
+            />
+            <Chip
+              onClick={() => onToggleLegend("forecast")}
+              clickable
+              icon={
+                <MoreHoriz
+                  sx={{ fontSize: 15, color: legendConfig.forecast.color }}
+                />
+              }
+              label="Forecast"
+              variant={legendConfig.forecast.on ? "outlined" : "filled"}
+              sx={{
+                backgroundColor: legendConfig.forecast.on
+                  ? "#eff6ff"
+                  : "#e2e8f0",
+                borderColor: legendConfig.forecast.color,
+                borderRadius: "5px",
+                height: 26,
+                "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+              }}
+            />
+          </>
+        ) : (
+          // fallback (unchanged)
+          <>
+            <Chip
+              icon={
+                <FiberManualRecord sx={{ fontSize: 10, color: ACTUAL_COLOR }} />
+              }
+              label="Actual"
+              variant="outlined"
+              sx={{
+                backgroundColor: "#eff6ff",
+                borderColor: "#cbd5e1",
+                borderRadius: "5px",
+                height: 26,
+                "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+              }}
+            />
+            <Chip
+              icon={<MoreHoriz sx={{ fontSize: 15, color: FORECAST_COLOR }} />}
+              label="Forecast"
+              variant="outlined"
+              sx={{
+                backgroundColor: "#eff6ff",
+                borderColor: "#cbd5e1",
+                borderRadius: "5px",
+                height: 26,
+                "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+              }}
+            />
+          </>
+        )}
       </Stack>
     </Stack>
   );
@@ -628,6 +794,8 @@ function ForecastChartSection({
   );
   const containerRef = React.useRef(null);
   const chartRef = React.useRef(null);
+  const [showActual, setShowActual] = useState(true);
+  const [showForecast, setShowForecast] = useState(true);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -734,26 +902,50 @@ function ForecastChartSection({
         borderColor: "#e5e7eb",
       },
       plotOptions: { series: { animation: false, marker: { radius: 3 } } },
+      // series: [
+      //   {
+      //     name: "Actual",
+      //     data: actualSeries,
+      //     color: "#0f766e",
+      //     lineWidth: 2.5,
+      //     dashStyle: "Solid",
+      //     zIndex: 2,
+      //     connectNulls: true,
+      //   },
+      //   {
+      //     name: "Forecast",
+      //     data: forecastJoined,
+      //     color: "#0f766e",
+      //     lineWidth: 2.5,
+      //     dashStyle: "ShortDot",
+      //     marker: { enabled: false },
+      //     opacity: 0.9,
+      //     zIndex: 1,
+      //     connectNulls: true,
+      //   },
+      // ],
       series: [
         {
           name: "Actual",
           data: actualSeries,
-          color: "#0f766e",
+          color: ACTUAL_COLOR,
           lineWidth: 2.5,
           dashStyle: "Solid",
           zIndex: 2,
           connectNulls: true,
+          visible: showActual, // <—
         },
         {
           name: "Forecast",
           data: forecastJoined,
-          color: "#0f766e",
+          color: FORECAST_COLOR,
           lineWidth: 2.5,
           dashStyle: "ShortDot",
           marker: { enabled: false },
           opacity: 0.9,
           zIndex: 1,
           connectNulls: true,
+          visible: showForecast, // <—
         },
       ],
       accessibility: { enabled: false },
@@ -846,11 +1038,26 @@ function ForecastChartSection({
 
       {mainTabValue === 0 ? (
         <>
+          {/* <ChartSectionHeader
+            header={header}
+            selectedSkuId={selectedSkuId}
+            skuOptions={skuOptions}
+            onChangeSku={onChangeSku}
+          /> */}
           <ChartSectionHeader
             header={header}
             selectedSkuId={selectedSkuId}
             skuOptions={skuOptions}
             onChangeSku={onChangeSku}
+            // NEW: interactive legend hookup
+            legendConfig={{
+              actual: { on: showActual, color: ACTUAL_COLOR },
+              forecast: { on: showForecast, color: FORECAST_COLOR },
+            }}
+            onToggleLegend={(key) => {
+              if (key === "actual") setShowActual((v) => !v);
+              if (key === "forecast") setShowForecast((v) => !v);
+            }}
           />
           <Stack
             sx={{
@@ -885,23 +1092,23 @@ function ForecastChartSection({
         </>
       ) : (
         // <Stack sx={{ p: 2 }}>
-        //     <DisruptionList rowsFromJson={sku?.disruptions || []} />        
+        //     <DisruptionList rowsFromJson={sku?.disruptions || []} />
         // </Stack>
-         <Box
-            sx={{
-              border: 1,
-              borderColor: "#e5e7eb",
-              borderRadius: 1,
-              overflow: "auto",
-              minHeight: 0,
-              width: "100%",
-              alignSelf: "flex-start",
-              boxShadow: 0,
-              backgroundColor: "#fff",
-            }}
-          >
-            <DisruptionList rowsFromJson={sku?.disruptions || []} />
-          </Box>
+        <Box
+          sx={{
+            border: 1,
+            borderColor: "#e5e7eb",
+            borderRadius: 1,
+            overflow: "auto",
+            minHeight: 0,
+            width: "100%",
+            alignSelf: "flex-start",
+            boxShadow: 0,
+            backgroundColor: "#fff",
+          }}
+        >
+          <DisruptionList rowsFromJson={sku?.disruptions || []} />
+        </Box>
       )}
     </Box>
   );
@@ -1332,9 +1539,9 @@ function buildStackedWaterfall(
     let totalThisStep = 0;
     activeCities.forEach((city) => {
       const mult = recoQty > 0 ? Number(perCityQty[city] || 0) / recoQty : 0;
-      const v = to1(Math.abs(st.value) * mult) * sign; 
+      const v = to1(Math.abs(st.value) * mult) * sign;
       cityVals[city] = v;
-      cityTotals[city] += v; 
+      cityTotals[city] += v;
       totalThisStep += v;
     });
 
@@ -1463,7 +1670,7 @@ function WaterfallChart({
 }) {
   const data = usingCustomized && activeCities.length ? wfStackedRows : wfData;
 
-  const showIfNotZero = (v) => Math.abs(Number(v || 0)) >= 0.05; 
+  const showIfNotZero = (v) => Math.abs(Number(v || 0)) >= 0.05;
   const { suffix } = getMoneyUnit(symbol);
 
   return (
@@ -2386,7 +2593,7 @@ function RecommendationPanel({
           }}
         >
           <Typography sx={{ fontWeight: 700, fontSize: 16, color: "#0f172a" }}>
-            Waterfall 
+            Waterfall
           </Typography>
           <IconButton onClick={() => setWfFullscreenOpen(false)}>
             <Close />
@@ -2481,7 +2688,7 @@ function MainContentSection() {
 
   const [showSim, setShowSim] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [panelFull, setPanelFull] = useState(false); 
+  const [panelFull, setPanelFull] = useState(false);
 
   const effectiveCollapsed = showSim ? sidebarCollapsed : false;
 

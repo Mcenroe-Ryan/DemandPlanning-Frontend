@@ -1,4 +1,3 @@
-//new version for scrollable
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box,
@@ -753,15 +752,48 @@ export default function ForecastTable({
 
       if (showForecast) return built;
 
+      // Weekly + Forecast OFF:
+      // keep past/current + NEXT 4 weeks (so the Consensus row can use them)
       const nowStart = startOfISOWeek(new Date());
       return built.filter((lbl) => {
         const d = weekLabelToDate(lbl);
-        return d && d <= nowStart;
+        if (!d) return false;
+        if (d <= nowStart) return true;
+        const diffDays = (d.getTime() - nowStart.getTime()) / 86400000;
+        return diffDays > 0 && diffDays <= 28; // next 4 weeks
       });
     }
 
     return columns;
   }, [period, columns, showForecast, startDate, endDate, defaultMonthlyLabels]);
+
+  // Chart columns: keep old behavior (weekly + Forecast OFF => past-only)
+  const chartColumns = useMemo(() => {
+    if (period === "W" && !showForecast) {
+      const nowStart = startOfISOWeek(new Date());
+      const base =
+        columns.length
+          ? columns
+          : startDate && endDate
+          ? buildISOWeekLabelsBetween(startDate, endDate)
+          : (() => {
+              const now = startOfISOWeek(new Date());
+              const from = new Date(now);
+              from.setDate(from.getDate() - 6 * 7);
+              const to = new Date(now);
+              to.setDate(to.getDate() + 6 * 7);
+              return buildISOWeekLabelsBetween(
+                from.toISOString().slice(0, 10),
+                to.toISOString().slice(0, 10)
+              );
+            })();
+      return base.filter((lbl) => {
+        const d = weekLabelToDate(lbl);
+        return d && d <= nowStart;
+      });
+    }
+    return visibleColumns;
+  }, [period, showForecast, columns, startDate, endDate, visibleColumns]);
 
   const STICKY_W = 240;
   const COL_W = 110;
@@ -950,20 +982,30 @@ export default function ForecastTable({
 
           setColumns(labels);
         } else {
-          const labels =
-            startDate && endDate
-              ? buildISOWeekLabelsBetween(startDate, endDate)
-              : (() => {
-                  const now = startOfISOWeek(new Date());
-                  const from = new Date(now);
-                  from.setDate(from.getDate() - 6 * 7);
-                  const to = new Date(now);
-                  to.setDate(to.getDate() + 6 * 7);
-                  return buildISOWeekLabelsBetween(
-                    from.toISOString().slice(0, 10),
-                    to.toISOString().slice(0, 10)
-                  );
-                })();
+          // WEEKLY labels – ensure at least next 4 weeks exist in labels
+          let labels;
+          if (startDate && endDate) {
+            const nowPlus4 = startOfISOWeek(new Date());
+            nowPlus4.setDate(nowPlus4.getDate() + 28); // +4 weeks
+            const requestedEnd = new Date(endDate);
+            const effectiveEnd = requestedEnd < nowPlus4 ? nowPlus4 : requestedEnd;
+
+            labels = buildISOWeekLabelsBetween(
+              startDate,
+              effectiveEnd.toISOString().slice(0, 10)
+            );
+          } else {
+            const now = startOfISOWeek(new Date());
+            const from = new Date(now);
+            from.setDate(from.getDate() - 6 * 7);
+            const to = new Date(now);
+            // default already provides +6 weeks (covers the +4 requirement)
+            to.setDate(to.getDate() + 6 * 7);
+            labels = buildISOWeekLabelsBetween(
+              from.toISOString().slice(0, 10),
+              to.toISOString().slice(0, 10)
+            );
+          }
 
           labels.forEach((w) => {
             ds[w] = {};
@@ -1081,7 +1123,7 @@ export default function ForecastTable({
     });
     setEditingCell({ month: null, row: null });
     setEditValue("");
-    setCanEditConsensus(false);
+       setCanEditConsensus(false);
   };
 
   const handleConfirmationSubmit = async () => {
@@ -1363,10 +1405,21 @@ export default function ForecastTable({
                 const shouldHighlight =
                   !isWeekly && canEditConsensus && isEditableCell;
 
-                const displayValue =
+                // Base display value
+                let displayValue =
                   value === undefined || value === null
                     ? "-"
                     : formatNumberByCountry(value, selectedCountry);
+
+                // Keep non-Consensus rows past-only in WEEKLY + Forecast OFF
+                if (isWeekly && !showForecast) {
+                  const nowStart = startOfISOWeek(new Date());
+                  const d = weekLabelToDate(m);
+                  const isFuture = d && d > nowStart;
+                  if (isFuture && !isConsensusRow) {
+                    displayValue = "-";
+                  }
+                }
 
                 return (
                   <td
@@ -1478,7 +1531,7 @@ export default function ForecastTable({
                       </IconButton>
                     )}
 
-                    {isConsensusRow ? (
+                    {label === "Consensus" ? (
                       !isWeekly && locked ? (
                         <span
                           style={{
@@ -1719,7 +1772,7 @@ export default function ForecastTable({
         <>
           {data && (
             <ForecastChart
-              months={visibleColumns}
+              months={chartColumns}
               data={data}
               modelName={modelName}
               setModelName={setModelName}
@@ -1740,7 +1793,7 @@ export default function ForecastTable({
           {renderForecastTable()}
           {data && (
             <ForecastChart
-              months={visibleColumns}
+              months={chartColumns}
               data={data}
               modelName={modelName}
               setModelName={setModelName}
