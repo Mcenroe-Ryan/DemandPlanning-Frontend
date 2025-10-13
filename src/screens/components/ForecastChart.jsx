@@ -55,8 +55,7 @@ import StarIcon from "@mui/icons-material/Star";
 import CloseIcon from "@mui/icons-material/Close";
 import RemoveIcon from "@mui/icons-material/Remove";
 
-// ========== helpers ==========
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const addAlpha = (hex, alpha = 0.22) => {
   if (!hex) return `rgba(0,0,0,${alpha})`;
