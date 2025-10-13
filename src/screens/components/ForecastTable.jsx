@@ -6,7 +6,6 @@ import {
   Typography,
   Checkbox,
   Button,
-  Menu,
   Popover,
   Avatar,
   Dialog,
@@ -20,7 +19,6 @@ import {
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import DownloadIcon from "@mui/icons-material/Download";
-import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import ShareIcon from "@mui/icons-material/Share";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import LockIcon from "@mui/icons-material/Lock";
@@ -30,6 +28,7 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined"; // <-- ADDED
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -531,7 +530,7 @@ function startOfISOWeek(d0 = new Date()) {
   const d = new Date(d0);
   d.setHours(0, 0, 0, 0);
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day; 
+  const diff = day === 0 ? -6 : 1 - day; // Monday
   d.setDate(d.getDate() + diff);
   return d;
 }
@@ -636,7 +635,10 @@ export default function ForecastTable({
   setOpenConsensusPopup,
   highlightTrigger,
 }) {
-  const REVENUE_LABEL = getRevenueForecastLabel(selectedCountry);
+  const REVENUE_LABEL = useMemo(
+    () => getRevenueForecastLabel(selectedCountry),
+    [selectedCountry]
+  );
 
   const CORE_ROWS = useMemo(
     () => ["Actual", "Baseline Forecast", "ML Forecast", "Consensus", REVENUE_LABEL],
@@ -685,9 +687,7 @@ export default function ForecastTable({
 
   useEffect(() => {
     const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.clientWidth);
-      }
+      if (containerRef.current) setContainerWidth(containerRef.current.clientWidth);
     };
     updateWidth();
     window.addEventListener("resize", updateWidth);
@@ -750,24 +750,13 @@ export default function ForecastTable({
               );
             })();
 
-      if (showForecast) return built;
-
-      // Weekly + Forecast OFF:
-      // keep past/current + NEXT 4 weeks (so the Consensus row can use them)
-      const nowStart = startOfISOWeek(new Date());
-      return built.filter((lbl) => {
-        const d = weekLabelToDate(lbl);
-        if (!d) return false;
-        if (d <= nowStart) return true;
-        const diffDays = (d.getTime() - nowStart.getTime()) / 86400000;
-        return diffDays > 0 && diffDays <= 28; // next 4 weeks
-      });
+      return built; // keep all columns; only consensus is limited later
     }
 
     return columns;
   }, [period, columns, showForecast, startDate, endDate, defaultMonthlyLabels]);
 
-  // Chart columns: keep old behavior (weekly + Forecast OFF => past-only)
+  // Chart columns: past-only when Forecast OFF in weekly mode; else mirror visibleColumns
   const chartColumns = useMemo(() => {
     if (period === "W" && !showForecast) {
       const nowStart = startOfISOWeek(new Date());
@@ -848,12 +837,12 @@ export default function ForecastTable({
     if (period !== "W") return new Set();
     const nowStart = startOfISOWeek(new Date());
     const set = new Set();
-    columns.forEach((lbl) => {
+    visibleColumns.forEach((lbl) => {
       const d = weekLabelToDate(lbl);
       if (d && d > nowStart) set.add(lbl);
     });
     return set;
-  }, [period, columns]);
+  }, [period, visibleColumns]);
 
   const keyMap = {
     Actual: "actual_units",
@@ -897,9 +886,7 @@ export default function ForecastTable({
     if (highlightTrigger && canEditConsensus && period === "M") {
       if (validateSingleSKUSelection()) {
         setHighlightEditableCells(true);
-        const timer = setTimeout(() => {
-          setHighlightEditableCells(false);
-        }, 5000);
+        const timer = setTimeout(() => setHighlightEditableCells(false), 5000);
         return () => clearTimeout(timer);
       }
     } else {
@@ -982,24 +969,15 @@ export default function ForecastTable({
 
           setColumns(labels);
         } else {
-          // WEEKLY labels – ensure at least next 4 weeks exist in labels
+          // WEEKLY
           let labels;
           if (startDate && endDate) {
-            const nowPlus4 = startOfISOWeek(new Date());
-            nowPlus4.setDate(nowPlus4.getDate() + 28); // +4 weeks
-            const requestedEnd = new Date(endDate);
-            const effectiveEnd = requestedEnd < nowPlus4 ? nowPlus4 : requestedEnd;
-
-            labels = buildISOWeekLabelsBetween(
-              startDate,
-              effectiveEnd.toISOString().slice(0, 10)
-            );
+            labels = buildISOWeekLabelsBetween(startDate, endDate);
           } else {
             const now = startOfISOWeek(new Date());
             const from = new Date(now);
             from.setDate(from.getDate() - 6 * 7);
             const to = new Date(now);
-            // default already provides +6 weeks (covers the +4 requirement)
             to.setDate(to.getDate() + 6 * 7);
             labels = buildISOWeekLabelsBetween(
               from.toISOString().slice(0, 10),
@@ -1007,6 +985,7 @@ export default function ForecastTable({
             );
           }
 
+          // init skeleton
           labels.forEach((w) => {
             ds[w] = {};
             allRowsSet.forEach((row) => {
@@ -1014,6 +993,7 @@ export default function ForecastTable({
             });
           });
 
+          // load values
           raw.forEach((item) => {
             const label = item.week_name
               ? String(item.week_name)
@@ -1030,6 +1010,26 @@ export default function ForecastTable({
               }
             });
           });
+
+          // === ONLY LIMIT CONSENSUS TO NEXT 4 FUTURE WEEKS ===
+          const nowStart = startOfISOWeek(new Date());
+
+          const futureLabelsSorted = labels
+            .map((lbl) => ({ lbl, d: weekLabelToDate(lbl) }))
+            .filter(({ d }) => d && d > nowStart)
+            .sort((a, b) => a.d - b.d)
+            .map(({ lbl }) => lbl);
+
+          const allowedFuture4 = new Set(futureLabelsSorted.slice(0, 4));
+
+          labels.forEach((lbl) => {
+            const d = weekLabelToDate(lbl);
+            const isFuture = d && d > nowStart;
+            if (isFuture && !allowedFuture4.has(lbl)) {
+              ds[lbl]["Consensus"] = "-";
+            }
+          });
+          // === END LIMIT ===
 
           setColumns(labels);
         }
@@ -1105,13 +1105,9 @@ export default function ForecastTable({
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const handleMenuClose = () => setAnchorEl(null);
 
-  const handleSwapClick = () => {
-    setIsSwapped((prev) => !prev);
-  };
+  const handleSwapClick = () => setIsSwapped((prev) => !prev);
 
   const handleConfirmationClose = () => {
     setConfirmationDialog({
@@ -1123,7 +1119,7 @@ export default function ForecastTable({
     });
     setEditingCell({ month: null, row: null });
     setEditValue("");
-       setCanEditConsensus(false);
+    setCanEditConsensus(false);
   };
 
   const handleConfirmationSubmit = async () => {
@@ -1217,9 +1213,7 @@ export default function ForecastTable({
       });
       return;
     }
-    const blob = new Blob(["\uFEFF" + csv], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const ts = new Date().toISOString().slice(0, 10);
     const mode = period === "W" ? "weekly" : "monthly";
@@ -1250,7 +1244,7 @@ export default function ForecastTable({
 
     const left = Math.max(0, Math.min(targetLeft, viewport.scrollWidth));
     viewport.scrollTo({ left, behavior: "smooth" });
-  }, [visibleColumns, period, containerRef, /* constants: */ STICKY_W, COL_W]);
+  }, [visibleColumns, period]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -1356,12 +1350,7 @@ export default function ForecastTable({
         </thead>
         <tbody>
           {allRows.map((label, idx) => (
-            <tr
-              key={label}
-              style={{
-                background: idx % 2 === 1 ? "#f7fafd" : "#fff",
-              }}
-            >
+            <tr key={label} style={{ background: idx % 2 === 1 ? "#f7fafd" : "#fff" }}>
               <td
                 style={{
                   position: "sticky",
@@ -1392,34 +1381,23 @@ export default function ForecastTable({
                 const isConsensusRow = label === "Consensus";
 
                 const isEditing =
-                  !isWeekly && editingCell.month === m && editingCell.row === label;
-                const locked = !isWeekly && isConsensusRow && isMonthLocked(m);
+                  period === "M" && editingCell.month === m && editingCell.row === label;
+                const locked = period === "M" && isConsensusRow && isMonthLocked(m);
                 const isAllowedMonth =
-                  !isWeekly &&
+                  period === "M" &&
                   firstFutureMonth &&
                   new Date(getMonthDate(m)).getTime() ===
                     new Date(getMonthDate(firstFutureMonth)).getTime();
 
                 const isEditableCell =
-                  !isWeekly && isConsensusRow && isAllowedMonth && !locked;
+                  period === "M" && isConsensusRow && isAllowedMonth && !locked;
                 const shouldHighlight =
-                  !isWeekly && canEditConsensus && isEditableCell;
+                  period === "M" && canEditConsensus && isEditableCell;
 
-                // Base display value
                 let displayValue =
                   value === undefined || value === null
                     ? "-"
                     : formatNumberByCountry(value, selectedCountry);
-
-                // Keep non-Consensus rows past-only in WEEKLY + Forecast OFF
-                if (isWeekly && !showForecast) {
-                  const nowStart = startOfISOWeek(new Date());
-                  const d = weekLabelToDate(m);
-                  const isFuture = d && d > nowStart;
-                  if (isFuture && !isConsensusRow) {
-                    displayValue = "-";
-                  }
-                }
 
                 return (
                   <td
@@ -1440,7 +1418,7 @@ export default function ForecastTable({
                         : undefined,
                       padding: "8px 12px",
                       paddingLeft:
-                        !isWeekly && isConsensusRow && isAllowedMonth && !locked
+                        period === "M" && isConsensusRow && isAllowedMonth && !locked
                           ? 36
                           : 12,
                       borderBottom: "1px solid #e0e7ef",
@@ -1449,14 +1427,14 @@ export default function ForecastTable({
                       fontWeight: 400,
                       color: "#64748B",
                       minWidth: 110,
-                      cursor: !isWeekly && isConsensusRow ? "pointer" : "default",
+                      cursor: period === "M" && isConsensusRow ? "pointer" : "default",
                       position: "relative",
                       zIndex: getCellZIndex(false, shouldHighlight, isEditing),
                       transition: "all 0.3s ease-in-out",
                     }}
                     onClick={(e) => {
                       if (
-                        !isWeekly &&
+                        period === "M" &&
                         isConsensusRow &&
                         canEditConsensus &&
                         !locked &&
@@ -1467,7 +1445,7 @@ export default function ForecastTable({
                           setEditingCell({ month: m, row: label });
                           setEditValue(value === "-" ? "" : value);
                         }
-                      } else if (!isWeekly && isConsensusRow && locked && value && value !== "-") {
+                      } else if (period === "M" && isConsensusRow && locked && value && value !== "-") {
                         setLockComment({
                           open: true,
                           anchor: e.currentTarget,
@@ -1476,63 +1454,12 @@ export default function ForecastTable({
                       }
                     }}
                   >
-                    {!isWeekly && label === "Consensus" && value !== "-" && (
+                    {period === "M" && label === "Consensus" && value !== "-" && (
                       <RedTriangleIcon />
                     )}
 
-                    {shouldHighlight && (
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: 6,
-                          left: 36,
-                          width: 12,
-                          height: 12,
-                          zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
-                          animation: "pulse 1s infinite",
-                          "@keyframes pulse": {
-                            "0%": { opacity: 1, transform: "scale(1)" },
-                            "50%": { opacity: 0.5, transform: "scale(1.3)" },
-                            "100%": { opacity: 1, transform: "scale(1)" },
-                          },
-                        }}
-                      />
-                    )}
-
-                    {!isWeekly && isConsensusRow && isAllowedMonth && !locked && !isEditing && (
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!validateSingleSKUSelection()) return;
-                          if (!canEditConsensus) setCanEditConsensus(true);
-                          setTimeout(() => {
-                            setEditingCell({ month: m, row: label });
-                            setEditValue(value === "-" ? "" : value);
-                          }, 0);
-                        }}
-                        sx={{
-                          position: "absolute",
-                          left: 8,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          width: 22,
-                          height: 22,
-                          zIndex: Z_INDEX_LAYERS.CELL_INDICATORS,
-                          bgcolor: "rgba(15,23,42,0.06)",
-                          borderRadius: "6px",
-                          p: 0,
-                          "&:hover": { bgcolor: "rgba(15,23,42,0.12)" },
-                        }}
-                        aria-label="Edit consensus"
-                        title="Edit consensus"
-                      >
-                        <i className="bi bi-pencil" style={{ fontSize: 14, lineHeight: 1 }} />
-                      </IconButton>
-                    )}
-
                     {label === "Consensus" ? (
-                      !isWeekly && locked ? (
+                      period === "M" && locked ? (
                         <span
                           style={{
                             color: "#aaa",
@@ -1546,7 +1473,7 @@ export default function ForecastTable({
                           <LockIcon style={{ fontSize: 14 }} />
                           {displayValue}
                         </span>
-                      ) : !isWeekly && isEditing && isAllowedMonth ? (
+                      ) : period === "M" && isEditing && isAllowedMonth ? (
                         <input
                           type="number"
                           value={editValue}
@@ -1564,9 +1491,7 @@ export default function ForecastTable({
                           disabled={updatingCell.month === m && updatingCell.row === label}
                           onChange={(e) => {
                             const newValue = e.target.value;
-                            if (newValue !== editValue) {
-                              setEditValue(newValue);
-                            }
+                            if (newValue !== editValue) setEditValue(newValue);
                           }}
                           onBlur={(e) => {
                             if (blurTimeoutRef.current) {
@@ -1630,15 +1555,42 @@ export default function ForecastTable({
                             }, 500);
                           }}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.target.blur();
-                            } else if (e.key === "Escape") {
-                              setEditingCell({ month: null, row: null });
-                            }
+                            if (e.key === "Enter") e.target.blur();
+                            else if (e.key === "Escape") setEditingCell({ month: null, row: null });
                           }}
                         />
-                      ) : !isWeekly && isAllowedMonth ? (
-                        <span style={{ color: "#1976d2", fontWeight: 500 }}>{displayValue}</span>
+                      ) : period === "M" && isAllowedMonth ? (
+                        <>
+                          {/* Pencil icon to edit monthly consensus */}
+                          <IconButton
+                            size="small"
+                            title="Edit consensus"
+                            aria-label="Edit consensus"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (validateSingleSKUSelection()) {
+                                setEditingCell({ month: m, row: label });
+                                setEditValue(value === "-" ? "" : value);
+                              }
+                            }}
+                            sx={{
+                              position: "absolute",
+                              left: 8,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              width: 22,
+                              height: 22,
+                              padding: 0,
+                              color: "#64748B",
+                              opacity: 0.85,
+                              "&:hover": { color: "#2563EB", opacity: 1, background: "transparent" },
+                            }}
+                          >
+                            <EditOutlinedIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+
+                          <span style={{ color: "#1976d2", fontWeight: 500 }}>{displayValue}</span>
+                        </>
                       ) : (
                         displayValue ?? "-"
                       )

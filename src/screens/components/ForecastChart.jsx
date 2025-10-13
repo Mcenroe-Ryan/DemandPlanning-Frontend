@@ -1,3 +1,1361 @@
+// import React, {
+//   useMemo,
+//   useState,
+//   useRef,
+//   useEffect,
+//   useCallback,
+// } from "react";
+// import Highcharts from "highcharts";
+// import HighchartsReact from "highcharts-react-official";
+
+// // --- Highcharts modules (init safely across ESM/CJS) ---
+// import exportingInit from "highcharts/modules/exporting";
+// import exportDataInit from "highcharts/modules/export-data";
+// import offlineExportingInit from "highcharts/modules/offline-exporting";
+
+// // initialize modules (handles both function export and { default } export)
+// const initHCModule = (mod) => {
+//   if (!mod) return;
+//   if (typeof mod === "function") mod(Highcharts);
+//   else if (mod.default && typeof mod.default === "function")
+//     mod.default(Highcharts);
+// };
+// initHCModule(exportingInit);
+// initHCModule(exportDataInit);
+// initHCModule(offlineExportingInit);
+
+// import {
+//   Box,
+//   Typography,
+//   IconButton,
+//   Paper,
+//   Stack,
+//   List,
+//   ListItem,
+//   ListItemIcon,
+//   ListItemText,
+//   RadioGroup,
+//   Radio,
+//   FormControlLabel,
+//   Checkbox,
+//   CircularProgress,
+//   Drawer,
+//   Divider,
+//   Switch,
+//   Popover, // ⟵ for click-to-open palette
+// } from "@mui/material";
+// import { styled } from "@mui/material/styles";
+// import GridViewIcon from "@mui/icons-material/GridView";
+// import DownloadIcon from "@mui/icons-material/Download";
+// import ShareIcon from "@mui/icons-material/Share";
+// import SettingsIcon from "@mui/icons-material/Settings";
+// import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+// import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+// import StarIcon from "@mui/icons-material/Star";
+// import CloseIcon from "@mui/icons-material/Close";
+// import RemoveIcon from "@mui/icons-material/Remove";
+
+// // ========== helpers ==========
+// const API_BASE_URL = "http://localhost:5000/api";
+
+// const addAlpha = (hex, alpha = 0.22) => {
+//   if (!hex) return `rgba(0,0,0,${alpha})`;
+//   const h = hex.replace("#", "");
+//   const r = h.length === 3 ? parseInt(h[0] + h[0], 16) : parseInt(h.slice(0, 2), 16);
+//   const g = h.length === 3 ? parseInt(h[1] + h[1], 16) : parseInt(h.slice(2, 4), 16);
+//   const b = h.length === 3 ? parseInt(h[2] + h[2], 16) : parseInt(h.slice(4, 6), 16);
+//   return `rgba(${r},${g},${b},${alpha})`;
+// };
+
+// const getMapeColor = (mapeValue) => {
+//   const v = Number(mapeValue);
+//   if (isNaN(v)) return "#6B7280";
+//   if (v <= 20) return "#22C55E";
+//   if (v <= 40) return "#F97316";
+//   return "#EF4444";
+// };
+
+// const AXIS_LABEL_STYLE = {
+//   fontFamily: "Poppins",
+//   fontWeight: 600,
+//   fontSize: 12,
+//   lineHeight: "100%",
+//   letterSpacing: 0.4,
+//   color: "#64748B",
+// };
+// const AXIS_TITLE_STYLE = { ...AXIS_LABEL_STYLE };
+
+// // ========== Legend keys ==========
+// const LEGEND_CONFIG = [
+//   { key: "actual", label: "Actual", seriesIndex: 0 },
+//   { key: "baseline", label: "Baseline", seriesIndex: 1 },
+//   { key: "ml", label: "ML", seriesIndex: 2 },
+//   { key: "consensus", label: "Consensus", seriesIndex: 3 },
+//   { key: "baseline_forecast", label: "Baseline Forecast", dash: "Dash", seriesIndex: 4 },
+//   { key: "ml_forecast", label: "ML Forecast", dash: "Dash", seriesIndex: 5 },
+//   { key: "consensus_forecast", label: "Consensus Plan", dash: "Dash", seriesIndex: 6 },
+//   { key: "holidays", label: "Holidays", isOverlay: true },
+//   { key: "promotions", label: "Promotions", isOverlay: true },
+// ];
+
+// // ========== Styled checkbox for the left menu ==========
+// const BlueSquare = styled("span")({
+//   width: 18,
+//   height: 18,
+//   borderRadius: 3,
+//   border: "2px solid #2196f3",
+//   background: "#fff",
+// });
+// const BlueChecked = styled(BlueSquare)({
+//   background: "#2196f3",
+//   position: "relative",
+//   "&:before": {
+//     content: '""',
+//     position: "absolute",
+//     left: 4,
+//     top: 1,
+//     width: 7,
+//     height: 12,
+//     border: "solid #fff",
+//     borderWidth: "0 2.5px 2.5px 0",
+//     transform: "rotate(45deg)",
+//   },
+// });
+// const BlueCheckbox = (props) => (
+//   <Checkbox
+//     disableRipple
+//     color="default"
+//     checkedIcon={<BlueChecked />}
+//     icon={<BlueSquare />}
+//     sx={{ p: 0.5, "&:hover": { bgcolor: "transparent" } }}
+//     {...props}
+//   />
+// );
+
+// /* =========================
+//    COLOR PALETTE (HSV)
+//    - Big SV square + vertical Hue bar
+//    - Returns hex via onChange
+// ========================= */
+
+// // utils: HEX ↔ RGB ↔ HSV
+// function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+// function hexToRgb(hex) {
+//   if (!hex) return { r: 255, g: 0, b: 0 };
+//   const h = hex.replace("#", "");
+//   const bigint = parseInt(h.length === 3 ? h.split("").map(ch => ch + ch).join("") : h, 16);
+//   return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+// }
+// function rgbToHex({ r, g, b }) {
+//   const toHex = (v) => v.toString(16).padStart(2, "0");
+//   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+// }
+// function rgbToHsv({ r, g, b }) {
+//   r /= 255; g /= 255; b /= 255;
+//   const max = Math.max(r, g, b), min = Math.min(r, g, b);
+//   const d = max - min;
+//   let h = 0;
+//   if (d !== 0) {
+//     switch (max) {
+//       case r: h = ((g - b) / d) % 6; break;
+//       case g: h = (b - r) / d + 2; break;
+//       case b: h = (r - g) / d + 4; break;
+//       default: break;
+//     }
+//     h *= 60;
+//     if (h < 0) h += 360;
+//   }
+//   const s = max === 0 ? 0 : d / max;
+//   const v = max;
+//   return { h, s, v };
+// }
+// function hsvToRgb({ h, s, v }) {
+//   const c = v * s;
+//   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+//   const m = v - c;
+//   let rp = 0, gp = 0, bp = 0;
+//   if (0 <= h && h < 60) [rp, gp, bp] = [c, x, 0];
+//   else if (60 <= h && h < 120) [rp, gp, bp] = [x, c, 0];
+//   else if (120 <= h && h < 180) [rp, gp, bp] = [0, c, x];
+//   else if (180 <= h && h < 240) [rp, gp, bp] = [0, x, c];
+//   else if (240 <= h && h < 300) [rp, gp, bp] = [x, 0, c];
+//   else [rp, gp, bp] = [c, 0, x];
+//   return {
+//     r: Math.round((rp + m) * 255),
+//     g: Math.round((gp + m) * 255),
+//     b: Math.round((bp + m) * 255),
+//   };
+// }
+
+// function ColorPalette({ value = "#ff0000", onChange, width = 260, height = 180 }) {
+//   const start = rgbToHsv(hexToRgb(value));
+//   const [hsv, setHSV] = useState(start);
+//   const svRef = useRef(null);
+//   const hueRef = useRef(null);
+
+//   // keep internal state in sync when value prop changes externally
+//   useEffect(() => {
+//     setHSV(rgbToHsv(hexToRgb(value)));
+//   }, [value]);
+
+//   const commit = useCallback((nextHSV) => {
+//     const hex = rgbToHex(hsvToRgb(nextHSV));
+//     onChange?.(hex);
+//   }, [onChange]);
+
+//   // SV square handlers
+//   const handleSV = useCallback((e) => {
+//     const rect = svRef.current.getBoundingClientRect();
+//     const x = clamp(e.clientX - rect.left, 0, rect.width);
+//     const y = clamp(e.clientY - rect.top, 0, rect.height);
+//     const s = x / rect.width;
+//     const v = 1 - (y / rect.height);
+//     const next = { ...hsv, s, v };
+//     setHSV(next);
+//     commit(next);
+//   }, [hsv, commit]);
+
+//   const startSV = (e) => {
+//     handleSV(e);
+//     const move = (ev) => handleSV(ev);
+//     const up = () => {
+//       window.removeEventListener("mousemove", move);
+//       window.removeEventListener("mouseup", up);
+//     };
+//     window.addEventListener("mousemove", move);
+//     window.addEventListener("mouseup", up);
+//   };
+
+//   // Hue bar handlers
+//   const handleHue = useCallback((e) => {
+//     const rect = hueRef.current.getBoundingClientRect();
+//     const y = clamp(e.clientY - rect.top, 0, rect.height);
+//     const h = clamp(360 * (y / rect.height), 0, 360);
+//     const next = { ...hsv, h };
+//     setHSV(next);
+//     commit(next);
+//   }, [hsv, commit]);
+
+//   const startHue = (e) => {
+//     handleHue(e);
+//     const move = (ev) => handleHue(ev);
+//     const up = () => {
+//       window.removeEventListener("mousemove", move);
+//       window.removeEventListener("mouseup", up);
+//     };
+//     window.addEventListener("mousemove", move);
+//     window.addEventListener("mouseup", up);
+//   };
+
+//   const hueColor = rgbToHex(hsvToRgb({ h: hsv.h, s: 1, v: 1 }));
+//   const svPointer = {
+//     left: `${hsv.s * 100}%`,
+//     top: `${(1 - hsv.v) * 100}%`,
+//   };
+//   const huePointerTop = `${(hsv.h / 360) * 100}%`;
+
+//   return (
+//     <Box sx={{ display: "flex", gap: 1.25 }}>
+//       {/* SV square */}
+//       <Box
+//         ref={svRef}
+//         onMouseDown={startSV}
+//         sx={{
+//           position: "relative",
+//           width,
+//           height,
+//           borderRadius: 1,
+//           overflow: "hidden",
+//           cursor: "crosshair",
+//           boxShadow: 1,
+//           background: `linear-gradient(to top, #000, rgba(0,0,0,0)),
+//                        linear-gradient(to right, #fff, ${hueColor})`,
+//         }}
+//       >
+//         <Box
+//           sx={{
+//             position: "absolute",
+//             width: 14, height: 14,
+//             borderRadius: "50%",
+//             border: "2px solid #fff",
+//             boxShadow: "0 0 0 1px rgba(0,0,0,0.4)",
+//             transform: "translate(-7px,-7px)",
+//             left: svPointer.left, top: svPointer.top,
+//             pointerEvents: "none",
+//           }}
+//         />
+//       </Box>
+
+//       {/* Hue bar */}
+//       <Box
+//         ref={hueRef}
+//         onMouseDown={startHue}
+//         sx={{
+//           width: 16,
+//           height,
+//           borderRadius: 1,
+//           position: "relative",
+//           cursor: "ns-resize",
+//           background:
+//             "linear-gradient(to bottom, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
+//           boxShadow: 1,
+//         }}
+//       >
+//         <Box
+//           sx={{
+//             position: "absolute",
+//             left: -4,
+//             top: huePointerTop,
+//             width: 24,
+//             height: 2,
+//             bgcolor: "#fff",
+//             boxShadow: "0 0 0 1px rgba(0,0,0,0.35)",
+//             transform: "translateY(-1px)",
+//             pointerEvents: "none",
+//           }}
+//         />
+//       </Box>
+//     </Box>
+//   );
+// }
+
+// // Swatch that opens a Popover with ColorPalette
+// function ColorPopoverPicker({ value, onChange, swatchSize = 22 }) {
+//   const [anchorEl, setAnchorEl] = useState(null);
+//   const open = Boolean(anchorEl);
+//   const handleOpen = (e) => setAnchorEl(e.currentTarget);
+//   const handleClose = () => setAnchorEl(null);
+
+//   return (
+//     <>
+//       <Box
+//         onClick={handleOpen}
+//         sx={{
+//           cursor: "pointer",
+//           width: swatchSize,
+//           height: swatchSize,
+//           borderRadius: 1,
+//           border: "1px solid rgba(0,0,0,0.15)",
+//           bgcolor: value,
+//           boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.04)",
+//         }}
+//         title={value}
+//       />
+//       {/* <Popover
+//         open={open}
+//         anchorEl={anchorEl}
+//         onClose={handleClose}
+//         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+//         transformOrigin={{ vertical: "top", horizontal: "left" }}
+//         PaperProps={{ sx: { p: 1.25, borderRadius: 2 } }}
+//       > */}
+//       <Popover
+//   open={open}
+//   anchorEl={anchorEl}
+//   onClose={handleClose}
+//   // Open to the RIGHT of the swatch
+//   anchorOrigin={{ vertical: "center", horizontal: "right" }}
+//   transformOrigin={{ vertical: "center", horizontal: "left" }}
+//   marginThreshold={8}
+//   PaperProps={{ sx: { p: 1.25, borderRadius: 2 } }}
+// >
+
+//         <Typography sx={{ fontWeight: 600, mb: 1, fontSize: 14 }}>Custom</Typography>
+//         <ColorPalette value={value} onChange={onChange} />
+//       </Popover>
+//     </>
+//   );
+// }
+
+// /* =========================
+//    Inline Graph Configuration (Drawer content)
+// ========================= */
+// const dataSourceOptions = [
+//   // { id: "spikes", label: "Spikes", defaultColor: "#22C55E" },
+//   // { id: "dips", label: "Dips", defaultColor: "#F97316" },
+//   // { id: "holiday", label: "Holiday", defaultColor: "#64748B" },
+//   // { id: "potential-stockout", label: "Potential Stockout Period", defaultColor: "#1D4ED8" },
+// ];
+
+// function GrapConfig({
+//   onClose,
+//   showGridLines,
+//   onToggleGridLines,
+//   seriesColors,
+//   onChangeColor,
+//   selectedDataSources,
+//   onToggleDataSource,
+// }) {
+//   return (
+//     <Box sx={{ height: "100%", bgcolor: "background.paper", p: 1.25, width: "100%" }}>
+//       <Stack spacing={1.875}>
+//         {/* Header */}
+//         <Stack direction="row" alignItems="center" justifyContent="space-between">
+//           <Stack direction="row" alignItems="center" spacing={0.625}>
+//             <SettingsIcon sx={{ width: 16, height: 16, color: "#626262" }} />
+//             <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+//               Graph Configuration
+//             </Typography>
+//           </Stack>
+//           <IconButton size="small" onClick={onClose} sx={{ p: 0.625 }}>
+//             <CloseIcon sx={{ width: 16, height: 16 }} />
+//           </IconButton>
+//         </Stack>
+
+//         <Divider />
+
+//         {/* Grid lines */}
+//         <Stack spacing={0.625}>
+//           <Stack direction="row" alignItems="center" spacing={1.25} sx={{ pt: 0.625, pb: 1.25 }}>
+//             <Switch
+//               checked={!!showGridLines}
+//               onChange={(e) => onToggleGridLines?.(e.target.checked)}
+//               sx={{
+//                 width: 44, height: 24, p: 0,
+//                 "& .MuiSwitch-switchBase": {
+//                   p: 0, m: 0.25, transitionDuration: "300ms",
+//                   "&.Mui-checked": {
+//                     transform: "translateX(20px)",
+//                     color: "#fff",
+//                     "& + .MuiSwitch-track": { backgroundColor: "#3B82F6", opacity: 1, border: 0 },
+//                   },
+//                 },
+//                 "& .MuiSwitch-thumb": { width: 20, height: 20 },
+//                 "& .MuiSwitch-track": { borderRadius: 12, backgroundColor: "#E5E7EB", opacity: 1 },
+//               }}
+//             />
+//             <Typography sx={{ fontWeight: 500, fontSize: 14, color: "#475569" }}>
+//               Show Grid Lines
+//             </Typography>
+//           </Stack>
+
+//           <Divider />
+
+//           {/* Series color palette */}
+//           <Stack spacing={1}>
+//             <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+//               Series Colors
+//             </Typography>
+
+//             {[
+//               { k: "actual", label: "Actual" },
+//               { k: "baseline", label: "Baseline" },
+//               { k: "ml", label: "ML" },
+//               { k: "consensus", label: "Consensus" },
+//               { k: "baseline_forecast", label: "Baseline Forecast" },
+//               { k: "ml_forecast", label: "ML Forecast" },
+//               { k: "consensus_forecast", label: "Consensus Plan" },
+//             ].map(({ k, label }) => (
+//               <Stack key={k} direction="row" alignItems="center" spacing={1.5} sx={{ py: 0.5 }}>
+//                 <Box sx={{ width: 12, height: 12, bgcolor: seriesColors[k], borderRadius: 1 }} />
+//                 <Typography sx={{ minWidth: 150, fontSize: 14, color: "#334155" }}>{label}</Typography>
+//                 <ColorPopoverPicker value={seriesColors[k]} onChange={(c) => onChangeColor?.(k, c)} />
+//               </Stack>
+//             ))}
+//           </Stack>
+
+//           <Divider />
+
+//           {/* Overlay colors */}
+//           <Stack spacing={1}>
+//             <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+//               Overlay Colors
+//             </Typography>
+
+//             {[
+//               { k: "holidays", label: "Holidays" },
+//               { k: "promotions", label: "Promotions" },
+//             ].map(({ k, label }) => (
+//               <Stack key={k} direction="row" alignItems="center" spacing={1.5} sx={{ py: 0.5 }}>
+//                 <Box sx={{ width: 12, height: 12, bgcolor: seriesColors[k], borderRadius: 1 }} />
+//                 <Typography sx={{ minWidth: 150, fontSize: 14, color: "#334155" }}>{label}</Typography>
+//                 <ColorPopoverPicker value={seriesColors[k]} onChange={(c) => onChangeColor?.(k, c)} />
+//               </Stack>
+//             ))}
+//           </Stack>
+
+//           <Divider />
+
+//           {/* Data sources (as-is) */}
+//           <Stack spacing={0.625} sx={{ py: 0.625 }}>
+//             {/* <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+//               Select Data Source
+//             </Typography> */}
+
+//             {dataSourceOptions.map((option) => (
+//               <Stack
+//                 key={option.id}
+//                 direction="row"
+//                 alignItems="center"
+//                 justifyContent="space-between"
+//                 sx={{ py: 0.625, bgcolor: "background.paper", borderRadius: 1 }}
+//               >
+//                 <Checkbox
+//                   checked={!!selectedDataSources?.[option.id]}
+//                   onChange={() => onToggleDataSource?.(option.id)}
+//                   sx={{ p: 0.625, "& .MuiSvgIcon-root": { width: 16, height: 16 } }}
+//                 />
+//                 <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+//                   <RemoveIcon sx={{ width: 16, height: 16, color: seriesColors[option.id] || option.defaultColor }} />
+//                   <Typography sx={{ flex: 1, fontWeight: 400, fontSize: 14, color: "#334155" }}>
+//                     {option.label}
+//                   </Typography>
+//                 </Stack>
+//                 <Box
+//                   sx={{
+//                     width: 16,
+//                     height: 16,
+//                     bgcolor: seriesColors[option.id] || option.defaultColor,
+//                     borderRadius: 0.5,
+//                   }}
+//                 />
+//               </Stack>
+//             ))}
+//           </Stack>
+//         </Stack>
+//       </Stack>
+//     </Box>
+//   );
+// }
+
+// /* =========================
+//    Tree menu bits
+// ========================= */
+// const TreeMenuItem = ({ item, disabled }) => (
+//   <ListItem
+//     sx={{
+//       px: 2,
+//       py: 0.25,
+//       borderRadius: 1,
+//       "&:hover": disabled ? {} : { bgcolor: "rgba(0,0,0,0.04)" },
+//       minHeight: 28,
+//       opacity: disabled ? 0.5 : 1,
+//       pointerEvents: disabled ? "none" : "auto",
+//     }}
+//   >
+//     <ListItemIcon sx={{ minWidth: 28 }}>
+//       <BlueCheckbox checked={item.checked} disabled />
+//     </ListItemIcon>
+//     {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main", mr: 0.5 }} />}
+//     <ListItemText
+//       primary={<Typography variant="body2" color="text.secondary">{item.label}</Typography>}
+//     />
+//   </ListItem>
+// );
+
+// function TreeMenuSection({ section, modelName, setModelName }) {
+//   const [open, setOpen] = useState(section.id === 1);
+//   const toggle = () => !section.disabled && setOpen((v) => !v);
+
+//   return (
+//     <>
+//       <Box
+//         onClick={toggle}
+//         sx={{
+//           px: 1, py: 1, mb: 0.5, display: "flex", alignItems: "center", gap: 1,
+//           borderRadius: 1, bgcolor: section.disabled ? "grey.100" : "primary.lighter",
+//           cursor: section.disabled ? "not-allowed" : "pointer", opacity: section.disabled ? 0.6 : 1,
+//         }}
+//       >
+//         {section.id === 1 && section.disabled && <CircularProgress size={16} sx={{ mr: 1 }} />}
+//         <ExpandMoreIcon
+//           sx={{
+//             transform: open ? "rotate(0deg)" : "rotate(-90deg)",
+//             transition: "transform 0.2s",
+//             color: section.disabled ? "grey.500" : "primary.main",
+//           }}
+//         />
+//         <DescriptionOutlined sx={{ color: section.disabled ? "grey.500" : "primary.main" }} />
+//         <Typography variant="subtitle2" fontWeight={600} sx={{ flexGrow: 1, color: section.disabled ? "grey.600" : "primary.main" }}>
+//           {section.title}
+//           {section.id === 1 && section.disabled && " (Loading…)"}
+//         </Typography>
+//       </Box>
+
+//       {open && (
+//         <Box sx={{ pl: 3, pointerEvents: section.disabled ? "none" : "auto", opacity: section.disabled ? 0.5 : 1 }}>
+//           {section.type === "radio" ? (
+//             <RadioGroup value={modelName} onChange={(e) => setModelName(e.target.value)} sx={{ display: "flex", gap: 0.5 }}>
+//               {section.items.length === 0 ? (
+//                 <Typography variant="body2" color="text.secondary">No models available</Typography>
+//               ) : (
+//                 section.items.map((item) => (
+//                   <FormControlLabel
+//                     key={item.id}
+//                     value={item.value}
+//                     control={<Radio size="small" />}
+//                     label={
+//                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+//                         {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main" }} />}
+//                         <Typography variant="body2">{item.label}</Typography>
+//                       </Box>
+//                     }
+//                     sx={{ mr: 0 }}
+//                   />
+//                 ))
+//               )}
+//             </RadioGroup>
+//           ) : (
+//             <List disablePadding>
+//               {section.items.map((item) => (
+//                 <TreeMenuItem key={item.id} item={item} disabled={section.disabled} />
+//               ))}
+//             </List>
+//           )}
+//         </Box>
+//       )}
+//     </>
+//   );
+// }
+
+// function TreeMenu({ open, onClose, modelName, setModelName, treeData, anchorEl }) {
+//   const [pos, setPos] = useState({ top: 80, left: 40 });
+
+//   useEffect(() => {
+//     if (!open || !anchorEl) return;
+//     const rect = anchorEl.getBoundingClientRect();
+//     const parent = anchorEl.offsetParent?.getBoundingClientRect();
+//     const width = 260;
+//     const height = 360;
+//     if (!parent) return;
+
+//     let top = rect.bottom - parent.top + 8;
+//     let left = rect.left - parent.left;
+//     if (top + height > parent.height) top = rect.top - parent.top - height - 8;
+//     if (left + width > parent.width) left = parent.width - width - 16;
+//     if (left < 16) left = 16;
+//     setPos({ top, left });
+//   }, [open, anchorEl]);
+
+//   useEffect(() => {
+//     if (!open) return;
+//     const handler = (e) => !e.target.closest(".tree-menu-float") && onClose();
+//     window.addEventListener("mousedown", handler);
+//     return () => window.removeEventListener("mousedown", handler);
+//   }, [open, onClose]);
+
+//   if (!open) return null;
+
+//   return (
+//     <Paper
+//       className="tree-menu-float"
+//       elevation={4}
+//       sx={{ position: "absolute", top: pos.top, left: pos.left, width: 260, maxHeight: 360, overflowY: "auto", p: 1, zIndex: 2000 }}
+//     >
+//       <Stack spacing={0.5}>
+//         {treeData.map((sec) => (
+//           <TreeMenuSection key={sec.id} section={sec} modelName={modelName} setModelName={setModelName} />
+//         ))}
+//       </Stack>
+//     </Paper>
+//   );
+// }
+
+// /* =========================
+//    Legend (uses current colors)
+// ========================= */
+// const CustomLegend = ({ activeKeys, onToggle, showForecast, disableForecastLegend, getColor }) => (
+//   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+//     {LEGEND_CONFIG.filter(({ key }) => {
+//       if (!showForecast) {
+//         return !["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
+//       }
+//       return true;
+//     }).map(({ key, label }) => {
+//       const color = getColor(key);
+//       const isForecast = ["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
+//       const disabled = isForecast && disableForecastLegend;
+
+//       return (
+//         <Box
+//           key={key}
+//           onClick={(e) => {
+//             if (disabled) return;
+//             e.preventDefault();
+//             e.stopPropagation();
+//             onToggle(key);
+//           }}
+//           sx={{
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//             height: 25,
+//             minWidth: 60,
+//             px: 1.1,
+//             py: 0.3,
+//             cursor: disabled ? "not-allowed" : "pointer",
+//             opacity: disabled ? 0.4 : activeKeys.includes(key) ? 1 : 0.5,
+//             borderRadius: 1.2,
+//             border: "1px solid",
+//             borderColor: "#CBD5E1",
+//             userSelect: "none",
+//             pointerEvents: disabled ? "none" : "auto",
+//             "&:hover": { opacity: disabled ? 0.4 : 0.8 },
+//           }}
+//           aria-disabled={disabled}
+//           title={disabled ? "No forecast data available" : undefined}
+//         >
+//           {isForecast ? (
+//             <Box sx={{ width: 16, height: 12, mr: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
+//               <Box
+//                 sx={{
+//                   width: "100%",
+//                   height: "2px",
+//                   background: `repeating-linear-gradient(
+//                     to right,
+//                     ${color} 0px,
+//                     ${color} 4px,
+//                     transparent 4px,
+//                     transparent 6px
+//                   )`,
+//                 }}
+//               />
+//             </Box>
+//           ) : (
+//             <Box sx={{ width: 12, height: 12, bgcolor: color, borderRadius: 1, mr: 1 }} />
+//           )}
+//           <Typography sx={{ fontFamily: "Poppins", fontWeight: 400, fontSize: 14, color: "#475569" }}>
+//             {label}
+//           </Typography>
+//         </Box>
+//       );
+//     })}
+//   </Box>
+// );
+
+// // ===== ISO week helpers =====
+// const WEEK_LABEL_RE = /^(\d{4})-W(\d{2})$/;
+// function getISOWeekParts(date) {
+//   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+//   const day = d.getUTCDay() || 7;
+//   d.setUTCDate(d.getUTCDate() + 4 - day);
+//   const year = d.getUTCFullYear();
+//   const yearStart = new Date(Date.UTC(year, 0, 1));
+//   const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+//   return { year, week };
+// }
+// function isoWeekLabelFor(date) {
+//   const { year, week } = getISOWeekParts(date);
+//   return `${year}-W${String(week).padStart(2, "0")}`;
+// }
+// function parseISOWeekLabel(label) {
+//   const m = WEEK_LABEL_RE.exec(label);
+//   if (!m) return null;
+//   const year = Number(m[1]);
+//   const week = Number(m[2]);
+//   const jan4 = new Date(Date.UTC(year, 0, 4));
+//   const jan4Day = jan4.getUTCDay() || 7;
+//   const mondayOfWeek1 = new Date(jan4);
+//   mondayOfWeek1.setUTCDate(jan4.getUTCDate() - (jan4Day - 1));
+//   const target = new Date(mondayOfWeek1);
+//   target.setUTCDate(mondayOfWeek1.getUTCDate() + (week - 1) * 7);
+//   return target;
+// }
+
+// /* =========================
+//    Main component
+// ========================= */
+// export default function ForecastChart({
+//   months,
+//   data,
+//   modelName,
+//   setModelName,
+//   models,
+//   loadingModels,
+//   avgMapeData,
+//   countryName,
+//   showForecast,
+//   setErrorSnackbar,
+//   isWeekly: isWeeklyProp,
+//   selectedRangeActive,
+// }) {
+//   const chartRef = useRef();
+//   const gridIconRef = useRef();
+//   const [treeOpen, setTreeOpen] = useState(false);
+//   const [cfgOpen, setCfgOpen] = useState(false);
+
+//   const [overlays, setOverlays] = useState({ holidays: false, promotions: false });
+//   const [hiddenSeries, setHiddenSeries] = useState({});
+//   const [events, setEvents] = useState([]);
+
+//   // NEW: grid & color state
+//   const [showGridLines, setShowGridLines] = useState(true);
+//   const [selectedDataSources, setSelectedDataSources] = useState({});
+//   const [seriesColors, setSeriesColors] = useState({
+//     actual: "#DC2626",
+//     baseline: "#60A5FA",
+//     ml: "#EAB308",
+//     consensus: "#0E7490",
+//     baseline_forecast: "#60A5FA",
+//     ml_forecast: "#A16207",
+//     consensus_forecast: "#0E7490",
+//     holidays: "#22C55E",
+//     promotions: "#F97316",
+//     spikes: "#22C55E",
+//     dips: "#F97316",
+//     "potential-stockout": "#1D4ED8",
+//   });
+
+//   const handleColorChange = useCallback((key, color) => {
+//     setSeriesColors((prev) => ({ ...prev, [key]: color }));
+//   }, []);
+
+//   // Wire grid lines to Highcharts
+//   useEffect(() => {
+//     const ch = chartRef.current?.chart;
+//     if (!ch) return;
+//     const width = showGridLines ? 1 : 0;
+//     ch.xAxis[0].update({ gridLineWidth: width }, false);
+//     ch.yAxis[0].update({ gridLineWidth: width }, false);
+//     ch.redraw();
+//   }, [showGridLines]);
+
+//   const handleDataSourceToggle = useCallback((id) => {
+//     setSelectedDataSources((prev) => {
+//       const next = { ...prev, [id]: !prev[id] };
+//       // example wiring: holiday/promo ↔ overlays
+//       if (id === "holiday") setOverlays((o) => ({ ...o, holidays: !!next[id] }));
+//       if (id === "dips") setOverlays((o) => ({ ...o, promotions: !!next[id] }));
+//       return next;
+//     });
+//   }, []);
+
+//   const autoWeekly =
+//     Array.isArray(months) &&
+//     months.length > 0 &&
+//     months.every((m) => WEEK_LABEL_RE.test(String(m)));
+//   const isWeekly = isWeeklyProp ?? autoWeekly;
+
+//   const treeData = useMemo(() => {
+//     const sorted = [...(models || [])].sort((a, b) => {
+//       if (a.model_name === "XGBoost") return -1;
+//       if (b.model_name === "XGBoost") return 1;
+//       return a.model_name.localeCompare(b.model_name);
+//     });
+//     return [
+//       {
+//         id: 1,
+//         title: "Model",
+//         disabled: loadingModels,
+//         type: "radio",
+//         items: sorted.map((m) => ({
+//           id: m.model_id,
+//           label: m.model_name,
+//           value: m.model_name,
+//           starred: m.model_name === "XGBoost",
+//         })),
+//       },
+//     ];
+//   }, [models, loadingModels]);
+
+//   // Fetch /events (resilient)
+//   useEffect(() => {
+//     let alive = true;
+//     const controller = new AbortController();
+
+//     const fetchEvents = async () => {
+//       const url = `${API_BASE_URL}/events?_=${Date.now()}`;
+//       const opts = { method: "GET", signal: controller.signal, cache: "no-store", headers: { Accept: "application/json" } };
+//       const withTimeout = (p, ms = 8000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+
+//       const tryOnce = async () => {
+//         const res = await withTimeout(fetch(url, opts));
+//         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+//         const text = await res.text();
+//         if (!text) return [];
+//         const ct = res.headers.get("content-type") || "";
+//         if (!ct.includes("application/json")) {
+//           try { return JSON.parse(text); } catch { throw new Error("non-json body"); }
+//         }
+//         return JSON.parse(text);
+//       };
+
+//       try {
+//         let data = await tryOnce();
+//         if (!Array.isArray(data)) data = [];
+//         if (alive) setEvents(data);
+//       } catch {
+//         try {
+//           await new Promise((r) => setTimeout(r, 500));
+//           let data = await tryOnce();
+//           if (!Array.isArray(data)) data = [];
+//           if (alive) setEvents(data);
+//         } catch {
+//           if (alive) setEvents([]);
+//         }
+//       }
+//     };
+
+//     fetchEvents();
+//     return () => { alive = false; controller.abort(); };
+//   }, []);
+
+//   const filteredEvents = useMemo(() => {
+//     if (!events.length) return [];
+//     if (!countryName) return events;
+//     const countries = Array.isArray(countryName) ? countryName : [countryName];
+//     return events.filter(
+//       (ev) =>
+//         ev.country_name &&
+//         countries.some((c) =>
+//           ev.country_name.toLowerCase().includes(c.toLowerCase())
+//         )
+//     );
+//   }, [events, countryName]);
+
+//   const createPlotBands = useCallback(
+//     (evts, monthsArr, overlayState) => {
+//       if (!Array.isArray(evts) || !evts.length) return [];
+//       const wantHoliday = !!overlayState.holidays;
+//       const wantPromo = !!overlayState.promotions;
+//       const isHoliday = (ev) => (ev.event_type || "").toLowerCase() === "holiday";
+//       const includeEvent = (ev) => (isHoliday(ev) ? wantHoliday : wantPromo) && (ev.start_date || ev.end_date);
+
+//       // helper for weekly
+//       const isoWeekday = (date) => {
+//         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+//         const wd = d.getUTCDay(); return wd === 0 ? 7 : wd;
+//       };
+//       const weekFrac = (date) => (isoWeekday(date) - 1) / 7;
+
+//       if (isWeekly) {
+//         return evts.reduce((acc, ev) => {
+//           if (!includeEvent(ev)) return acc;
+//           const s = new Date(ev.start_date);
+//           const e = new Date(ev.end_date || ev.start_date);
+//           const sLbl = isoWeekLabelFor(s);
+//           const eLbl = isoWeekLabelFor(e);
+//           const sIdx = monthsArr.indexOf(sLbl);
+//           const eIdx = monthsArr.indexOf(eLbl);
+//           if (sIdx === -1) return acc;
+
+//           const fromPos = sIdx + weekFrac(s) - 0.5;
+//           let toPos;
+//           if (eIdx === -1) toPos = sIdx + 0.5;
+//           else if (eIdx === sIdx) toPos = sIdx + Math.max(weekFrac(e), weekFrac(s)) - 0.5;
+//           else toPos = eIdx + weekFrac(e) - 0.5;
+
+//           const minWidth = 0.05;
+//           const width = Math.max(toPos - fromPos, minWidth);
+//           const color = isHoliday(ev) ? addAlpha(seriesColors.holidays, 0.22) : addAlpha(seriesColors.promotions, 0.22);
+
+//           acc.push({ id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sLbl}_${eLbl}`}`, from: fromPos, to: fromPos + width, color });
+//           return acc;
+//         }, []);
+//       }
+
+//       // monthly
+//       return evts.reduce((acc, ev) => {
+//         if (!includeEvent(ev)) return acc;
+//         const s = new Date(ev.start_date);
+//         const e = new Date(ev.end_date || ev.start_date);
+//         const sm = s.toLocaleString("default", { month: "short", year: "2-digit" });
+//         const em = e.toLocaleString("default", { month: "short", year: "2-digit" });
+//         const sIdx = monthsArr.indexOf(sm);
+//         const eIdx = monthsArr.indexOf(em);
+//         if (sIdx === -1) return acc;
+
+//         const dayFrac = (date) => {
+//           const year = date.getFullYear(); const month = date.getMonth(); const day = date.getDate();
+//           const max = new Date(year, month + 1, 0).getDate();
+//           return (day - 1) / max;
+//         };
+//         const minWidth = 0.05;
+//         const fromPos = sIdx + dayFrac(s) - 0.5;
+//         const toPos = eIdx === -1 ? sIdx + 0.5 : eIdx === sIdx ? sIdx + dayFrac(e) - 0.5 : eIdx + dayFrac(e) - 0.5;
+//         const width = Math.max(toPos - fromPos, minWidth);
+//         const color = (ev.event_type || "").toLowerCase() === "holiday"
+//           ? addAlpha(seriesColors.holidays, 0.22)
+//           : addAlpha(seriesColors.promotions, 0.22);
+
+//         acc.push({ id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sm}_${em}`}`, from: fromPos, to: fromPos + width, color });
+//         return acc;
+//       }, []);
+//     },
+//     [isWeekly, seriesColors.holidays, seriesColors.promotions]
+//   );
+
+//   const today = new Date();
+//   const monthlyTodayLabel = today.toLocaleString("default", { month: "short", year: "2-digit" });
+//   let safeTodayIdx = -1;
+//   if (isWeekly) {
+//     const wkLbl = isoWeekLabelFor(today);
+//     const exact = months?.indexOf(wkLbl);
+//     if (exact !== -1) safeTodayIdx = exact;
+//     else {
+//       const mapped = (months || []).map((l) => parseISOWeekLabel(String(l)));
+//       safeTodayIdx = mapped.reduce((acc, d, i) => (d && d.getTime() <= today.getTime() ? i : acc), -1);
+//       if (safeTodayIdx === -1 && (months || []).length) safeTodayIdx = -1;
+//     }
+//   } else {
+//     const idx = months?.indexOf(monthlyTodayLabel);
+//     safeTodayIdx = idx === -1 ? ((months || []).length ? (months.length - 1) : -1) : idx;
+//   }
+
+//   const seriesData = useMemo(() => {
+//     if (!months || !months.length) {
+//       return { actual: [], baseline: [], baseline_forecast: [], ml: [], ml_forecast: [], consensus: [], consensus_forecast: [] };
+//     }
+//     const getRow = (row) => months.map((m) => {
+//       const v = data?.[m]?.[row];
+//       return v == null || v === "-" ? null : +v;
+//     });
+
+//     const baselineFull = getRow("Baseline Forecast");
+//     const mlFull = getRow("ML Forecast");
+//     const consFull = getRow("Consensus");
+//     const actualFull = getRow("Actual");
+
+//     const histMask = (arr) => arr.map((v, i) => (i <= safeTodayIdx ? v : null));
+//     const futMask = (arr) => arr.map((v, i) => (i > safeTodayIdx ? v : null));
+
+//     const join = (histArr, futArr) => {
+//       const out = [...futArr];
+//       let bridgePos = -1;
+//       for (let i = 1; i < out.length; i++) {
+//         if (out[i] != null && out[i - 1] == null) { bridgePos = i - 1; break; }
+//       }
+//       if (bridgePos >= 0) {
+//         out[bridgePos] = histArr?.[bridgePos] ?? null;
+//         if (Array.isArray(histArr)) histArr[bridgePos] = null;
+//       }
+//       return out;
+//     };
+
+//     const firstFutureOnly = (arr) => {
+//       let found = false;
+//       return arr.map((v, i) => {
+//         if (i > safeTodayIdx && v != null && !found) { found = true; return v; }
+//         return null;
+//       });
+//     };
+
+//     let actual = actualFull;
+//     let baselineHist = histMask(baselineFull);
+//     let baselineFut = join(histMask(baselineFull), futMask(baselineFull));
+
+//     let mlHist = histMask(mlFull);
+//     let mlFut = join(histMask(mlFull), futMask(mlFull));
+
+//     let consHist = histMask(consFull);
+//     let consFut = join(histMask(consFull), firstFutureOnly(consFull));
+
+//     const rangeSelected = selectedRangeActive ?? true;
+//     if (isWeekly && !rangeSelected) {
+//       const WEEKS_WINDOW = 6;
+//       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+//       const lastIdx = months.length - 1;
+//       const todayIdx = safeTodayIdx === -1 ? 0 : safeTodayIdx;
+//       const histFrom = clamp(todayIdx - (WEEKS_WINDOW - 1), 0, lastIdx);
+//       const histTo = clamp(todayIdx, 0, lastIdx);
+//       const futFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx);
+//       const futTo = clamp(futFrom + WEEKS_WINDOW, 0, lastIdx);
+//       const applyWindow = (arr, from, to) => arr.map((v, i) => (i >= from && i <= to ? v : null));
+
+//       actual = applyWindow(actualFull, histFrom, futTo);
+//       baselineHist = applyWindow(baselineHist, histFrom, histTo);
+//       baselineFut = applyWindow(baselineFut, futFrom, futTo);
+//       mlHist = applyWindow(mlHist, histFrom, histTo);
+//       mlFut = applyWindow(mlFut, futFrom, futTo);
+//       consHist = applyWindow(consHist, histFrom, histTo);
+//       consFut = applyWindow(consFut, futFrom, futTo);
+//     }
+
+//     return { actual, baseline: baselineHist, baseline_forecast: baselineFut, ml: mlHist, ml_forecast: mlFut, consensus: consHist, consensus_forecast: consFut };
+//   }, [months, data, safeTodayIdx, isWeekly, selectedRangeActive]);
+
+//   const hasBaselineFc = (seriesData.baseline_forecast || []).some((v) => v != null);
+//   const hasMlFc = (seriesData.ml_forecast || []).some((v) => v != null);
+//   const hasConsFc = (seriesData.consensus_forecast || []).some((v) => v != null);
+//   const hasAnyForecastData = hasBaselineFc || hasMlFc || hasConsFc;
+
+//   const handleDownloadPdf = useCallback(() => {
+//     const ch = chartRef.current?.chart;
+//     if (!ch) {
+//       setErrorSnackbar?.({ open: true, message: "Chart not ready yet. Try again in a moment." });
+//       return;
+//     }
+//     try {
+//       if (ch.customTooltip) { ch.customTooltip.destroy(); ch.customTooltip = null; }
+//       const filename = `demand_forecast_${new Date().toISOString().slice(0, 10)}`;
+//       const exportOpts = { type: "application/pdf", filename, scale: 2, sourceWidth: ch.chartWidth, sourceHeight: ch.chartHeight };
+//       if (typeof ch.exportChartLocal === "function") ch.exportChartLocal(exportOpts);
+//       else if (typeof ch.exportChart === "function") ch.exportChart(exportOpts);
+//       else throw new Error("Highcharts exporting module not loaded");
+//     } catch {
+//       setErrorSnackbar?.({
+//         open: true,
+//         message: "Unable to export PDF. Make sure exporting modules are loaded and try again.",
+//       });
+//     }
+//   }, [setErrorSnackbar]);
+
+//   // Helper to get current color by key for legend/series
+//   const getColor = useCallback((key) => seriesColors[key] || "#999", [seriesColors]);
+
+//   const options = useMemo(
+//     () => ({
+//       chart: { backgroundColor: "#fafafa", style: { fontFamily: "Inter" }, zoomType: "x" },
+//       title: { text: "" },
+//       xAxis: {
+//         categories: months,
+//         gridLineWidth: 1,
+//         gridLineColor: "#e0e0e0",
+//         tickmarkPlacement: "on",
+//         startOnTick: true,
+//         endOnTick: true,
+//         title: { text: "", style: AXIS_TITLE_STYLE },
+//         labels: { style: AXIS_LABEL_STYLE, overflow: "justify", crop: false },
+//         plotBands: createPlotBands(filteredEvents, months || [], overlays),
+//       },
+//       yAxis: {
+//         title: { text: "Units (in thousands)", style: AXIS_TITLE_STYLE },
+//         labels: {
+//           align: "center",
+//           style: AXIS_LABEL_STYLE,
+//           formatter() { return this.value === 0 ? "0" : this.value / 1000; },
+//         },
+//         gridLineDashStyle: "ShortDash",
+//         gridLineColor: "#e0e0e0",
+//         min: null,
+//       },
+//       tooltip: {
+//         shared: true,
+//         useHTML: true,
+//         formatter: function () {
+//           const idx = (this.points && this.points[0] && this.points[0].point.x) ?? (this.point && this.point.x);
+//           const categories = this.points?.[0]?.series?.xAxis?.categories || [];
+//           const header = Number.isInteger(idx) && categories[idx] !== undefined ? categories[idx] : String(this.x);
+//           let pts = this.points || [this];
+//           if (idx === safeTodayIdx) {
+//             const hideSolid = new Set(["Baseline", "ML", "Consensus"]);
+//             pts = pts.filter((p) => !hideSolid.has(p.series.name));
+//           }
+//           let html = `<div style="font-weight:600;margin-bottom:4px">${header}</div>`;
+//           pts.forEach((p) => {
+//             if (p.y == null) return;
+//             const cleanName = p.series.name.replace(/\s*\(\d+\)\s*$/, "");
+//             // inside dot color == series color
+//             html += `<span style="color:${p.color}">●</span> ${cleanName}: <b>${Highcharts.numberFormat(p.y, 0)}</b><br/>`;
+//           });
+//           return html;
+//         },
+//       },
+//       legend: { enabled: false },
+//       credits: { enabled: false },
+//       exporting: { enabled: false, fallbackToExportServer: true },
+//       series: [
+//         { name: "Actual", data: seriesData.actual, color: getColor("actual"), marker: { enabled: false }, visible: !hiddenSeries[0] },
+//         { name: "Baseline", data: seriesData.baseline, color: getColor("baseline"), marker: { enabled: false }, visible: !hiddenSeries[1] },
+//         { name: "ML", data: seriesData.ml, color: getColor("ml"), marker: { enabled: false }, visible: !hiddenSeries[2] },
+//         { name: "Consensus", data: seriesData.consensus, color: getColor("consensus"), marker: { enabled: false }, visible: !hiddenSeries[3] },
+//         { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: getColor("baseline_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[4] },
+//         { name: "ML Forecast", data: seriesData.ml_forecast, color: getColor("ml_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[5] },
+//         { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: getColor("consensus_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[6] },
+//       ],
+//     }),
+//     [
+//       months,
+//       seriesData,
+//       filteredEvents,
+//       overlays,
+//       hiddenSeries,
+//       createPlotBands,
+//       safeTodayIdx,
+//       getColor,
+//     ]
+//   );
+
+//   const validateCountrySelection = useCallback(() => {
+//     if (!countryName || (Array.isArray(countryName) && countryName.length === 0) || countryName === "") {
+//       if (setErrorSnackbar) {
+//         setErrorSnackbar({
+//           open: true,
+//           message: "Country is not selected. Please select a country before accessing holidays and promotions.",
+//         });
+//       }
+//       return false;
+//     }
+//     return true;
+//   }, [countryName, setErrorSnackbar]);
+
+//   const handleLegendClick = useCallback(
+//     (key) => {
+//       const cfg = LEGEND_CONFIG.find((i) => i.key === key);
+//       if (!cfg) return;
+
+//       const isForecastKey = ["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
+//       if (isForecastKey && !hasAnyForecastData) return;
+
+//       if ((key === "holidays" || key === "promotions") && !validateCountrySelection()) return;
+
+//       const ch = chartRef.current?.chart;
+//       if (!ch) return;
+
+//       if (cfg.isOverlay) {
+//         setOverlays((prev) => {
+//           const next = { ...prev, [cfg.key]: !prev[cfg.key] };
+//           setTimeout(() => {
+//             ch.xAxis[0].update({ plotBands: createPlotBands(filteredEvents, months || [], next) });
+//           }, 0);
+//           return next;
+//         });
+//       } else {
+//         const s = ch.series[cfg.seriesIndex];
+//         if (!s) return;
+//         s.visible ? s.hide() : s.show();
+//         setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
+//       }
+//     },
+//     [createPlotBands, filteredEvents, months, validateCountrySelection, hasAnyForecastData]
+//   );
+
+//   useEffect(() => {
+//     const ch = chartRef.current?.chart;
+//     if (!ch) return;
+//     const init = {};
+//     ch.series.forEach((s, i) => { init[i] = !s.visible; });
+//     setHiddenSeries(init);
+//   }, []);
+
+//   useEffect(() => {
+//     if (showForecast === undefined) return;
+//     const forecastIdx = [4, 5, 6];
+//     const ch = chartRef.current?.chart;
+//     setHiddenSeries((prev) => {
+//       const next = { ...prev };
+//       forecastIdx.forEach((i) => {
+//         next[i] = !showForecast;
+//         if (ch?.series?.[i]) { showForecast ? ch.series[i].show(false) : ch.series[i].hide(false); }
+//       });
+//       return next;
+//     });
+//   }, [showForecast]);
+
+//   useEffect(() => () => {
+//     const ch = chartRef.current?.chart;
+//     if (ch?.customTooltip) ch.customTooltip.destroy();
+//   }, []);
+
+//   const activeKeys = LEGEND_CONFIG
+//     .filter((cfg) => (cfg.isOverlay ? overlays[cfg.key] : !hiddenSeries[cfg.seriesIndex]))
+//     .map((i) => i.key);
+
+//   const mapeStr = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
+//   const mapeColor = getMapeColor(mapeStr);
+
+//   useEffect(() => {
+//     const ch = chartRef.current?.chart;
+//     if (!ch) return;
+
+//     if (isWeekly && !selectedRangeActive) {
+//       const arrays = [
+//         seriesData.actual, seriesData.baseline, seriesData.baseline_forecast,
+//         seriesData.ml, seriesData.ml_forecast, seriesData.consensus, seriesData.consensus_forecast,
+//       ];
+//       let min = Infinity, max = -Infinity;
+//       arrays.forEach((arr) => {
+//         (arr || []).forEach((v, i) => {
+//           if (v != null) { if (i < min) min = i; if (i > max) max = i; }
+//         });
+//       });
+//       if (min !== Infinity && max !== -Infinity) {
+//         const pad = 0.5;
+//         ch.xAxis[0].setExtremes(min - pad, max + pad, true, false);
+//       } else {
+//         ch.xAxis[0].setExtremes(null, null, true, false);
+//       }
+//     } else {
+//       ch.xAxis[0].setExtremes(null, null, true, false);
+//     }
+//   }, [isWeekly, months, seriesData, selectedRangeActive]);
+
+//   useEffect(() => {
+//     const ch = chartRef.current?.chart;
+//     if (!ch) return;
+//     if (isWeekly && (selectedRangeActive ?? true)) {
+//       ch.xAxis[0].setExtremes(null, null, true, false);
+//     }
+//   }, [isWeekly, selectedRangeActive, months?.length]);
+
+//   return (
+//     <Box
+//       sx={{
+//         mt: 1, mx: 1, p: 1, bgcolor: "#fff", borderRadius: 1, boxShadow: 1, position: "relative", border: "1px solid #CBD5E1",
+//       }}
+//     >
+//       {/* Header */}
+//       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+//         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+//           <Typography sx={{ fontFamily: "Poppins", fontWeight: 500, fontSize: 14, color: "#334155" }}>
+//             Demand Forecast
+//           </Typography>
+//           <Typography sx={{ fontFamily: "Poppins", fontWeight: 500, fontSize: 14, color: "#4f4f58ff" }}>|</Typography>
+//           <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: 14, color: "#555", display: "flex", alignItems: "center" }}>
+//             MAPE:&nbsp;<Box component="span" sx={{ color: mapeColor }}>{mapeStr}</Box>
+//           </Typography>
+//         </Box>
+
+//         <Box sx={{ display: "flex", alignItems: "center", gap: 1.3 }}>
+//           <IconButton ref={gridIconRef} size="small" onClick={() => setTreeOpen((v) => !v)}>
+//             <GridViewIcon fontSize="small" />
+//           </IconButton>
+//           <IconButton size="small" onClick={handleDownloadPdf}>
+//             <DownloadIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
+//           </IconButton>
+//           <IconButton size="small">
+//             <ShareIcon fontSize="small" />
+//           </IconButton>
+//           <IconButton size="small" onClick={() => setCfgOpen(true)}>
+//             <SettingsIcon fontSize="small" />
+//           </IconButton>
+//         </Box>
+//       </Box>
+
+//       {/* Legend */}
+//       <CustomLegend
+//         activeKeys={activeKeys}
+//         onToggle={handleLegendClick}
+//         showForecast={showForecast}
+//         disableForecastLegend={!hasAnyForecastData}
+//         getColor={getColor}
+//       />
+
+//       {/* Chart */}
+//       <HighchartsReact ref={chartRef} highcharts={Highcharts} options={options} />
+
+//       {/* Floating model menu */}
+//       <TreeMenu
+//         open={treeOpen}
+//         onClose={() => setTreeOpen(false)}
+//         modelName={modelName}
+//         setModelName={setModelName}
+//         treeData={useMemo(() => treeData, [treeData])}
+//         anchorEl={gridIconRef.current}
+//       />
+
+//       {/* RIGHT SIDEBAR DRAWER */}
+//       <Drawer
+//         anchor="right"
+//         open={cfgOpen}
+//         onClose={() => setCfgOpen(false)}
+//         keepMounted
+//         PaperProps={{ sx: { width: 340, maxWidth: "90vw", p: 0 } }}
+//       >
+//         <GrapConfig
+//           onClose={() => setCfgOpen(false)}
+//           showGridLines={showGridLines}
+//           onToggleGridLines={setShowGridLines}
+//           seriesColors={seriesColors}
+//           onChangeColor={handleColorChange}
+//           selectedDataSources={selectedDataSources}
+//           onToggleDataSource={handleDataSourceToggle}
+//         />
+//       </Drawer>
+//     </Box>
+//   );
+// }
+// ForecastChart.jsx
 import React, {
   useMemo,
   useState,
@@ -39,18 +1397,33 @@ import {
   FormControlLabel,
   Checkbox,
   CircularProgress,
+  Drawer,
+  Divider,
+  Switch,
+  Popover,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import GridViewIcon from "@mui/icons-material/GridView";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import DownloadIcon from "@mui/icons-material/Download";
 import ShareIcon from "@mui/icons-material/Share";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
+import CloseIcon from "@mui/icons-material/Close";
+import RemoveIcon from "@mui/icons-material/Remove";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// ========== helpers ==========
+const API_BASE_URL = "http://localhost:5000/api";
+
+const addAlpha = (hex, alpha = 0.22) => {
+  if (!hex) return `rgba(0,0,0,${alpha})`;
+  const h = hex.replace("#", "");
+  const r = h.length === 3 ? parseInt(h[0] + h[0], 16) : parseInt(h.slice(0, 2), 16);
+  const g = h.length === 3 ? parseInt(h[1] + h[1], 16) : parseInt(h.slice(2, 4), 16);
+  const b = h.length === 3 ? parseInt(h[2] + h[2], 16) : parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+};
 
 const getMapeColor = (mapeValue) => {
   const v = Number(mapeValue);
@@ -70,6 +1443,20 @@ const AXIS_LABEL_STYLE = {
 };
 const AXIS_TITLE_STYLE = { ...AXIS_LABEL_STYLE };
 
+// ========== Legend keys ==========
+const LEGEND_CONFIG = [
+  { key: "actual", label: "Actual", seriesIndex: 0 },
+  { key: "baseline", label: "Baseline", seriesIndex: 1 },
+  { key: "ml", label: "ML", seriesIndex: 2 },
+  { key: "consensus", label: "Consensus", seriesIndex: 3 },
+  { key: "baseline_forecast", label: "Baseline Forecast", dash: "Dash", seriesIndex: 4 },
+  { key: "ml_forecast", label: "ML Forecast", dash: "Dash", seriesIndex: 5 },
+  { key: "consensus_forecast", label: "Consensus Plan", dash: "Dash", seriesIndex: 6 },
+  { key: "holidays", label: "Holidays", isOverlay: true },
+  { key: "promotions", label: "Promotions", isOverlay: true },
+];
+
+// ========== Styled checkbox for the left menu ==========
 const BlueSquare = styled("span")({
   width: 18,
   height: 18,
@@ -103,36 +1490,398 @@ const BlueCheckbox = (props) => (
   />
 );
 
-const LEGEND_CONFIG = [
-  { key: "actual", label: "Actual", color: "#DC2626", seriesIndex: 0 },
-  { key: "baseline", label: "Baseline", color: "#60A5FA", seriesIndex: 1 },
-  { key: "ml", label: "ML", color: "#EAB308", seriesIndex: 2 },
-  { key: "consensus", label: "Consensus", color: "#0E7490", seriesIndex: 3 },
-  {
-    key: "baseline_forecast",
-    label: "Baseline Forecast",
-    color: "#60A5FA",
-    dash: "Dash",
-    seriesIndex: 4,
-  },
-  {
-    key: "ml_forecast",
-    label: "ML Forecast",
-    color: "#A16207",
-    dash: "Dash",
-    seriesIndex: 5,
-  },
-  {
-    key: "consensus_forecast",
-    label: "Consensus Plan",
-    color: "#0E7490",
-    dash: "Dash",
-    seriesIndex: 6,
-  },
-  { key: "holidays", label: "Holidays", color: "#22C55E", isOverlay: true },
-  { key: "promotions", label: "Promotions", color: "#F97316", isOverlay: true },
+/* =========================
+   COLOR PALETTE (HSV)
+========================= */
+
+// utils: HEX ↔ RGB ↔ HSV
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+function hexToRgb(hex) {
+  if (!hex) return { r: 255, g: 0, b: 0 };
+  const h = hex.replace("#", "");
+  const bigint = parseInt(h.length === 3 ? h.split("").map(ch => ch + ch).join("") : h, 16);
+  return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+}
+function rgbToHex({ r, g, b }) {
+  const toHex = (v) => v.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+function rgbToHsv({ r, g, b }) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    switch (max) {
+      case r: h = ((g - b) / d) % 6; break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+      default: break;
+    }
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+  return { h, s, v };
+}
+function hsvToRgb({ h, s, v }) {
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  let rp = 0, gp = 0, bp = 0;
+  if (0 <= h && h < 60) [rp, gp, bp] = [c, x, 0];
+  else if (60 <= h && h < 120) [rp, gp, bp] = [x, c, 0];
+  else if (120 <= h && h < 180) [rp, gp, bp] = [0, c, x];
+  else if (180 <= h && h < 240) [rp, gp, bp] = [0, x, c];
+  else if (240 <= h && h < 300) [rp, gp, bp] = [x, 0, c];
+  else [rp, gp, bp] = [c, 0, x];
+  return {
+    r: Math.round((rp + m) * 255),
+    g: Math.round((gp + m) * 255),
+    b: Math.round((bp + m) * 255),
+  };
+}
+
+function ColorPalette({ value = "#ff0000", onChange, width = 260, height = 180 }) {
+  const start = rgbToHsv(hexToRgb(value));
+  const [hsv, setHSV] = useState(start);
+  const svRef = useRef(null);
+  const hueRef = useRef(null);
+
+  // keep internal state in sync when value prop changes externally
+  useEffect(() => {
+    setHSV(rgbToHsv(hexToRgb(value)));
+  }, [value]);
+
+  const commit = useCallback((nextHSV) => {
+    const hex = rgbToHex(hsvToRgb(nextHSV));
+    onChange?.(hex);
+  }, [onChange]);
+
+  // SV square handlers
+  const handleSV = useCallback((e) => {
+    const rect = svRef.current.getBoundingClientRect();
+    const x = clamp(e.clientX - rect.left, 0, rect.width);
+    const y = clamp(e.clientY - rect.top, 0, rect.height);
+    const s = x / rect.width;
+    const v = 1 - (y / rect.height);
+    const next = { ...hsv, s, v };
+    setHSV(next);
+    commit(next);
+  }, [hsv, commit]);
+
+  const startSV = (e) => {
+    handleSV(e);
+    const move = (ev) => handleSV(ev);
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  // Hue bar handlers
+  const handleHue = useCallback((e) => {
+    const rect = hueRef.current.getBoundingClientRect();
+    const y = clamp(e.clientY - rect.top, 0, rect.height);
+    const h = clamp(360 * (y / rect.height), 0, 360);
+    const next = { ...hsv, h };
+    setHSV(next);
+    commit(next);
+  }, [hsv, commit]);
+
+  const startHue = (e) => {
+    handleHue(e);
+    const move = (ev) => handleHue(ev);
+    const up = () => {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  };
+
+  const hueColor = rgbToHex(hsvToRgb({ h: hsv.h, s: 1, v: 1 }));
+  const svPointer = {
+    left: `${hsv.s * 100}%`,
+    top: `${(1 - hsv.v) * 100}%`,
+  };
+  const huePointerTop = `${(hsv.h / 360) * 100}%`;
+
+  return (
+    <Box sx={{ display: "flex", gap: 1.25 }}>
+      {/* SV square */}
+      <Box
+        ref={svRef}
+        onMouseDown={startSV}
+        sx={{
+          position: "relative",
+          width,
+          height,
+          borderRadius: 1,
+          overflow: "hidden",
+          cursor: "crosshair",
+          boxShadow: 1,
+          background: `linear-gradient(to top, #000, rgba(0,0,0,0)),
+                       linear-gradient(to right, #fff, ${hueColor})`,
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            width: 14, height: 14,
+            borderRadius: "50%",
+            border: "2px solid #fff",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.4)",
+            transform: "translate(-7px,-7px)",
+            left: svPointer.left, top: svPointer.top,
+            pointerEvents: "none",
+          }}
+        />
+      </Box>
+
+      {/* Hue bar */}
+      <Box
+        ref={hueRef}
+        onMouseDown={startHue}
+        sx={{
+          width: 16,
+          height,
+          borderRadius: 1,
+          position: "relative",
+          cursor: "ns-resize",
+          background:
+            "linear-gradient(to bottom, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
+          boxShadow: 1,
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            left: -4,
+            top: huePointerTop,
+            width: 24,
+            height: 2,
+            bgcolor: "#fff",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.35)",
+            transform: "translateY(-1px)",
+            pointerEvents: "none",
+          }}
+        />
+      </Box>
+    </Box>
+  );
+}
+
+// Swatch that opens a Popover with ColorPalette
+function ColorPopoverPicker({ value, onChange, swatchSize = 22 }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+
+  return (
+    <>
+      <Box
+        onClick={handleOpen}
+        sx={{
+          cursor: "pointer",
+          width: swatchSize,
+          height: swatchSize,
+          borderRadius: 1,
+          border: "1px solid rgba(0,0,0,0.15)",
+          bgcolor: value,
+          boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.04)",
+          justifySelf: "end", // hugs the right edge of our grid
+        }}
+        title={value}
+      />
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        PaperProps={{ sx: { p: 1.25, borderRadius: 2 } }}
+      >
+        <Typography sx={{ fontWeight: 600, mb: 1, fontSize: 14 }}>Custom</Typography>
+        <ColorPalette value={value} onChange={onChange} />
+      </Popover>
+    </>
+  );
+}
+
+/* =========================
+   Inline Graph Configuration (Drawer content)
+========================= */
+const dataSourceOptions = [
+  // Example placeholders (left commented intentionally)
+  // { id: "spikes", label: "Spikes", defaultColor: "#22C55E" },
+  // { id: "dips", label: "Dips", defaultColor: "#F97316" },
+  // { id: "holiday", label: "Holiday", defaultColor: "#64748B" },
+  // { id: "potential-stockout", label: "Potential Stockout Period", defaultColor: "#1D4ED8" },
 ];
 
+function GrapConfig({
+  onClose,
+  showGridLines,
+  onToggleGridLines,
+  seriesColors,
+  onChangeColor,
+  selectedDataSources,
+  onToggleDataSource,
+}) {
+  return (
+    <Box sx={{ height: "100%", bgcolor: "background.paper", p: 1.25, width: "100%" }}>
+      <Stack spacing={1.875}>
+        {/* Header */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack direction="row" alignItems="center" spacing={0.625}>
+            <SettingsIcon sx={{ width: 16, height: 16, color: "#626262" }} />
+            <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+              Graph Configuration
+            </Typography>
+          </Stack>
+          <IconButton size="small" onClick={onClose} sx={{ p: 0.625 }}>
+            <CloseIcon sx={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Stack>
+
+        <Divider />
+
+        {/* Grid lines */}
+        <Stack spacing={0.625}>
+          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ pt: 0.625, pb: 1.25 }}>
+            <Switch
+              checked={!!showGridLines}
+              onChange={(e) => onToggleGridLines?.(e.target.checked)}
+              sx={{
+                width: 44, height: 24, p: 0,
+                "& .MuiSwitch-switchBase": {
+                  p: 0, m: 0.25, transitionDuration: "300ms",
+                  "&.Mui-checked": {
+                    transform: "translateX(20px)",
+                    color: "#fff",
+                    "& + .MuiSwitch-track": { backgroundColor: "#3B82F6", opacity: 1, border: 0 },
+                  },
+                },
+                "& .MuiSwitch-thumb": { width: 20, height: 20 },
+                "& .MuiSwitch-track": { borderRadius: 12, backgroundColor: "#E5E7EB", opacity: 1 },
+              }}
+            />
+            <Typography sx={{ fontWeight: 500, fontSize: 14, color: "#475569" }}>
+              Show Grid Lines
+            </Typography>
+          </Stack>
+
+          <Divider />
+
+          {/* Series color palette (compact, no right whitespace) */}
+          <Stack spacing={1}>
+            <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+              Series Colors
+            </Typography>
+
+            {[
+              { k: "actual", label: "Actual" },
+              { k: "baseline", label: "Baseline" },
+              { k: "ml", label: "ML" },
+              { k: "consensus", label: "Consensus" },
+              { k: "baseline_forecast", label: "Baseline Forecast" },
+              { k: "ml_forecast", label: "ML Forecast" },
+              { k: "consensus_forecast", label: "Consensus Plan" },
+            ].map(({ k, label }) => (
+              <Box
+                key={k}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "14px auto 24px", // dot | label | swatch
+                  alignItems: "center",
+                  columnGap: 1.25,
+                  py: 0.5,
+                }}
+              >
+                <Box sx={{ width: 12, height: 12, bgcolor: seriesColors[k], borderRadius: 1 }} />
+                <Typography sx={{ fontSize: 14, color: "#334155" }}>{label}</Typography>
+                <ColorPopoverPicker swatchSize={22} value={seriesColors[k]} onChange={(c) => onChangeColor?.(k, c)} />
+              </Box>
+            ))}
+          </Stack>
+
+          <Divider />
+
+          {/* Overlay colors (same compact grid) */}
+          <Stack spacing={1}>
+            <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+              Overlay Colors
+            </Typography>
+
+            {[
+              { k: "holidays", label: "Holidays" },
+              { k: "promotions", label: "Promotions" },
+            ].map(({ k, label }) => (
+              <Box
+                key={k}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "14px auto 24px",
+                  alignItems: "center",
+                  columnGap: 1.25,
+                  py: 0.5,
+                }}
+              >
+                <Box sx={{ width: 12, height: 12, bgcolor: seriesColors[k], borderRadius: 1 }} />
+                <Typography sx={{ fontSize: 14, color: "#334155" }}>{label}</Typography>
+                <ColorPopoverPicker swatchSize={22} value={seriesColors[k]} onChange={(c) => onChangeColor?.(k, c)} />
+              </Box>
+            ))}
+          </Stack>
+
+          <Divider />
+
+          {/* Data sources (kept, if you later re-enable) */}
+          <Stack spacing={0.625} sx={{ py: 0.625 }}>
+            {dataSourceOptions.map((option) => (
+              <Stack
+                key={option.id}
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ py: 0.625, bgcolor: "background.paper", borderRadius: 1 }}
+              >
+                <Checkbox
+                  checked={!!selectedDataSources?.[option.id]}
+                  onChange={() => onToggleDataSource?.(option.id)}
+                  sx={{ p: 0.625, "& .MuiSvgIcon-root": { width: 16, height: 16 } }}
+                />
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+                  <RemoveIcon sx={{ width: 16, height: 16, color: seriesColors[option.id] || option.defaultColor }} />
+                  <Typography sx={{ flex: 1, fontWeight: 400, fontSize: 14, color: "#334155" }}>
+                    {option.label}
+                  </Typography>
+                </Stack>
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    bgcolor: seriesColors[option.id] || option.defaultColor,
+                    borderRadius: 0.5,
+                  }}
+                />
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
+      </Stack>
+    </Box>
+  );
+}
+
+/* =========================
+   Tree menu bits
+========================= */
 const TreeMenuItem = ({ item, disabled }) => (
   <ListItem
     sx={{
@@ -148,15 +1897,9 @@ const TreeMenuItem = ({ item, disabled }) => (
     <ListItemIcon sx={{ minWidth: 28 }}>
       <BlueCheckbox checked={item.checked} disabled />
     </ListItemIcon>
-    {item.starred && (
-      <StarIcon sx={{ fontSize: 14, color: "warning.main", mr: 0.5 }} />
-    )}
+    {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main", mr: 0.5 }} />}
     <ListItemText
-      primary={
-        <Typography variant="body2" color="text.secondary">
-          {item.label}
-        </Typography>
-      }
+      primary={<Typography variant="body2" color="text.secondary">{item.label}</Typography>}
     />
   </ListItem>
 );
@@ -170,21 +1913,12 @@ function TreeMenuSection({ section, modelName, setModelName }) {
       <Box
         onClick={toggle}
         sx={{
-          px: 1,
-          py: 1,
-          mb: 0.5,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          borderRadius: 1,
-          bgcolor: section.disabled ? "grey.100" : "primary.lighter",
-          cursor: section.disabled ? "not-allowed" : "pointer",
-          opacity: section.disabled ? 0.6 : 1,
+          px: 1, py: 1, mb: 0.5, display: "flex", alignItems: "center", gap: 1,
+          borderRadius: 1, bgcolor: section.disabled ? "grey.100" : "primary.lighter",
+          cursor: section.disabled ? "not-allowed" : "pointer", opacity: section.disabled ? 0.6 : 1,
         }}
       >
-        {section.id === 1 && section.disabled && (
-          <CircularProgress size={16} sx={{ mr: 1 }} />
-        )}
+        {section.id === 1 && section.disabled && <CircularProgress size={16} sx={{ mr: 1 }} />}
         <ExpandMoreIcon
           sx={{
             transform: open ? "rotate(0deg)" : "rotate(-90deg)",
@@ -192,40 +1926,19 @@ function TreeMenuSection({ section, modelName, setModelName }) {
             color: section.disabled ? "grey.500" : "primary.main",
           }}
         />
-        <DescriptionOutlined
-          sx={{ color: section.disabled ? "grey.500" : "primary.main" }}
-        />
-        <Typography
-          variant="subtitle2"
-          fontWeight={600}
-          sx={{
-            flexGrow: 1,
-            color: section.disabled ? "grey.600" : "primary.main",
-          }}
-        >
+        <DescriptionOutlined sx={{ color: section.disabled ? "grey.500" : "primary.main" }} />
+        <Typography variant="subtitle2" fontWeight={600} sx={{ flexGrow: 1, color: section.disabled ? "grey.600" : "primary.main" }}>
           {section.title}
           {section.id === 1 && section.disabled && " (Loading…)"}
         </Typography>
       </Box>
 
       {open && (
-        <Box
-          sx={{
-            pl: 3,
-            pointerEvents: section.disabled ? "none" : "auto",
-            opacity: section.disabled ? 0.5 : 1,
-          }}
-        >
+        <Box sx={{ pl: 3, pointerEvents: section.disabled ? "none" : "auto", opacity: section.disabled ? 0.5 : 1 }}>
           {section.type === "radio" ? (
-            <RadioGroup
-              value={modelName}
-              onChange={(e) => setModelName(e.target.value)}
-              sx={{ display: "flex", gap: 0.5 }}
-            >
+            <RadioGroup value={modelName} onChange={(e) => setModelName(e.target.value)} sx={{ display: "flex", gap: 0.5 }}>
               {section.items.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No models available
-                </Typography>
+                <Typography variant="body2" color="text.secondary">No models available</Typography>
               ) : (
                 section.items.map((item) => (
                   <FormControlLabel
@@ -233,14 +1946,8 @@ function TreeMenuSection({ section, modelName, setModelName }) {
                     value={item.value}
                     control={<Radio size="small" />}
                     label={
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        {item.starred && (
-                          <StarIcon
-                            sx={{ fontSize: 14, color: "warning.main" }}
-                          />
-                        )}
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main" }} />}
                         <Typography variant="body2">{item.label}</Typography>
                       </Box>
                     }
@@ -252,11 +1959,7 @@ function TreeMenuSection({ section, modelName, setModelName }) {
           ) : (
             <List disablePadding>
               {section.items.map((item) => (
-                <TreeMenuItem
-                  key={item.id}
-                  item={item}
-                  disabled={section.disabled}
-                />
+                <TreeMenuItem key={item.id} item={item} disabled={section.disabled} />
               ))}
             </List>
           )}
@@ -266,14 +1969,7 @@ function TreeMenuSection({ section, modelName, setModelName }) {
   );
 }
 
-function TreeMenu({
-  open,
-  onClose,
-  modelName,
-  setModelName,
-  treeData,
-  anchorEl,
-}) {
+function TreeMenu({ open, onClose, modelName, setModelName, treeData, anchorEl }) {
   const [pos, setPos] = useState({ top: 80, left: 40 });
 
   useEffect(() => {
@@ -305,54 +2001,30 @@ function TreeMenu({
     <Paper
       className="tree-menu-float"
       elevation={4}
-      sx={{
-        position: "absolute",
-        top: pos.top,
-        left: pos.left,
-        width: 260,
-        maxHeight: 360,
-        overflowY: "auto",
-        p: 1,
-        zIndex: 2000,
-      }}
+      sx={{ position: "absolute", top: pos.top, left: pos.left, width: 260, maxHeight: 360, overflowY: "auto", p: 1, zIndex: 2000 }}
     >
       <Stack spacing={0.5}>
         {treeData.map((sec) => (
-          <TreeMenuSection
-            key={sec.id}
-            section={sec}
-            modelName={modelName}
-            setModelName={setModelName}
-          />
+          <TreeMenuSection key={sec.id} section={sec} modelName={modelName} setModelName={setModelName} />
         ))}
       </Stack>
     </Paper>
   );
 }
 
-const CustomLegend = ({
-  activeKeys,
-  onToggle,
-  showForecast,
-  disableForecastLegend,
-}) => (
+/* =========================
+   Legend (uses current colors)
+========================= */
+const CustomLegend = ({ activeKeys, onToggle, showForecast, disableForecastLegend, getColor }) => (
   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
     {LEGEND_CONFIG.filter(({ key }) => {
       if (!showForecast) {
-        return ![
-          "baseline_forecast",
-          "ml_forecast",
-          "consensus_forecast",
-        ].includes(key);
+        return !["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
       }
       return true;
-    }).map(({ key, label, color }) => {
-      const isForecast = [
-        "baseline_forecast",
-        "ml_forecast",
-        "consensus_forecast",
-      ].includes(key);
-
+    }).map(({ key, label }) => {
+      const color = getColor(key);
+      const isForecast = ["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
       const disabled = isForecast && disableForecastLegend;
 
       return (
@@ -385,16 +2057,7 @@ const CustomLegend = ({
           title={disabled ? "No forecast data available" : undefined}
         >
           {isForecast ? (
-            <Box
-              sx={{
-                width: 16,
-                height: 12,
-                mr: 1,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
+            <Box sx={{ width: 16, height: 12, mr: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
               <Box
                 sx={{
                   width: "100%",
@@ -410,27 +2073,9 @@ const CustomLegend = ({
               />
             </Box>
           ) : (
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                bgcolor: color,
-                borderRadius: 1,
-                mr: 1,
-              }}
-            />
+            <Box sx={{ width: 12, height: 12, bgcolor: color, borderRadius: 1, mr: 1 }} />
           )}
-          <Typography
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 400,
-              fontStyle: "normal",
-              fontSize: "14px",
-              lineHeight: "100%",
-              letterSpacing: "0.1px",
-              color: "#475569",
-            }}
-          >
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 400, fontSize: 14, color: "#475569" }}>
             {label}
           </Typography>
         </Box>
@@ -439,13 +2084,12 @@ const CustomLegend = ({
   </Box>
 );
 
+// ===== ISO week helpers =====
 const WEEK_LABEL_RE = /^(\d{4})-W(\d{2})$/;
 function getISOWeekParts(date) {
-  const d = new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-  );
-  const day = d.getUTCDay() || 7; 
-  d.setUTCDate(d.getUTCDate() + 4 - day); 
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
   const year = d.getUTCFullYear();
   const yearStart = new Date(Date.UTC(year, 0, 1));
   const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
@@ -460,17 +2104,18 @@ function parseISOWeekLabel(label) {
   if (!m) return null;
   const year = Number(m[1]);
   const week = Number(m[2]);
-
   const jan4 = new Date(Date.UTC(year, 0, 4));
   const jan4Day = jan4.getUTCDay() || 7;
   const mondayOfWeek1 = new Date(jan4);
   mondayOfWeek1.setUTCDate(jan4.getUTCDate() - (jan4Day - 1));
-
   const target = new Date(mondayOfWeek1);
   target.setUTCDate(mondayOfWeek1.getUTCDate() + (week - 1) * 7);
   return target;
 }
 
+/* =========================
+   Main component
+========================= */
 export default function ForecastChart({
   months,
   data,
@@ -482,18 +2127,58 @@ export default function ForecastChart({
   countryName,
   showForecast,
   setErrorSnackbar,
-  isWeekly: isWeeklyProp, 
+  isWeekly: isWeeklyProp,
   selectedRangeActive,
 }) {
   const chartRef = useRef();
   const gridIconRef = useRef();
   const [treeOpen, setTreeOpen] = useState(false);
-  const [overlays, setOverlays] = useState({
-    holidays: false,
-    promotions: false,
-  });
+  const [cfgOpen, setCfgOpen] = useState(false);
+
+  const [overlays, setOverlays] = useState({ holidays: false, promotions: false });
   const [hiddenSeries, setHiddenSeries] = useState({});
   const [events, setEvents] = useState([]);
+
+  // NEW: grid & color state
+  const [showGridLines, setShowGridLines] = useState(true);
+  const [selectedDataSources, setSelectedDataSources] = useState({});
+  const [seriesColors, setSeriesColors] = useState({
+    actual: "#DC2626",
+    baseline: "#60A5FA",
+    ml: "#EAB308",
+    consensus: "#0E7490",
+    baseline_forecast: "#60A5FA",
+    ml_forecast: "#A16207",
+    consensus_forecast: "#0E7490",
+    holidays: "#22C55E",
+    promotions: "#F97316",
+    spikes: "#22C55E",
+    dips: "#F97316",
+    "potential-stockout": "#1D4ED8",
+  });
+
+  const handleColorChange = useCallback((key, color) => {
+    setSeriesColors((prev) => ({ ...prev, [key]: color }));
+  }, []);
+
+  // Wire grid lines to Highcharts
+  useEffect(() => {
+    const ch = chartRef.current?.chart;
+    if (!ch) return;
+    const width = showGridLines ? 1 : 0;
+    ch.xAxis[0].update({ gridLineWidth: width }, false);
+    ch.yAxis[0].update({ gridLineWidth: width }, false);
+    ch.redraw();
+  }, [showGridLines]);
+
+  const handleDataSourceToggle = useCallback((id) => {
+    setSelectedDataSources((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      if (id === "holiday") setOverlays((o) => ({ ...o, holidays: !!next[id] }));
+      if (id === "dips") setOverlays((o) => ({ ...o, promotions: !!next[id] }));
+      return next;
+    });
+  }, []);
 
   const autoWeekly =
     Array.isArray(months) &&
@@ -502,7 +2187,7 @@ export default function ForecastChart({
   const isWeekly = isWeeklyProp ?? autoWeekly;
 
   const treeData = useMemo(() => {
-    const sorted = [...models].sort((a, b) => {
+    const sorted = [...(models || [])].sort((a, b) => {
       if (a.model_name === "XGBoost") return -1;
       if (b.model_name === "XGBoost") return 1;
       return a.model_name.localeCompare(b.model_name);
@@ -520,56 +2205,18 @@ export default function ForecastChart({
           starred: m.model_name === "XGBoost",
         })),
       },
-      // (future sections hidden)
-      // {
-      //   id: 2,
-      //   title: "External Factors",
-      //   disabled: true,
-      //   type: "checkbox",
-      //   items: [
-      //     { id: 21, label: "All", checked: false },
-      //     { id: 22, label: "CPI", checked: true, starred: true },
-      //     { id: 23, label: "Interest Rate", checked: false },
-      //     { id: 24, label: "GDP", checked: true, starred: true },
-      //     { id: 25, label: "Unemployment Rate", checked: true, starred: true },
-      //     { id: 26, label: "Average Disposable Income", checked: false },
-      //   ],
-      // },
-      // {
-      //   id: 3,
-      //   title: "Events",
-      //   disabled: true,
-      //   type: "checkbox",
-      //   items: [
-      //     { id: 31, label: "All", checked: true, starred: true },
-      //     { id: 32, label: "Holidays", checked: true },
-      //     { id: 33, label: "Marketing & Promotion", checked: true },
-      //   ],
-      // },
     ];
   }, [models, loadingModels]);
 
-  // resilient /events fetch
+  // Fetch /events (resilient)
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
 
     const fetchEvents = async () => {
       const url = `${API_BASE_URL}/events?_=${Date.now()}`;
-      const opts = {
-        method: "GET",
-        signal: controller.signal,
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      };
-
-      const withTimeout = (p, ms = 8000) =>
-        Promise.race([
-          p,
-          new Promise((_, rej) =>
-            setTimeout(() => rej(new Error("timeout")), ms)
-          ),
-        ]);
+      const opts = { method: "GET", signal: controller.signal, cache: "no-store", headers: { Accept: "application/json" } };
+      const withTimeout = (p, ms = 8000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
       const tryOnce = async () => {
         const res = await withTimeout(fetch(url, opts));
@@ -578,41 +2225,29 @@ export default function ForecastChart({
         if (!text) return [];
         const ct = res.headers.get("content-type") || "";
         if (!ct.includes("application/json")) {
-          try {
-            return JSON.parse(text);
-          } catch {
-            throw new Error("non-json body");
-          }
+          try { return JSON.parse(text); } catch { throw new Error("non-json body"); }
         }
         return JSON.parse(text);
       };
 
-      const load = async () => {
+      try {
+        let data = await tryOnce();
+        if (!Array.isArray(data)) data = [];
+        if (alive) setEvents(data);
+      } catch {
         try {
+          await new Promise((r) => setTimeout(r, 500));
           let data = await tryOnce();
           if (!Array.isArray(data)) data = [];
           if (alive) setEvents(data);
         } catch {
-          try {
-            await new Promise((r) => setTimeout(r, 500));
-            let data = await tryOnce();
-            if (!Array.isArray(data)) data = [];
-            if (alive) setEvents(data);
-          } catch {
-            if (alive) setEvents([]);
-          }
+          if (alive) setEvents([]);
         }
-      };
-
-      load();
+      }
     };
 
     fetchEvents();
-
-    return () => {
-      alive = false;
-      controller.abort();
-    };
+    return () => { alive = false; controller.abort(); };
   }, []);
 
   const filteredEvents = useMemo(() => {
@@ -628,275 +2263,103 @@ export default function ForecastChart({
     );
   }, [events, countryName]);
 
-
   const createPlotBands = useCallback(
-  (evts, monthsArr, overlayState) => {
-    if (!Array.isArray(evts) || !evts.length) return [];
+    (evts, monthsArr, overlayState) => {
+      if (!Array.isArray(evts) || !evts.length) return [];
+      const wantHoliday = !!overlayState.holidays;
+      const wantPromo = !!overlayState.promotions;
+      const isHoliday = (ev) => (ev.event_type || "").toLowerCase() === "holiday";
+      const includeEvent = (ev) => (isHoliday(ev) ? wantHoliday : wantPromo) && (ev.start_date || ev.end_date);
 
-    const wantHoliday = !!overlayState.holidays;
-    const wantPromo = !!overlayState.promotions;
+      // helper for weekly
+      const isoWeekday = (date) => {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const wd = d.getUTCDay(); return wd === 0 ? 7 : wd;
+      };
+      const weekFrac = (date) => (isoWeekday(date) - 1) / 7;
 
-    const isoWeekday = (date) => {
-      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const wd = d.getUTCDay();
-      return wd === 0 ? 7 : wd;
-    };
-    const weekFrac = (date) => (isoWeekday(date) - 1) / 7;
+      if (isWeekly) {
+        return evts.reduce((acc, ev) => {
+          if (!includeEvent(ev)) return acc;
+          const s = new Date(ev.start_date);
+          const e = new Date(ev.end_date || ev.start_date);
+          const sLbl = isoWeekLabelFor(s);
+          const eLbl = isoWeekLabelFor(e);
+          const sIdx = monthsArr.indexOf(sLbl);
+          const eIdx = monthsArr.indexOf(eLbl);
+          if (sIdx === -1) return acc;
 
-    const isHoliday = (ev) => (ev.event_type || "").toLowerCase() === "holiday";
-    const includeEvent = (ev) =>
-      (isHoliday(ev) ? wantHoliday : wantPromo) && (ev.start_date || ev.end_date);
+          const fromPos = sIdx + weekFrac(s) - 0.5;
+          let toPos;
+          if (eIdx === -1) toPos = sIdx + 0.5;
+          else if (eIdx === sIdx) toPos = sIdx + Math.max(weekFrac(e), weekFrac(s)) - 0.5;
+          else toPos = eIdx + weekFrac(e) - 0.5;
 
-    if (isWeekly) {
+          const minWidth = 0.05;
+          const width = Math.max(toPos - fromPos, minWidth);
+          const color = isHoliday(ev) ? addAlpha(seriesColors.holidays, 0.22) : addAlpha(seriesColors.promotions, 0.22);
+
+          acc.push({ id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sLbl}_${eLbl}`}`, from: fromPos, to: fromPos + width, color });
+          return acc;
+        }, []);
+      }
+
+      // monthly
       return evts.reduce((acc, ev) => {
         if (!includeEvent(ev)) return acc;
-
         const s = new Date(ev.start_date);
         const e = new Date(ev.end_date || ev.start_date);
+        const sm = s.toLocaleString("default", { month: "short", year: "2-digit" });
+        const em = e.toLocaleString("default", { month: "short", year: "2-digit" });
+        const sIdx = monthsArr.indexOf(sm);
+        const eIdx = monthsArr.indexOf(em);
+        if (sIdx === -1) return acc;
 
-        const sLbl = isoWeekLabelFor(s);
-        const eLbl = isoWeekLabelFor(e);
-
-        const sIdx = monthsArr.indexOf(sLbl);
-        const eIdx = monthsArr.indexOf(eLbl);
-
-        if (sIdx === -1) return acc; 
-
-        const fromPos = sIdx + weekFrac(s) - 0.5;
-
-        let toPos;
-        if (eIdx === -1) {
-          toPos = sIdx + 0.5;
-        } else if (eIdx === sIdx) {
-          toPos = sIdx + Math.max(weekFrac(e), weekFrac(s)) - 0.5;
-        } else {
-          toPos = eIdx + weekFrac(e) - 0.5;
-        }
-
+        const dayFrac = (date) => {
+          const year = date.getFullYear(); const month = date.getMonth(); const day = date.getDate();
+          const max = new Date(year, month + 1, 0).getDate();
+          return (day - 1) / max;
+        };
         const minWidth = 0.05;
+        const fromPos = sIdx + dayFrac(s) - 0.5;
+        const toPos = eIdx === -1 ? sIdx + 0.5 : eIdx === sIdx ? sIdx + dayFrac(e) - 0.5 : eIdx + dayFrac(e) - 0.5;
         const width = Math.max(toPos - fromPos, minWidth);
-        const color = isHoliday(ev) ? "#DCFCE7" : "#FFEDD5";
+        const color = (ev.event_type || "").toLowerCase() === "holiday"
+          ? addAlpha(seriesColors.holidays, 0.22)
+          : addAlpha(seriesColors.promotions, 0.22);
 
-        acc.push({
-          id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sLbl}_${eLbl}`}`,
-          from: fromPos,
-          to: fromPos + width,
-          color,
-          events: {
-            mouseover: function (mouseEvt) {
-              const ch = chartRef.current?.chart;
-              if (!ch) return;
-              if (ch.customTooltip) ch.customTooltip.destroy();
-
-              const names = [];
-              if (Array.isArray(countryName)) names.push(...countryName);
-              else if (typeof countryName === "string") names.push(countryName);
-              if (ev.country_name) names.push(ev.country_name);
-              const all = names.map((t) => t.toLowerCase());
-              const matchAny = (text, keys) => keys.some((k) => text.includes(k));
-              const isUSA = all.some((t) =>
-                matchAny(t, ["usa", "u.s.", "united states", "united states of america", "us"])
-              );
-              const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
-              const formatDate = (d) => {
-                if (isUSA || (!isUSA && !isIndia)) {
-                  return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
-                }
-                return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
-              };
-
-              const tip = `
-                <div style="padding:8px;font-size:12px;font-family:Inter">
-                  <b>${ev.event_type || "Event"}:</b> ${ev.event_name || "-"}<br/>
-                  <b>Start:</b> ${formatDate(s)}<br/>
-                  <b>End&nbsp;&nbsp;:</b> ${formatDate(e)}<br/>
-                  <b>Country:</b> ${ev.country_name || "N/A"}
-                </div>
-              `;
-
-              const rect = ch.container.getBoundingClientRect();
-              const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-              const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
-
-              ch.customTooltip = ch.renderer
-                .label(tip, x, y, "round", null, null, true)
-                .attr({
-                  fill: "rgba(255,255,255,0.95)",
-                  stroke: "rgba(51,51,51,0.3)",
-                  "stroke-width": 1,
-                  r: 3,
-                  padding: 8,
-                  zIndex: 999,
-                })
-                .css({
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
-                })
-                .add();
-            },
-            mouseout: function () {
-              const ch = chartRef.current?.chart;
-              if (ch?.customTooltip) {
-                ch.customTooltip.destroy();
-                ch.customTooltip = null;
-              }
-            },
-          },
-        });
-
+        acc.push({ id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sm}_${em}`}`, from: fromPos, to: fromPos + width, color });
         return acc;
       }, []);
-    }
-
-    return evts.reduce((acc, ev) => {
-      if (!includeEvent(ev)) return acc;
-
-      const s = new Date(ev.start_date);
-      const e = new Date(ev.end_date || ev.start_date);
-
-      const sm = s.toLocaleString("default", { month: "short", year: "2-digit" });
-      const em = e.toLocaleString("default", { month: "short", year: "2-digit" });
-
-      const sIdx = monthsArr.indexOf(sm);
-      const eIdx = monthsArr.indexOf(em);
-      if (sIdx === -1) return acc;
-
-      const dayFrac = (date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const day = date.getDate();
-        const max = new Date(year, month + 1, 0).getDate();
-        return (day - 1) / max;
-      };
-
-      const minWidth = 0.05;
-      const fromPos = sIdx + dayFrac(s) - 0.5;
-      const toPos =
-        eIdx === -1
-          ? sIdx + 0.5
-          : eIdx === sIdx
-          ? sIdx + dayFrac(e) - 0.5
-          : eIdx + dayFrac(e) - 0.5;
-
-      const width = Math.max(toPos - fromPos, minWidth);
-      const color = isHoliday(ev) ? "#DCFCE7" : "#FFEDD5";
-
-      acc.push({
-        id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sm}_${em}`}`,
-        from: fromPos,
-        to: fromPos + width,
-        color,
-        events: {
-          mouseover: function (mouseEvt) {
-            const ch = chartRef.current?.chart;
-            if (!ch) return;
-            if (ch.customTooltip) ch.customTooltip.destroy();
-
-            const names = [];
-            if (Array.isArray(countryName)) names.push(...countryName);
-            else if (typeof countryName === "string") names.push(countryName);
-            if (ev.country_name) names.push(ev.country_name);
-            const all = names.map((t) => t.toLowerCase());
-            const matchAny = (text, keys) => keys.some((k) => text.includes(k));
-            const isUSA = all.some((t) =>
-              matchAny(t, ["usa", "u.s.", "united states", "united states of america", "us"])
-            );
-            const isIndia = all.some((t) => matchAny(t, ["india", "bharat"]));
-            const formatDate = (d) => {
-              if (isUSA || (!isUSA && !isIndia)) {
-                return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
-              }
-              return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
-            };
-
-            const tip = `
-              <div style="padding:8px;font-size:12px;font-family:Inter">
-                <b>${ev.event_type || "Event"}:</b> ${ev.event_name || "-"}<br/>
-                <b>Start:</b> ${formatDate(s)}<br/>
-                <b>End&nbsp;&nbsp;:</b> ${formatDate(e)}<br/>
-                <b>Country:</b> ${ev.country_name || "N/A"}
-              </div>
-            `;
-
-            const rect = ch.container.getBoundingClientRect();
-            const x = (mouseEvt.pageX || mouseEvt.clientX) - rect.left + 10;
-            const y = (mouseEvt.pageY || mouseEvt.clientY) - rect.top - 100;
-
-            ch.customTooltip = ch.renderer
-              .label(tip, x, y, "round", null, null, true)
-              .attr({
-                fill: "rgba(255,255,255,0.95)",
-                stroke: "rgba(51,51,51,0.3)",
-                "stroke-width": 1,
-                r: 3,
-                padding: 8,
-                zIndex: 999,
-              })
-              .css({
-                boxShadow: "0 1px 3px rgba(0,0,0,0.12),0 1px 2px rgba(0,0,0,0.24)",
-              })
-              .add();
-          },
-          mouseout: function () {
-            const ch = chartRef.current?.chart;
-            if (ch?.customTooltip) {
-              ch.customTooltip.destroy();
-              ch.customTooltip = null;
-            }
-          },
-        },
-      });
-
-      return acc;
-    }, []);
-  },
-  [isWeekly, countryName]
-);
+    },
+    [isWeekly, seriesColors.holidays, seriesColors.promotions]
+  );
 
   const today = new Date();
-  const monthlyTodayLabel = today.toLocaleString("default", {
-    month: "short",
-    year: "2-digit",
-  });
-
+  const monthlyTodayLabel = today.toLocaleString("default", { month: "short", year: "2-digit" });
   let safeTodayIdx = -1;
   if (isWeekly) {
     const wkLbl = isoWeekLabelFor(today);
-    const exact = months.indexOf(wkLbl);
-    if (exact !== -1) {
-      safeTodayIdx = exact;
-    } else {
-      const mapped = months.map((l) => parseISOWeekLabel(String(l)));
-      safeTodayIdx = mapped.reduce((acc, d, i) => {
-        if (d && d.getTime() <= today.getTime()) return i;
-        return acc;
-      }, -1);
-      if (safeTodayIdx === -1 && months.length) {
-        safeTodayIdx = -1;
-      }
+    const exact = months?.indexOf(wkLbl);
+    if (exact !== -1) safeTodayIdx = exact;
+    else {
+      const mapped = (months || []).map((l) => parseISOWeekLabel(String(l)));
+      safeTodayIdx = mapped.reduce((acc, d, i) => (d && d.getTime() <= today.getTime() ? i : acc), -1);
+      if (safeTodayIdx === -1 && (months || []).length) safeTodayIdx = -1;
     }
   } else {
-    const idx = months.indexOf(monthlyTodayLabel);
-    safeTodayIdx = idx === -1 ? (months.length ? months.length - 1 : -1) : idx;
+    const idx = months?.indexOf(monthlyTodayLabel);
+    safeTodayIdx = idx === -1 ? ((months || []).length ? (months.length - 1) : -1) : idx;
   }
 
   const seriesData = useMemo(() => {
     if (!months || !months.length) {
-      return {
-        actual: [],
-        baseline: [],
-        baseline_forecast: [],
-        ml: [],
-        ml_forecast: [],
-        consensus: [],
-        consensus_forecast: [],
-      };
+      return { actual: [], baseline: [], baseline_forecast: [], ml: [], ml_forecast: [], consensus: [], consensus_forecast: [] };
     }
-
-    const getRow = (row) =>
-      months.map((m) => {
-        const v = data?.[m]?.[row];
-        return v == null || v === "-" ? null : +v;
-      });
+    const getRow = (row) => months.map((m) => {
+      const v = data?.[m]?.[row];
+      return v == null || v === "-" ? null : +v;
+    });
 
     const baselineFull = getRow("Baseline Forecast");
     const mlFull = getRow("ML Forecast");
@@ -910,10 +2373,7 @@ export default function ForecastChart({
       const out = [...futArr];
       let bridgePos = -1;
       for (let i = 1; i < out.length; i++) {
-        if (out[i] != null && out[i - 1] == null) {
-          bridgePos = i - 1;
-          break;
-        }
+        if (out[i] != null && out[i - 1] == null) { bridgePos = i - 1; break; }
       }
       if (bridgePos >= 0) {
         out[bridgePos] = histArr?.[bridgePos] ?? null;
@@ -925,10 +2385,7 @@ export default function ForecastChart({
     const firstFutureOnly = (arr) => {
       let found = false;
       return arr.map((v, i) => {
-        if (i > safeTodayIdx && v != null && !found) {
-          found = true;
-          return v;
-        }
+        if (i > safeTodayIdx && v != null && !found) { found = true; return v; }
         return null;
       });
     };
@@ -944,106 +2401,61 @@ export default function ForecastChart({
     let consFut = join(histMask(consFull), firstFutureOnly(consFull));
 
     const rangeSelected = selectedRangeActive ?? true;
-
     if (isWeekly && !rangeSelected) {
-      const WEEKS_WINDOW = 6; 
+      const WEEKS_WINDOW = 6;
       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
       const lastIdx = months.length - 1;
-
       const todayIdx = safeTodayIdx === -1 ? 0 : safeTodayIdx;
-
       const histFrom = clamp(todayIdx - (WEEKS_WINDOW - 1), 0, lastIdx);
       const histTo = clamp(todayIdx, 0, lastIdx);
-
       const futFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx);
       const futTo = clamp(futFrom + WEEKS_WINDOW, 0, lastIdx);
-
-      const applyWindow = (arr, from, to) =>
-        arr.map((v, i) => (i >= from && i <= to ? v : null));
+      const applyWindow = (arr, from, to) => arr.map((v, i) => (i >= from && i <= to ? v : null));
 
       actual = applyWindow(actualFull, histFrom, futTo);
-
       baselineHist = applyWindow(baselineHist, histFrom, histTo);
       baselineFut = applyWindow(baselineFut, futFrom, futTo);
-
       mlHist = applyWindow(mlHist, histFrom, histTo);
       mlFut = applyWindow(mlFut, futFrom, futTo);
-
       consHist = applyWindow(consHist, histFrom, histTo);
       consFut = applyWindow(consFut, futFrom, futTo);
     }
 
-    return {
-      actual,
-      baseline: baselineHist,
-      baseline_forecast: baselineFut,
-      ml: mlHist,
-      ml_forecast: mlFut,
-      consensus: consHist,
-      consensus_forecast: consFut,
-    };
-  }, [months, data, safeTodayIdx, isWeekly]);
+    return { actual, baseline: baselineHist, baseline_forecast: baselineFut, ml: mlHist, ml_forecast: mlFut, consensus: consHist, consensus_forecast: consFut };
+  }, [months, data, safeTodayIdx, isWeekly, selectedRangeActive]);
 
-  const hasBaselineFc = (seriesData.baseline_forecast || []).some(
-    (v) => v != null
-  );
+  const hasBaselineFc = (seriesData.baseline_forecast || []).some((v) => v != null);
   const hasMlFc = (seriesData.ml_forecast || []).some((v) => v != null);
-  const hasConsFc = (seriesData.consensus_forecast || []).some(
-    (v) => v != null
-  );
+  const hasConsFc = (seriesData.consensus_forecast || []).some((v) => v != null);
   const hasAnyForecastData = hasBaselineFc || hasMlFc || hasConsFc;
 
   const handleDownloadPdf = useCallback(() => {
     const ch = chartRef.current?.chart;
     if (!ch) {
-      setErrorSnackbar?.({
-        open: true,
-        message: "Chart not ready yet. Try again in a moment.",
-      });
+      setErrorSnackbar?.({ open: true, message: "Chart not ready yet. Try again in a moment." });
       return;
     }
-
     try {
-      if (ch.customTooltip) {
-        ch.customTooltip.destroy();
-        ch.customTooltip = null;
-      }
-
-      const filename = `demand_forecast_${new Date()
-        .toISOString()
-        .slice(0, 10)}`;
-
-      const exportOpts = {
-        type: "application/pdf",
-        filename,
-        scale: 2,
-        sourceWidth: ch.chartWidth,
-        sourceHeight: ch.chartHeight,
-      };
-
-      if (typeof ch.exportChartLocal === "function") {
-        ch.exportChartLocal(exportOpts);
-      } else if (typeof ch.exportChart === "function") {
-        ch.exportChart(exportOpts);
-      } else {
-        throw new Error("Highcharts exporting module not loaded");
-      }
+      if (ch.customTooltip) { ch.customTooltip.destroy(); ch.customTooltip = null; }
+      const filename = `demand_forecast_${new Date().toISOString().slice(0, 10)}`;
+      const exportOpts = { type: "application/pdf", filename, scale: 2, sourceWidth: ch.chartWidth, sourceHeight: ch.chartHeight };
+      if (typeof ch.exportChartLocal === "function") ch.exportChartLocal(exportOpts);
+      else if (typeof ch.exportChart === "function") ch.exportChart(exportOpts);
+      else throw new Error("Highcharts exporting module not loaded");
     } catch {
       setErrorSnackbar?.({
         open: true,
-        message:
-          "Unable to export PDF. Make sure exporting modules are loaded and try again.",
+        message: "Unable to export PDF. Make sure exporting modules are loaded and try again.",
       });
     }
   }, [setErrorSnackbar]);
 
+  // Helper to get current color by key for legend/series
+  const getColor = useCallback((key) => seriesColors[key] || "#999", [seriesColors]);
+
   const options = useMemo(
     () => ({
-      chart: {
-        backgroundColor: "#fafafa",
-        style: { fontFamily: "Inter" },
-        zoomType: "x",
-      },
+      chart: { backgroundColor: "#fafafa", style: { fontFamily: "Inter" }, zoomType: "x" },
       title: { text: "" },
       xAxis: {
         categories: months,
@@ -1054,118 +2466,51 @@ export default function ForecastChart({
         endOnTick: true,
         title: { text: "", style: AXIS_TITLE_STYLE },
         labels: { style: AXIS_LABEL_STYLE, overflow: "justify", crop: false },
-        plotBands: createPlotBands(filteredEvents, months, overlays),
+        plotBands: createPlotBands(filteredEvents, months || [], overlays),
       },
       yAxis: {
         title: { text: "Units (in thousands)", style: AXIS_TITLE_STYLE },
         labels: {
           align: "center",
           style: AXIS_LABEL_STYLE,
-          formatter() {
-            if (this.value === 0) return "0";
-            return this.value / 1000;
-          },
+          formatter() { return this.value === 0 ? "0" : this.value / 1000; },
         },
         gridLineDashStyle: "ShortDash",
         gridLineColor: "#e0e0e0",
         min: null,
       },
-
       tooltip: {
         shared: true,
         useHTML: true,
         formatter: function () {
-          const idx =
-            (this.points && this.points[0] && this.points[0].point.x) ??
-            (this.point && this.point.x);
-
+          const idx = (this.points && this.points[0] && this.points[0].point.x) ?? (this.point && this.point.x);
           const categories = this.points?.[0]?.series?.xAxis?.categories || [];
-          const header =
-            Number.isInteger(idx) && categories[idx] !== undefined
-              ? categories[idx]
-              : String(this.x);
-
+          const header = Number.isInteger(idx) && categories[idx] !== undefined ? categories[idx] : String(this.x);
           let pts = this.points || [this];
-
           if (idx === safeTodayIdx) {
             const hideSolid = new Set(["Baseline", "ML", "Consensus"]);
             pts = pts.filter((p) => !hideSolid.has(p.series.name));
           }
-
           let html = `<div style="font-weight:600;margin-bottom:4px">${header}</div>`;
           pts.forEach((p) => {
             if (p.y == null) return;
             const cleanName = p.series.name.replace(/\s*\(\d+\)\s*$/, "");
-            html += `<span style="color:${
-              p.color
-            }">●</span> ${cleanName}: <b>${Highcharts.numberFormat(
-              p.y,
-              0
-            )}</b><br/>`;
+            html += `<span style="color:${p.color}">●</span> ${cleanName}: <b>${Highcharts.numberFormat(p.y, 0)}</b><br/>`;
           });
           return html;
         },
       },
-
       legend: { enabled: false },
       credits: { enabled: false },
-      exporting: {
-        enabled: false, 
-        fallbackToExportServer: true,
-      },
+      exporting: { enabled: false, fallbackToExportServer: true },
       series: [
-        {
-          name: "Actual",
-          data: seriesData.actual,
-          color: "#DC2626",
-          marker: { enabled: false },
-          visible: !hiddenSeries[0],
-        },
-        {
-          name: "Baseline",
-          data: seriesData.baseline,
-          color: "#60A5FA",
-          marker: { enabled: false },
-          visible: !hiddenSeries[1],
-        },
-        {
-          name: "ML",
-          data: seriesData.ml,
-          color: "#EAB308",
-          marker: { enabled: false },
-          visible: !hiddenSeries[2],
-        },
-        {
-          name: "Consensus",
-          data: seriesData.consensus,
-          color: "#0E7490",
-          marker: { enabled: false },
-          visible: !hiddenSeries[3],
-        },
-        {
-          name: "Baseline Forecast",
-          data: seriesData.baseline_forecast,
-          color: "#60A5FA",
-          dashStyle: "Dash",
-          marker: { enabled: false },
-          visible: !hiddenSeries[4],
-        },
-        {
-          name: "ML Forecast",
-          data: seriesData.ml_forecast,
-          color: "#A16207",
-          dashStyle: "Dash",
-          marker: { enabled: false },
-          visible: !hiddenSeries[5],
-        },
-        {
-          name: "Consensus Forecast",
-          data: seriesData.consensus_forecast,
-          color: "#0E7490",
-          dashStyle: "Dash",
-          marker: { enabled: false },
-          visible: !hiddenSeries[6],
-        },
+        { name: "Actual", data: seriesData.actual, color: getColor("actual"), marker: { enabled: false }, visible: !hiddenSeries[0] },
+        { name: "Baseline", data: seriesData.baseline, color: getColor("baseline"), marker: { enabled: false }, visible: !hiddenSeries[1] },
+        { name: "ML", data: seriesData.ml, color: getColor("ml"), marker: { enabled: false }, visible: !hiddenSeries[2] },
+        { name: "Consensus", data: seriesData.consensus, color: getColor("consensus"), marker: { enabled: false }, visible: !hiddenSeries[3] },
+        { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: getColor("baseline_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[4] },
+        { name: "ML Forecast", data: seriesData.ml_forecast, color: getColor("ml_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[5] },
+        { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: getColor("consensus_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[6] },
       ],
     }),
     [
@@ -1176,20 +2521,16 @@ export default function ForecastChart({
       hiddenSeries,
       createPlotBands,
       safeTodayIdx,
+      getColor,
     ]
   );
 
   const validateCountrySelection = useCallback(() => {
-    if (
-      !countryName ||
-      (Array.isArray(countryName) && countryName.length === 0) ||
-      countryName === ""
-    ) {
+    if (!countryName || (Array.isArray(countryName) && countryName.length === 0) || countryName === "") {
       if (setErrorSnackbar) {
         setErrorSnackbar({
           open: true,
-          message:
-            "Country is not selected. Please select a country before accessing holidays and promotions.",
+          message: "Country is not selected. Please select a country before accessing holidays and promotions.",
         });
       }
       return false;
@@ -1202,19 +2543,10 @@ export default function ForecastChart({
       const cfg = LEGEND_CONFIG.find((i) => i.key === key);
       if (!cfg) return;
 
-      const isForecastKey = [
-        "baseline_forecast",
-        "ml_forecast",
-        "consensus_forecast",
-      ].includes(key);
+      const isForecastKey = ["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
       if (isForecastKey && !hasAnyForecastData) return;
 
-      if (
-        (key === "holidays" || key === "promotions") &&
-        !validateCountrySelection()
-      ) {
-        return;
-      }
+      if ((key === "holidays" || key === "promotions") && !validateCountrySelection()) return;
 
       const ch = chartRef.current?.chart;
       if (!ch) return;
@@ -1223,9 +2555,7 @@ export default function ForecastChart({
         setOverlays((prev) => {
           const next = { ...prev, [cfg.key]: !prev[cfg.key] };
           setTimeout(() => {
-            ch.xAxis[0].update({
-              plotBands: createPlotBands(filteredEvents, months, next),
-            });
+            ch.xAxis[0].update({ plotBands: createPlotBands(filteredEvents, months || [], next) });
           }, 0);
           return next;
         });
@@ -1236,22 +2566,14 @@ export default function ForecastChart({
         setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
       }
     },
-    [
-      createPlotBands,
-      filteredEvents,
-      months,
-      validateCountrySelection,
-      hasAnyForecastData,
-    ]
+    [createPlotBands, filteredEvents, months, validateCountrySelection, hasAnyForecastData]
   );
 
   useEffect(() => {
     const ch = chartRef.current?.chart;
     if (!ch) return;
     const init = {};
-    ch.series.forEach((s, i) => {
-      init[i] = !s.visible;
-    });
+    ch.series.forEach((s, i) => { init[i] = !s.visible; });
     setHiddenSeries(init);
   }, []);
 
@@ -1263,25 +2585,20 @@ export default function ForecastChart({
       const next = { ...prev };
       forecastIdx.forEach((i) => {
         next[i] = !showForecast;
-        if (ch?.series?.[i]) {
-          showForecast ? ch.series[i].show(false) : ch.series[i].hide(false);
-        }
+        if (ch?.series?.[i]) { showForecast ? ch.series[i].show(false) : ch.series[i].hide(false); }
       });
       return next;
     });
   }, [showForecast]);
 
-  useEffect(
-    () => () => {
-      const ch = chartRef.current?.chart;
-      if (ch?.customTooltip) ch.customTooltip.destroy();
-    },
-    []
-  );
+  useEffect(() => () => {
+    const ch = chartRef.current?.chart;
+    if (ch?.customTooltip) ch.customTooltip.destroy();
+  }, []);
 
-  const activeKeys = LEGEND_CONFIG.filter((cfg) =>
-    cfg.isOverlay ? overlays[cfg.key] : !hiddenSeries[cfg.seriesIndex]
-  ).map((i) => i.key);
+  const activeKeys = LEGEND_CONFIG
+    .filter((cfg) => (cfg.isOverlay ? overlays[cfg.key] : !hiddenSeries[cfg.seriesIndex]))
+    .map((i) => i.key);
 
   const mapeStr = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
   const mapeColor = getMapeColor(mapeStr);
@@ -1292,28 +2609,17 @@ export default function ForecastChart({
 
     if (isWeekly && !selectedRangeActive) {
       const arrays = [
-        seriesData.actual,
-        seriesData.baseline,
-        seriesData.baseline_forecast,
-        seriesData.ml,
-        seriesData.ml_forecast,
-        seriesData.consensus,
-        seriesData.consensus_forecast,
+        seriesData.actual, seriesData.baseline, seriesData.baseline_forecast,
+        seriesData.ml, seriesData.ml_forecast, seriesData.consensus, seriesData.consensus_forecast,
       ];
-      let min = Infinity;
-      let max = -Infinity;
-
+      let min = Infinity, max = -Infinity;
       arrays.forEach((arr) => {
         (arr || []).forEach((v, i) => {
-          if (v != null) {
-            if (i < min) min = i;
-            if (i > max) max = i;
-          }
+          if (v != null) { if (i < min) min = i; if (i > max) max = i; }
         });
       });
-
       if (min !== Infinity && max !== -Infinity) {
-        const pad = 0.5; 
+        const pad = 0.5;
         ch.xAxis[0].setExtremes(min - pad, max + pad, true, false);
       } else {
         ch.xAxis[0].setExtremes(null, null, true, false);
@@ -1323,95 +2629,43 @@ export default function ForecastChart({
     }
   }, [isWeekly, months, seriesData, selectedRangeActive]);
 
-useEffect(() => {
-  const ch = chartRef.current?.chart;
-  if (!ch) return;
-  if (isWeekly && (selectedRangeActive ?? true)) {
-    ch.xAxis[0].setExtremes(null, null, true, false);
-  }
-}, [isWeekly, selectedRangeActive, months?.length]);
+  useEffect(() => {
+    const ch = chartRef.current?.chart;
+    if (!ch) return;
+    if (isWeekly && (selectedRangeActive ?? true)) {
+      ch.xAxis[0].setExtremes(null, null, true, false);
+    }
+  }, [isWeekly, selectedRangeActive, months?.length]);
+
   return (
     <Box
       sx={{
-        mt: 1,
-        mx: 1,
-        p: 1,
-        bgcolor: "#fff",
-        borderRadius: 1,
-        boxShadow: 1,
-        position: "relative",
-        border: "1px solid #CBD5E1",
+        mt: 1, mx: 1, p: 1, bgcolor: "#fff", borderRadius: 1, boxShadow: 1, position: "relative", border: "1px solid #CBD5E1",
       }}
     >
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 500,
-              fontSize: 14,
-              color: "#334155",
-            }}
-          >
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 500, fontSize: 14, color: "#334155" }}>
             Demand Forecast
           </Typography>
-          <Typography
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 500,
-              fontStyle: "normal",
-              fontSize: "14px",
-              lineHeight: "100%",
-              letterSpacing: "0.1px",
-              textAlign: "center",
-              verticalAlign: "middle",
-              color: "#4f4f58ff",
-            }}
-          >
-            |
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 600,
-              fontSize: 14,
-              color: "#555",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            MAPE:&nbsp;
-            <Box component="span" sx={{ color: mapeColor }}>
-              {mapeStr}
-            </Box>
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 500, fontSize: 14, color: "#4f4f58ff" }}>|</Typography>
+          <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: 14, color: "#555", display: "flex", alignItems: "center" }}>
+            MAPE:&nbsp;<Box component="span" sx={{ color: mapeColor }}>{mapeStr}</Box>
           </Typography>
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.3 }}>
-          <IconButton
-            ref={gridIconRef}
-            size="small"
-            onClick={() => setTreeOpen((v) => !v)}
-          >
+          <IconButton ref={gridIconRef} size="small" onClick={() => setTreeOpen((v) => !v)}>
             <GridViewIcon fontSize="small" />
           </IconButton>
           <IconButton size="small" onClick={handleDownloadPdf}>
-            <DownloadIcon
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <DownloadIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
           </IconButton>
           <IconButton size="small">
             <ShareIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small">
+          <IconButton size="small" onClick={() => setCfgOpen(true)}>
             <SettingsIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -1423,16 +2677,13 @@ useEffect(() => {
         onToggle={handleLegendClick}
         showForecast={showForecast}
         disableForecastLegend={!hasAnyForecastData}
+        getColor={getColor}
       />
 
       {/* Chart */}
-      <HighchartsReact
-        ref={chartRef}
-        highcharts={Highcharts}
-        options={options}
-      />
+      <HighchartsReact ref={chartRef} highcharts={Highcharts} options={options} />
 
-      {/* Floating tree menu */}
+      {/* Floating model menu */}
       <TreeMenu
         open={treeOpen}
         onClose={() => setTreeOpen(false)}
@@ -1441,6 +2692,25 @@ useEffect(() => {
         treeData={treeData}
         anchorEl={gridIconRef.current}
       />
+
+      {/* RIGHT SIDEBAR DRAWER */}
+      <Drawer
+        anchor="right"
+        open={cfgOpen}
+        onClose={() => setCfgOpen(false)}
+        keepMounted
+        PaperProps={{ sx: { width: 340, maxWidth: "90vw", p: 0 } }}
+      >
+        <GrapConfig
+          onClose={() => setCfgOpen(false)}
+          showGridLines={showGridLines}
+          onToggleGridLines={setShowGridLines}
+          seriesColors={seriesColors}
+          onChangeColor={handleColorChange}
+          selectedDataSources={selectedDataSources}
+          onToggleDataSource={handleDataSourceToggle}
+        />
+      </Drawer>
     </Box>
   );
 }

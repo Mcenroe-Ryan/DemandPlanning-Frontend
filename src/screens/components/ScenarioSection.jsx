@@ -78,8 +78,8 @@ const SIDEBAR_W = "clamp(280px, 18vw, 320px)";
 const COLLAPSED_W = "52px";
 const RIGHT_W = "clamp(420px, 34vw, 760px)";
 const GRAPH_HEIGHT = 200;
-const ACTUAL_COLOR = "#0891b2";
-const FORECAST_COLOR = "#64748b";
+const ACTUAL_COLOR = "#0E7490";
+const FORECAST_COLOR = "#0E7490";
 
 const enhanceForMobileDrag = (opts, isSmall, graphHeight) => {
   if (!isSmall) return opts;
@@ -427,9 +427,15 @@ const legendItems = [
 //   selectedSkuId,
 //   skuOptions,
 //   onChangeSku,
+//   // NEW (optional): interactive legend wiring
+//   legendConfig, // { actual: { on, color }, forecast: { on, color } }
+//   onToggleLegend, // (key: 'actual' | 'forecast') => void
 // }) {
 //   const labelSx = { fontWeight: 600, color: "#475569", fontSize: 12 };
 //   const valueSx = { color: "#475569", fontSize: 12, ml: 0.5 };
+
+//   const hasInteractiveLegend =
+//     legendConfig && typeof onToggleLegend === "function";
 
 //   return (
 //     <Stack spacing={1.25} sx={{ p: 1.25 }}>
@@ -462,7 +468,9 @@ const legendItems = [
 //             </Typography>
 //           </Stack>
 //         ))}
+
 //         <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />
+
 //         <Stack direction="row" alignItems="center" spacing={0.5}>
 //           <Typography variant="body2" sx={labelSx}>
 //             SKU:
@@ -497,34 +505,93 @@ const legendItems = [
 //       </Stack>
 
 //       <Stack direction="row" spacing={1} flexWrap="wrap">
-//         {legendItems.map((item) => (
-//           <Chip
-//             key={item.id}
-//             icon={item.indicator}
-//             label={item.label}
-//             variant="outlined"
-//             sx={{
-//               backgroundColor: "#eff6ff",
-//               borderColor: "#cbd5e1",
-//               borderRadius: "5px",
-//               height: 26,
-//               "& .MuiChip-label": { fontSize: 12, color: "#475569" },
-//               "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
-//             }}
-//           />
-//         ))}
+//         {hasInteractiveLegend ? (
+//           <>
+//             <Chip
+//               onClick={() => onToggleLegend("actual")}
+//               clickable
+//               icon={
+//                 <FiberManualRecord
+//                   sx={{ fontSize: 10, color: legendConfig.actual.color }}
+//                 />
+//               }
+//               label="Actual"
+//               variant={legendConfig.actual.on ? "outlined" : "filled"}
+//               sx={{
+//                 backgroundColor: legendConfig.actual.on ? "#eff6ff" : "#e2e8f0",
+//                 borderColor: legendConfig.actual.color,
+//                 borderRadius: "5px",
+//                 height: 26,
+//                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+//                 "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+//               }}
+//             />
+//             <Chip
+//               onClick={() => onToggleLegend("forecast")}
+//               clickable
+//               icon={
+//                 <MoreHoriz
+//                   sx={{ fontSize: 15, color: legendConfig.forecast.color }}
+//                 />
+//               }
+//               label="Forecast"
+//               variant={legendConfig.forecast.on ? "outlined" : "filled"}
+//               sx={{
+//                 backgroundColor: legendConfig.forecast.on
+//                   ? "#eff6ff"
+//                   : "#e2e8f0",
+//                 borderColor: legendConfig.forecast.color,
+//                 borderRadius: "5px",
+//                 height: 26,
+//                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+//                 "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+//               }}
+//             />
+//           </>
+//         ) : (
+//           // fallback (unchanged)
+//           <>
+//             <Chip
+//               icon={
+//                 <FiberManualRecord sx={{ fontSize: 10, color: ACTUAL_COLOR }} />
+//               }
+//               label="Actual"
+//               variant="outlined"
+//               sx={{
+//                 backgroundColor: "#eff6ff",
+//                 borderColor: "#cbd5e1",
+//                 borderRadius: "5px",
+//                 height: 26,
+//                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+//                 "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+//               }}
+//             />
+//             <Chip
+//               icon={<MoreHoriz sx={{ fontSize: 15, color: FORECAST_COLOR }} />}
+//               label="Forecast"
+//               variant="outlined"
+//               sx={{
+//                 backgroundColor: "#eff6ff",
+//                 borderColor: "#cbd5e1",
+//                 borderRadius: "5px",
+//                 height: 26,
+//                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
+//                 "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+//               }}
+//             />
+//           </>
+//         )}
 //       </Stack>
 //     </Stack>
 //   );
 // }
-
 function ChartSectionHeader({
   header,
   selectedSkuId,
   skuOptions,
   onChangeSku,
-  // NEW (optional): interactive legend wiring
-  legendConfig, // { actual: { on, color }, forecast: { on, color } }
+  // Optional for interactive legend
+  legendConfig, // { actual: { on: boolean, color: string }, forecast: { on: boolean, color: string } }
   onToggleLegend, // (key: 'actual' | 'forecast') => void
 }) {
   const labelSx = { fontWeight: 600, color: "#475569", fontSize: 12 };
@@ -550,11 +617,7 @@ function ChartSectionHeader({
             sx={{ whiteSpace: "nowrap" }}
           >
             {idx > 0 && (
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ mx: 1, height: 16 }}
-              />
+              <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 16 }} />
             )}
             <Typography variant="body2" sx={labelSx}>
               {item.label}
@@ -603,76 +666,75 @@ function ChartSectionHeader({
       <Stack direction="row" spacing={1} flexWrap="wrap">
         {hasInteractiveLegend ? (
           <>
+            {/* Actual */}
             <Chip
               onClick={() => onToggleLegend("actual")}
               clickable
-              icon={
-                <FiberManualRecord
-                  sx={{ fontSize: 10, color: legendConfig.actual.color }}
-                />
-              }
+              icon={<FiberManualRecord sx={{ fontSize: 10 }} />}
               label="Actual"
               variant={legendConfig.actual.on ? "outlined" : "filled"}
               sx={{
+                "--legend-color": legendConfig.actual.color,
                 backgroundColor: legendConfig.actual.on ? "#eff6ff" : "#e2e8f0",
-                borderColor: legendConfig.actual.color,
+                borderColor: "var(--legend-color)",
                 borderRadius: "5px",
                 height: 26,
                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
-                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+                "& .MuiChip-icon": { ml: "8px", color: "var(--legend-color)" },
+                "& .MuiChip-icon svg": { color: "var(--legend-color)" },
               }}
             />
+
+            {/* Forecast */}
             <Chip
               onClick={() => onToggleLegend("forecast")}
               clickable
-              icon={
-                <MoreHoriz
-                  sx={{ fontSize: 15, color: legendConfig.forecast.color }}
-                />
-              }
+              icon={<MoreHoriz sx={{ fontSize: 15 }} />}
               label="Forecast"
               variant={legendConfig.forecast.on ? "outlined" : "filled"}
               sx={{
-                backgroundColor: legendConfig.forecast.on
-                  ? "#eff6ff"
-                  : "#e2e8f0",
-                borderColor: legendConfig.forecast.color,
+                "--legend-color": legendConfig.forecast.color,
+                backgroundColor: legendConfig.forecast.on ? "#eff6ff" : "#e2e8f0",
+                borderColor: "var(--legend-color)",
                 borderRadius: "5px",
                 height: 26,
                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
-                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+                "& .MuiChip-icon": { ml: "8px", color: "var(--legend-color)" },
+                "& .MuiChip-icon svg": { color: "var(--legend-color)" },
               }}
             />
           </>
         ) : (
-          // fallback (unchanged)
+          // Fallback (non-interactive) — uses your ACTUAL_COLOR / FORECAST_COLOR constants
           <>
             <Chip
-              icon={
-                <FiberManualRecord sx={{ fontSize: 10, color: ACTUAL_COLOR }} />
-              }
+              icon={<FiberManualRecord sx={{ fontSize: 10 }} />}
               label="Actual"
               variant="outlined"
               sx={{
+                "--legend-color": ACTUAL_COLOR,
                 backgroundColor: "#eff6ff",
                 borderColor: "#cbd5e1",
                 borderRadius: "5px",
                 height: 26,
                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
-                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+                "& .MuiChip-icon": { ml: "8px", color: "var(--legend-color)" },
+                "& .MuiChip-icon svg": { color: "var(--legend-color)" },
               }}
             />
             <Chip
-              icon={<MoreHoriz sx={{ fontSize: 15, color: FORECAST_COLOR }} />}
+              icon={<MoreHoriz sx={{ fontSize: 15 }} />}
               label="Forecast"
               variant="outlined"
               sx={{
+                "--legend-color": FORECAST_COLOR,
                 backgroundColor: "#eff6ff",
                 borderColor: "#cbd5e1",
                 borderRadius: "5px",
                 height: 26,
                 "& .MuiChip-label": { fontSize: 12, color: "#475569" },
-                "& .MuiChip-icon": { ml: "8px", "& svg": { fontSize: 12 } },
+                "& .MuiChip-icon": { ml: "8px", color: "var(--legend-color)" },
+                "& .MuiChip-icon svg": { color: "var(--legend-color)" },
               }}
             />
           </>
@@ -681,6 +743,7 @@ function ChartSectionHeader({
     </Stack>
   );
 }
+
 
 function DisruptionList({ rowsFromJson, onCountChange }) {
   const [rows, setRows] = useState(
