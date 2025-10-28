@@ -16,80 +16,80 @@
           { "week": 35, "units": 10000 },
           { "week": 36, "units": 15000 }
         ],
-  "scenarios": {
-    "SCN001": {
-      "id": "SCN001",
-      "name": "Sudden Spike in Demand",
-      "impact": "+30%",
-      "duration": "3 Months",
-      "description": "30% increase due to marketing campaign",
-      "category": "demand_increase",
-      "applicableRegions": ["India", "Asia"]
-    },
-    "SCN002": {
-      "id": "SCN002",
-      "name": "Sudden Drop in Demand",
-      "impact": "-20%",
-      "duration": "6 Months",
-      "description": "20% drop due to economic slowdown",
-      "category": "demand_decrease",
-      "applicableRegions": ["India", "Global"]
-    },
-    "SCN003": {
-      "id": "SCN003",
-      "name": "New Market Expansion",
-      "impact": "+40%",
-      "duration": "12 Months",
-      "description": "Launch in new region with 40% uplift",
-      "category": "expansion",
-      "applicableRegions": ["India"]
-    },
-    "SCN004": {
-      "id": "SCN004",
-      "name": "Supplier Disruption",
-      "impact": "-15%",
-      "duration": "4 Months",
-      "description": "Unfulfilled demand due to raw material shortage",
-      "category": "supply_disruption",
-      "applicableRegions": ["India", "Asia"]
-    },
-    "SCN005": {
-      "id": "SCN005",
-      "name": "Fitness Trend Surge",
-      "impact": "+45%",
-      "duration": "8 Months",
-      "description": "45% increase due to fitness trend and gym reopenings",
-      "category": "demand_increase",
-      "applicableRegions": ["USA", "North America"]
-    },
-    "SCN006": {
-      "id": "SCN006",
-      "name": "Competitive Pricing Pressure",
-      "impact": "-25%",
-      "duration": "5 Months",
-      "description": "25% drop due to competitor price reduction",
-      "category": "competitive_pressure",
-      "applicableRegions": ["USA", "Global"]
-    },
-    "SCN007": {
-      "id": "SCN007",
-      "name": "New Flavor Launch",
-      "impact": "+35%",
-      "duration": "10 Months",
-      "description": "Launch new chocolate flavor with 35% demand boost",
-      "category": "product_launch",
-      "applicableRegions": ["USA"]
-    },
-    "SCN008": {
-      "id": "SCN008",
-      "name": "Supply Chain Cost Increase",
-      "impact": "-18%",
-      "duration": "6 Months",
-      "description": "Reduced demand due to increased product costs",
-      "category": "cost_increase",
-      "applicableRegions": ["USA", "North America"]
-    }
-  },
+        "scenarios": {
+          "SCN001": {
+            "id": "SCN001",
+            "name": "Sudden Spike in Demand",
+            "impact": "+30%",
+            "duration": "3 Months",
+            "description": "30% increase due to marketing campaign",
+            "category": "demand_increase",
+            "applicableRegions": ["India", "Asia"]
+          },
+          "SCN002": {
+            "id": "SCN002",
+            "name": "Sudden Drop in Demand",
+            "impact": "-20%",
+            "duration": "6 Months",
+            "description": "20% drop due to economic slowdown",
+            "category": "demand_decrease",
+            "applicableRegions": ["India", "Global"]
+          },
+          "SCN003": {
+            "id": "SCN003",
+            "name": "New Market Expansion",
+            "impact": "+40%",
+            "duration": "12 Months",
+            "description": "Launch in new region with 40% uplift",
+            "category": "expansion",
+            "applicableRegions": ["India"]
+          },
+          "SCN004": {
+            "id": "SCN004",
+            "name": "Supplier Disruption",
+            "impact": "-15%",
+            "duration": "4 Months",
+            "description": "Unfulfilled demand due to raw material shortage",
+            "category": "supply_disruption",
+            "applicableRegions": ["India", "Asia"]
+          },
+          "SCN005": {
+            "id": "SCN005",
+            "name": "Fitness Trend Surge",
+            "impact": "+45%",
+            "duration": "8 Months",
+            "description": "45% increase due to fitness trend and gym reopenings",
+            "category": "demand_increase",
+            "applicableRegions": ["USA", "North America"]
+          },
+          "SCN006": {
+            "id": "SCN006",
+            "name": "Competitive Pricing Pressure",
+            "impact": "-25%",
+            "duration": "5 Months",
+            "description": "25% drop due to competitor price reduction",
+            "category": "competitive_pressure",
+            "applicableRegions": ["USA", "Global"]
+          },
+          "SCN007": {
+            "id": "SCN007",
+            "name": "New Flavor Launch",
+            "impact": "+35%",
+            "duration": "10 Months",
+            "description": "Launch new chocolate flavor with 35% demand boost",
+            "category": "product_launch",
+            "applicableRegions": ["USA"]
+          },
+          "SCN008": {
+            "id": "SCN008",
+            "name": "Supply Chain Cost Increase",
+            "impact": "-18%",
+            "duration": "6 Months",
+            "description": "Reduced demand due to increased product costs",
+            "category": "cost_increase",
+            "applicableRegions": ["USA", "North America"]
+          }
+        },
         "forecast": [
           { "week": 36, "units": 28000 },
           { "week": 37, "units": 12000 },
@@ -110,15 +110,42 @@
           "eta": 4,
           "logistics": {
             "projectedRevenue": 74100,
+            "projectedRevenueChange": 33,
+
             "additionalRevenue": 72500,
+            "additionalRevenueChange": 42,
+            
             "logisticCost": -11000,
+            "logisticCostChange": 18,
+            
             "laborHandlingCost": -6500,
+            "laborHandlingCostChange": 18,
+
             "transactionCost": -5100,
+            "transactionCostChange": 15,
+
             "simulatedRevenue": 74500,
+            "simulatedRevenueChange": 29,
+
             "totalRevenue": 41000,
             "totalProfit": 21000,
             "totalCost": 178650,
             "profitMargin": 24
+          },
+          "graphByLocation": {
+            "actual": [
+              { "week": 1, "units": 2100 },
+              { "week": 2, "units": 2900 },
+              { "week": 3, "units": 3200 },
+              { "week": 4, "units": 4000 }
+            ],
+            "forecast": [
+              { "week": 5, "units": 4700 },
+              { "week": 6, "units": 4300 },
+              { "week": 7, "units": 4000 },
+              { "week": 8, "units": 3800 }
+              
+            ]
           }
         },
         {
@@ -141,6 +168,21 @@
             "totalProfit": 10000,
             "totalCost": 175000,
             "profitMargin": 18
+          },
+          "graphByLocation": {
+            "actual": [
+              { "week": 1, "units": 2300 },
+              { "week": 2, "units": 2800 },
+              { "week": 3, "units": 3400 },
+              { "week": 4, "units": 4200 }
+            ],
+            "forecast": [
+              { "week": 5, "units": 4600 },
+              { "week": 6, "units": 4100 },
+              { "week": 7, "units": 3700 },
+              { "week": 8, "units": 3500 }
+              
+            ]
           }
         },
         {
@@ -163,6 +205,21 @@
             "totalProfit": 30000,
             "totalCost": 168000,
             "profitMargin": 22
+          },
+           "graphByLocation": {
+            "actual": [
+              { "week": 1, "units": 2000 },
+              { "week": 2, "units": 2700 },
+              { "week": 3, "units": 3100 },
+              { "week": 4, "units": 4100 }
+            ],
+            "forecast": [
+              { "week": 5, "units": 4300 },
+              { "week": 6, "units": 4000 },
+              { "week": 7, "units": 3800 },
+              { "week": 8, "units": 3600 }
+              
+            ]
           }
         }
       ],
@@ -173,9 +230,13 @@
         "profitMargin": 24,
         "eta": "22 Jan 25",
         "logisticCost": 102100,
+        "logisticCostChange": -15,
         "laborHandlingCost": 73000,
+        "laborHandlingCostChange": -15,
         "revenue": 255650,
-        "totalCost": 178650
+         "revenueChange": 24,
+        "totalCost": 178650,
+        "totalCostChnage": 10
       },
       "disruptions": [
         {
@@ -186,7 +247,7 @@
           "selected": false
         },
         {
-          "date": "18 Jul, 2025 04:30PM", 
+          "date": "18 Jul, 2025 04:30PM",
           "location": "Hyderabad (HYD643)",
           "type": "Weather event",
           "description": "RTE - Soup Pack (Veg) (G46802008): Weather event",
@@ -203,7 +264,7 @@
         {
           "name": "Sudden Drop in Demand",
           "impact": "-20%",
-          "duration": "6 Months", 
+          "duration": "6 Months",
           "description": "20% drop due to economic slowdown"
         },
         {
@@ -231,17 +292,17 @@
       "nextWeekDemand": 4650,
       "demandForecast": {
         "actual": [
-          { "week": 33, "units": 4200 },
-          { "week": 34, "units": 8500 },
-          { "week": 35, "units": 9200 },
-          { "week": 36, "units": 12800 }
+          { "week": 33, "units": 5000 },
+          { "week": 34, "units": 5500 },
+          { "week": 35, "units": 7200 },
+          { "week": 36, "units": 8000 }
         ],
         "forecast": [
-          { "week": 36, "units": 22000 },
-          { "week": 37, "units": 18000 },
-          { "week": 38, "units": 15000 },
-          { "week": 39, "units": 9500 },
-          { "week": 40, "units": 11200 }
+          { "week": 36, "units": 8000 },
+          { "week": 37, "units": 7800 },
+          { "week": 38, "units": 7000 },
+          { "week": 39, "units": 6200 },
+          { "week": 40, "units": 5800 }
         ]
       },
       "locations": [
@@ -255,16 +316,43 @@
           "excessQty": 6100,
           "eta": 2,
           "logistics": {
-            "projectedRevenue": 125000,
-            "additionalRevenue": 118000,
-            "logisticCost": -18500,
-            "laborHandlingCost": -12300,
-            "transactionCost": -8200,
-            "simulatedRevenue": 124000,
+            "projectedRevenue": 188000,
+            "projectedRevenueChange": 30,
+
+            "additionalRevenue": 57000,
+            "additionalRevenueChange": 45,
+
+            "logisticCost": -19000,
+            "logisticCostChange": 15,
+
+            "laborHandlingCost": -13000,
+            "laborHandlingCostChange": 15,
+
+            "transactionCost": -7000,
+            "transactionCostChange": 10,
+
+            "simulatedRevenue": 206000,
+            "simulatedRevenueChange": 34,
+
             "totalRevenue": 98000,
             "totalProfit": 58000,
             "totalCost": 142000,
             "profitMargin": 28
+          },
+          "graphByLocation": {
+            "actual": [
+              { "week": 1, "units": 2100 },
+              { "week": 2, "units": 2900 },
+              { "week": 3, "units": 3200 },
+              { "week": 4, "units": 4000 }
+            ],
+            "forecast": [
+              { "week": 5, "units": 4700 },
+              { "week": 6, "units": 4300 },
+              { "week": 7, "units": 4000 },
+              { "week": 8, "units": 3800 }
+              
+            ]
           }
         },
         {
@@ -287,6 +375,21 @@
             "totalProfit": 38700,
             "totalCost": 156000,
             "profitMargin": 22
+          },
+          "graphByLocation": {
+            "actual": [
+              { "week": 1, "units": 2300 },
+              { "week": 2, "units": 2800 },
+              { "week": 3, "units": 3400 },
+              { "week": 4, "units": 4200 }
+            ],
+            "forecast": [
+              { "week": 5, "units": 4600 },
+              { "week": 6, "units": 4100 },
+              { "week": 7, "units": 3700 },
+              { "week": 8, "units": 3500 }
+              
+            ]
           }
         },
         {
@@ -309,19 +412,38 @@
             "totalProfit": 63800,
             "totalCost": 138000,
             "profitMargin": 31
+          },
+          "graphByLocation": {
+            "actual": [
+              { "week": 1, "units": 2000 },
+              { "week": 2, "units": 2700 },
+              { "week": 3, "units": 3100 },
+              { "week": 4, "units": 4100 }
+            ],
+            "forecast": [
+              { "week": 5, "units": 4300 },
+              { "week": 6, "units": 4000 },
+              { "week": 7, "units": 3800 },
+              { "week": 8, "units": 3600 }
+              
+            ]
           }
         }
       ],
       "recommendedLocation": {
         "name": "Denver",
-        "qty": 3240,
-        "profit": 89500,
-        "profitMargin": 28,
-        "eta": "24 Jan 25",
-        "logisticCost": 18500,
-        "laborHandlingCost": 12300,
+        "qty": 6800,
+        "profit": 91000,
+        "profitMargin": 30,
+        "eta": "21 Jan 25",
+        "logisticCost": 19000,
+        "logisticCostChange": -15,
+        "laborHandlingCost": 13000,
+        "laborHandlingCostChange": -15,
         "revenue": 245000,
-        "totalCost": 142000
+        "revenueChange": 24,
+        "totalCost": 142000,
+        "totalCostChnage": 10
       },
       "disruptions": [
         {
@@ -333,7 +455,7 @@
         },
         {
           "date": "28 Jul, 2025 02:45PM",
-          "location": "Denver (DEN25)", 
+          "location": "Denver (DEN25)",
           "type": "Weather event",
           "description": "Energy Drinks (ED45820): Severe weather affecting distribution",
           "selected": false
@@ -341,28 +463,28 @@
       ],
       "scenarios": [
         {
-          "name": "Fitness Trend Surge",
-          "impact": "+45%",
-          "duration": "8 Months",
-          "description": "45% increase due to fitness trend and gym reopenings"
+          "name": "Sudden Spike in Demand",
+          "impact": "+30%",
+          "duration": "3 Months",
+          "description": "30% surge due to viral social media challenge (3 mo)"
         },
         {
-          "name": "Competitive Pricing Pressure",
-          "impact": "-25%",
-          "duration": "5 Months",
-          "description": "25% drop due to competitor price reduction"
-        },
-        {
-          "name": "New Flavor Launch",
-          "impact": "+35%",
-          "duration": "10 Months",
-          "description": "Launch new chocolate flavor with 35% demand boost"
-        },
-        {
-          "name": "Supply Chain Cost Increase", 
-          "impact": "-18%",
+          "name": "Sudden Drop in Demand",
+          "impact": "-20%",
           "duration": "6 Months",
-          "description": "Reduced demand due to increased product costs"
+          "description": "20% dip after negative dietary press (6 mo)"
+        },
+        {
+          "name": "New Market Expansion",
+          "impact": "+40%",
+          "duration": "12 Months",
+          "description": "Launch in health stores, 40% uplift (12 mo)"
+        },
+        {
+          "name": "Supply Chain Cost Increase",
+          "impact": "-15%",
+          "duration": "4 Months",
+          "description": "15% shortage from protein source delays (4 mo)"
         }
       ]
     }
