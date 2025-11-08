@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -144,7 +144,7 @@ function MultiSelectWithCheckboxes({
   loading = false,
   disabled = false,
   onOpen,
-  single = false, 
+  single = false,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [search, setSearch] = useState("");
@@ -177,13 +177,12 @@ function MultiSelectWithCheckboxes({
   }, [anchorEl]);
 
   const handleSelectAll = () => {
-    if (single) return; 
+    if (single) return;
     setSelected(isAllSelected ? [] : safeOptions.map((opt) => opt[optionKey]));
   };
 
   const handleToggle = (value) => {
     if (single) {
-    
       if (selected.length === 0) {
         setSelected([value]);
       } else if (selected[0] === value) {
@@ -284,7 +283,7 @@ function MultiSelectWithCheckboxes({
             ...filteredOptions.map((option) => {
               const val = option[optionKey];
               const isSelected = selected.includes(val);
-              const isInactive = single && selected.length === 1 && !isSelected; // disable others
+              const isInactive = single && selected.length === 1 && !isSelected;
 
               return (
                 <MenuItem
@@ -444,7 +443,7 @@ export const DemandProjectMonth = () => {
 
   const handleEnableEditConsensus = () => {
     setCanEditConsensus(true);
-    setHighlightTrigger(Date.now()); 
+    setHighlightTrigger(Date.now());
   };
 
   const handleOpenChatBot = () => {
@@ -454,6 +453,38 @@ export const DemandProjectMonth = () => {
   const handleCloseChatBot = () => {
     setIsChatBotOpen(false);
   };
+
+  const fetchChannels = useCallback(() => {
+    setLoadingChannels(true);
+    axios
+      .get(`${API_BASE_URL}/getAllChannels`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+        params: {
+          _: Date.now(),
+        },
+      })
+      .then((res) => {
+        setFiltersData((prev) => ({
+          ...prev,
+          channels: Array.isArray(res.data) ? res.data : [],
+        }));
+      })
+      .catch(() =>
+        setFiltersData((prev) => ({
+          ...prev,
+          channels: [],
+        }))
+      )
+      .finally(() => setLoadingChannels(false));
+  }, []);
+
+  useEffect(() => {
+    fetchChannels();
+  }, [fetchChannels]);
 
   const handleClearFilters = () => {
     setDateRange({
@@ -468,7 +499,8 @@ export const DemandProjectMonth = () => {
     setSelectedSKUs([]);
     setSelectedChannels([]);
 
-    setFiltersData({
+    setFiltersData((prev) => ({
+      ...prev,
       countries: [],
       states: [],
       cities: [],
@@ -476,8 +508,10 @@ export const DemandProjectMonth = () => {
       categories: [],
       skus: [],
       channels: [],
-    });
+    }));
+
     setDateFilterKey((k) => k + 1);
+    fetchChannels();
   };
 
   useEffect(() => {
@@ -744,29 +778,6 @@ export const DemandProjectMonth = () => {
     setSelectedChannels([]);
   }, [selectedSKUs]);
 
-  useEffect(() => {
-    setLoadingChannels(true);
-    axios
-      .get(`${API_BASE_URL}/getAllChannels`, {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-        params: {
-          _: Date.now(),
-        },
-      })
-      .then((res) => {
-        setFiltersData((prev) => ({
-          ...prev,
-          channels: Array.isArray(res.data) ? res.data : [],
-        }));
-      })
-      .catch(() => setFiltersData((prev) => ({ ...prev, channels: [] })))
-      .finally(() => setLoadingChannels(false));
-  }, []);
-
   return (
     <Box>
       <AppBar
@@ -954,7 +965,7 @@ export const DemandProjectMonth = () => {
             loading={loadingCountries}
             onOpen={fetchCountries}
             width={110}
-            single 
+            single
             disabled={
               activeTab === 1 ||
               activeTab === 2 ||
@@ -973,7 +984,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search state"
             loading={loadingStates}
             disabled={
-              selectedCountry.length === 0 || 
+              selectedCountry.length === 0 ||
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -992,7 +1003,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search city"
             loading={loadingCities}
             disabled={
-              selectedState.length === 0 || 
+              selectedState.length === 0 ||
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1030,7 +1041,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search category"
             loading={loadingCategories}
             disabled={
-              selectedPlants.length === 0 || 
+              selectedPlants.length === 0 ||
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1049,7 +1060,7 @@ export const DemandProjectMonth = () => {
             searchPlaceholder="Search SKU"
             loading={loadingSkus}
             disabled={
-              selectedCategories.length === 0 || 
+              selectedCategories.length === 0 ||
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1069,7 +1080,7 @@ export const DemandProjectMonth = () => {
             loading={loadingChannels}
             width={110}
             disabled={
-              selectedSKUs.length === 0 || 
+              selectedSKUs.length === 0 ||
               activeTab === 1 ||
               activeTab === 2 ||
               activeTab === 3 ||
@@ -1150,7 +1161,10 @@ export const DemandProjectMonth = () => {
               subMonths(new Date("2024-12-01"), 6),
               "yyyy-MM-dd"
             ),
-            endDate: format(addMonths(new Date("2025-12-31"), 6), "yyyy-MM-dd"),
+            endDate: format(
+              addMonths(new Date("2025-12-31"), 6),
+              "yyyy-MM-dd"
+            ),
           });
 
           if (
@@ -1167,7 +1181,8 @@ export const DemandProjectMonth = () => {
             setSelectedSKUs([]);
             setSelectedChannels([]);
 
-            setFiltersData({
+            setFiltersData((prev) => ({
+              ...prev,
               countries: [],
               states: [],
               cities: [],
@@ -1175,7 +1190,11 @@ export const DemandProjectMonth = () => {
               categories: [],
               skus: [],
               channels: [],
-            });
+            }));
+          }
+
+          if (newValue === 0) {
+            fetchChannels();
           }
 
           if (newValue === 2) {
@@ -1317,7 +1336,7 @@ export const DemandProjectMonth = () => {
                 <AnalyticsFrameSection />
               </Box>
             )
-          ) : activeTab === 4 ? ( 
+          ) : activeTab === 4 ? (
             scenariosLoading ? (
               <Box
                 sx={{
@@ -1331,7 +1350,7 @@ export const DemandProjectMonth = () => {
               </Box>
             ) : (
               <Box sx={{ width: "100%", bgcolor: "#f6faff", p: 0, m: 0 }}>
-                <ScenarioSection /> 
+                <ScenarioSection />
               </Box>
             )
           ) : (
