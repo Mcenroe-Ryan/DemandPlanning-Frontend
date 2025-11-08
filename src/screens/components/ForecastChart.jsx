@@ -13,7 +13,7 @@ import exportingInit from "highcharts/modules/exporting";
 import exportDataInit from "highcharts/modules/export-data";
 import offlineExportingInit from "highcharts/modules/offline-exporting";
 
-// initialize modules (handles both function export and { default } export)
+// initialize modules
 const initHCModule = (mod) => {
   if (!mod) return;
   if (typeof mod === "function") mod(Highcharts);
@@ -60,9 +60,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 const addAlpha = (hex, alpha = 0.22) => {
   if (!hex) return `rgba(0,0,0,${alpha})`;
   const h = hex.replace("#", "");
-  const r = h.length === 3 ? parseInt(h[0] + h[0], 16) : parseInt(h.slice(0, 2), 16);
-  const g = h.length === 3 ? parseInt(h[1] + h[1], 16) : parseInt(h.slice(2, 4), 16);
-  const b = h.length === 3 ? parseInt(h[2] + h[2], 16) : parseInt(h.slice(4, 6), 16);
+  const r =
+    h.length === 3 ? parseInt(h[0] + h[0], 16) : parseInt(h.slice(0, 2), 16);
+  const g =
+    h.length === 3 ? parseInt(h[1] + h[1], 16) : parseInt(h.slice(2, 4), 16);
+  const b =
+    h.length === 3 ? parseInt(h[2] + h[2], 16) : parseInt(h.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${alpha})`;
 };
 
@@ -84,20 +87,33 @@ const AXIS_LABEL_STYLE = {
 };
 const AXIS_TITLE_STYLE = { ...AXIS_LABEL_STYLE };
 
-// ========== Legend keys ==========
 const LEGEND_CONFIG = [
   { key: "actual", label: "Actual", seriesIndex: 0 },
   { key: "baseline", label: "Baseline", seriesIndex: 1 },
   { key: "ml", label: "ML", seriesIndex: 2 },
   { key: "consensus", label: "Consensus", seriesIndex: 3 },
-  { key: "baseline_forecast", label: "Baseline Forecast", dash: "Dash", seriesIndex: 4 },
-  { key: "ml_forecast", label: "ML Forecast", dash: "Dash", seriesIndex: 5 },
-  { key: "consensus_forecast", label: "Consensus Plan", dash: "Dash", seriesIndex: 6 },
+  {
+    key: "baseline_forecast",
+    label: "Baseline Forecast",
+    dash: "Dash",
+    seriesIndex: 4,
+  },
+  {
+    key: "ml_forecast",
+    label: "ML Forecast",
+    dash: "Dash",
+    seriesIndex: 5,
+  },
+  {
+    key: "consensus_forecast",
+    label: "Consensus Plan",
+    dash: "Dash",
+    seriesIndex: 6,
+  },
   { key: "holidays", label: "Holidays", isOverlay: true },
   { key: "promotions", label: "Promotions", isOverlay: true },
 ];
 
-// ========== Styled checkbox for the left menu ==========
 const BlueSquare = styled("span")({
   width: 18,
   height: 18,
@@ -131,33 +147,52 @@ const BlueCheckbox = (props) => (
   />
 );
 
-/* =========================
-   COLOR PALETTE (HSV)
-========================= */
-
-// utils: HEX ↔ RGB ↔ HSV
-function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
 function hexToRgb(hex) {
   if (!hex) return { r: 255, g: 0, b: 0 };
   const h = hex.replace("#", "");
-  const bigint = parseInt(h.length === 3 ? h.split("").map(ch => ch + ch).join("") : h, 16);
-  return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+  const bigint = parseInt(
+    h.length === 3
+      ? h
+          .split("")
+          .map((ch) => ch + ch)
+          .join("")
+      : h,
+    16
+  );
+  return {
+    r: (bigint >> 16) & 255,
+    g: (bigint >> 8) & 255,
+    b: bigint & 255,
+  };
 }
 function rgbToHex({ r, g, b }) {
   const toHex = (v) => v.toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 function rgbToHsv({ r, g, b }) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
   const d = max - min;
   let h = 0;
   if (d !== 0) {
     switch (max) {
-      case r: h = ((g - b) / d) % 6; break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-      default: break;
+      case r:
+        h = ((g - b) / d) % 6;
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+      default:
+        break;
     }
     h *= 60;
     if (h < 0) h += 360;
@@ -170,7 +205,9 @@ function hsvToRgb({ h, s, v }) {
   const c = v * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = v - c;
-  let rp = 0, gp = 0, bp = 0;
+  let rp = 0,
+    gp = 0,
+    bp = 0;
   if (0 <= h && h < 60) [rp, gp, bp] = [c, x, 0];
   else if (60 <= h && h < 120) [rp, gp, bp] = [x, c, 0];
   else if (120 <= h && h < 180) [rp, gp, bp] = [0, c, x];
@@ -184,33 +221,42 @@ function hsvToRgb({ h, s, v }) {
   };
 }
 
-function ColorPalette({ value = "#ff0000", onChange, width = 260, height = 180 }) {
+function ColorPalette({
+  value = "#ff0000",
+  onChange,
+  width = 260,
+  height = 180,
+}) {
   const start = rgbToHsv(hexToRgb(value));
   const [hsv, setHSV] = useState(start);
   const svRef = useRef(null);
   const hueRef = useRef(null);
 
-  // keep internal state in sync when value prop changes externally
   useEffect(() => {
     setHSV(rgbToHsv(hexToRgb(value)));
   }, [value]);
 
-  const commit = useCallback((nextHSV) => {
-    const hex = rgbToHex(hsvToRgb(nextHSV));
-    onChange?.(hex);
-  }, [onChange]);
+  const commit = useCallback(
+    (nextHSV) => {
+      const hex = rgbToHex(hsvToRgb(nextHSV));
+      onChange?.(hex);
+    },
+    [onChange]
+  );
 
-  // SV square handlers
-  const handleSV = useCallback((e) => {
-    const rect = svRef.current.getBoundingClientRect();
-    const x = clamp(e.clientX - rect.left, 0, rect.width);
-    const y = clamp(e.clientY - rect.top, 0, rect.height);
-    const s = x / rect.width;
-    const v = 1 - (y / rect.height);
-    const next = { ...hsv, s, v };
-    setHSV(next);
-    commit(next);
-  }, [hsv, commit]);
+  const handleSV = useCallback(
+    (e) => {
+      const rect = svRef.current.getBoundingClientRect();
+      const x = clamp(e.clientX - rect.left, 0, rect.width);
+      const y = clamp(e.clientY - rect.top, 0, rect.height);
+      const s = x / rect.width;
+      const v = 1 - y / rect.height;
+      const next = { ...hsv, s, v };
+      setHSV(next);
+      commit(next);
+    },
+    [hsv, commit]
+  );
 
   const startSV = (e) => {
     handleSV(e);
@@ -223,15 +269,17 @@ function ColorPalette({ value = "#ff0000", onChange, width = 260, height = 180 }
     window.addEventListener("mouseup", up);
   };
 
-  // Hue bar handlers
-  const handleHue = useCallback((e) => {
-    const rect = hueRef.current.getBoundingClientRect();
-    const y = clamp(e.clientY - rect.top, 0, rect.height);
-    const h = clamp(360 * (y / rect.height), 0, 360);
-    const next = { ...hsv, h };
-    setHSV(next);
-    commit(next);
-  }, [hsv, commit]);
+  const handleHue = useCallback(
+    (e) => {
+      const rect = hueRef.current.getBoundingClientRect();
+      const y = clamp(e.clientY - rect.top, 0, rect.height);
+      const h = clamp((360 * y) / rect.height, 0, 360);
+      const next = { ...hsv, h };
+      setHSV(next);
+      commit(next);
+    },
+    [hsv, commit]
+  );
 
   const startHue = (e) => {
     handleHue(e);
@@ -253,7 +301,6 @@ function ColorPalette({ value = "#ff0000", onChange, width = 260, height = 180 }
 
   return (
     <Box sx={{ display: "flex", gap: 1.25 }}>
-      {/* SV square */}
       <Box
         ref={svRef}
         onMouseDown={startSV}
@@ -272,18 +319,19 @@ function ColorPalette({ value = "#ff0000", onChange, width = 260, height = 180 }
         <Box
           sx={{
             position: "absolute",
-            width: 14, height: 14,
+            width: 14,
+            height: 14,
             borderRadius: "50%",
             border: "2px solid #fff",
             boxShadow: "0 0 0 1px rgba(0,0,0,0.4)",
             transform: "translate(-7px,-7px)",
-            left: svPointer.left, top: svPointer.top,
+            left: svPointer.left,
+            top: svPointer.top,
             pointerEvents: "none",
           }}
         />
       </Box>
 
-      {/* Hue bar */}
       <Box
         ref={hueRef}
         onMouseDown={startHue}
@@ -316,7 +364,6 @@ function ColorPalette({ value = "#ff0000", onChange, width = 260, height = 180 }
   );
 }
 
-// Swatch that opens a Popover with ColorPalette
 function ColorPopoverPicker({ value, onChange, swatchSize = 22 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -335,7 +382,7 @@ function ColorPopoverPicker({ value, onChange, swatchSize = 22 }) {
           border: "1px solid rgba(0,0,0,0.15)",
           bgcolor: value,
           boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.04)",
-          justifySelf: "end", // hugs the right edge of our grid
+          justifySelf: "end",
         }}
         title={value}
       />
@@ -347,22 +394,17 @@ function ColorPopoverPicker({ value, onChange, swatchSize = 22 }) {
         transformOrigin={{ vertical: "top", horizontal: "left" }}
         PaperProps={{ sx: { p: 1.25, borderRadius: 2 } }}
       >
-        <Typography sx={{ fontWeight: 600, mb: 1, fontSize: 14 }}>Custom</Typography>
+        <Typography sx={{ fontWeight: 600, mb: 1, fontSize: 14 }}>
+          Custom
+        </Typography>
         <ColorPalette value={value} onChange={onChange} />
       </Popover>
     </>
   );
 }
 
-/* =========================
-   Inline Graph Configuration (Drawer content)
-========================= */
 const dataSourceOptions = [
-  // Example placeholders (left commented intentionally)
-  // { id: "spikes", label: "Spikes", defaultColor: "#22C55E" },
-  // { id: "dips", label: "Dips", defaultColor: "#F97316" },
-  // { id: "holiday", label: "Holiday", defaultColor: "#64748B" },
-  // { id: "potential-stockout", label: "Potential Stockout Period", defaultColor: "#1D4ED8" },
+  // reserved
 ];
 
 function GrapConfig({
@@ -375,13 +417,30 @@ function GrapConfig({
   onToggleDataSource,
 }) {
   return (
-    <Box sx={{ height: "100%", bgcolor: "background.paper", p: 1.25, width: "100%" }}>
+    <Box
+      sx={{
+        height: "100%",
+        bgcolor: "background.paper",
+        p: 1.25,
+        width: "100%",
+      }}
+    >
       <Stack spacing={1.875}>
-        {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Stack direction="row" alignItems="center" spacing={0.625}>
             <SettingsIcon sx={{ width: 16, height: 16, color: "#626262" }} />
-            <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+            <Typography
+              sx={{
+                fontFamily: "Poppins, Helvetica",
+                fontWeight: 600,
+                fontSize: 14,
+                color: "#626262",
+              }}
+            >
               Graph Configuration
             </Typography>
           </Stack>
@@ -394,34 +453,67 @@ function GrapConfig({
 
         {/* Grid lines */}
         <Stack spacing={0.625}>
-          <Stack direction="row" alignItems="center" spacing={1.25} sx={{ pt: 0.625, pb: 1.25 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1.25}
+            sx={{ pt: 0.625, pb: 1.25 }}
+          >
             <Switch
               checked={!!showGridLines}
               onChange={(e) => onToggleGridLines?.(e.target.checked)}
               sx={{
-                width: 44, height: 24, p: 0,
+                width: 44,
+                height: 24,
+                p: 0,
                 "& .MuiSwitch-switchBase": {
-                  p: 0, m: 0.25, transitionDuration: "300ms",
+                  p: 0,
+                  m: 0.25,
+                  transitionDuration: "300ms",
                   "&.Mui-checked": {
                     transform: "translateX(20px)",
                     color: "#fff",
-                    "& + .MuiSwitch-track": { backgroundColor: "#3B82F6", opacity: 1, border: 0 },
+                    "& + .MuiSwitch-track": {
+                      backgroundColor: "#3B82F6",
+                      opacity: 1,
+                      border: 0,
+                    },
                   },
                 },
-                "& .MuiSwitch-thumb": { width: 20, height: 20 },
-                "& .MuiSwitch-track": { borderRadius: 12, backgroundColor: "#E5E7EB", opacity: 1 },
+                "& .MuiSwitch-thumb": {
+                  width: 20,
+                  height: 20,
+                },
+                "& .MuiSwitch-track": {
+                  borderRadius: 12,
+                  backgroundColor: "#E5E7EB",
+                  opacity: 1,
+                },
               }}
             />
-            <Typography sx={{ fontWeight: 500, fontSize: 14, color: "#475569" }}>
+            <Typography
+              sx={{
+                fontWeight: 500,
+                fontSize: 14,
+                color: "#475569",
+              }}
+            >
               Show Grid Lines
             </Typography>
           </Stack>
 
           <Divider />
 
-          {/* Series color palette (compact, no right whitespace) */}
+          {/* Series color palette */}
           <Stack spacing={1}>
-            <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+            <Typography
+              sx={{
+                fontFamily: "Poppins, Helvetica",
+                fontWeight: 600,
+                fontSize: 14,
+                color: "#626262",
+              }}
+            >
               Series Colors
             </Typography>
 
@@ -438,24 +530,49 @@ function GrapConfig({
                 key={k}
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: "14px auto 24px", // dot | label | swatch
+                  gridTemplateColumns: "14px auto 24px",
                   alignItems: "center",
                   columnGap: 1.25,
                   py: 0.5,
                 }}
               >
-                <Box sx={{ width: 12, height: 12, bgcolor: seriesColors[k], borderRadius: 1 }} />
-                <Typography sx={{ fontSize: 14, color: "#334155" }}>{label}</Typography>
-                <ColorPopoverPicker swatchSize={22} value={seriesColors[k]} onChange={(c) => onChangeColor?.(k, c)} />
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    bgcolor: seriesColors[k],
+                    borderRadius: 1,
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: 14,
+                    color: "#334155",
+                  }}
+                >
+                  {label}
+                </Typography>
+                <ColorPopoverPicker
+                  swatchSize={22}
+                  value={seriesColors[k]}
+                  onChange={(c) => onChangeColor?.(k, c)}
+                />
               </Box>
             ))}
           </Stack>
 
           <Divider />
 
-          {/* Overlay colors (same compact grid) */}
+          {/* Overlay colors */}
           <Stack spacing={1}>
-            <Typography sx={{ fontFamily: "Poppins, Helvetica", fontWeight: 600, fontSize: 14, color: "#626262" }}>
+            <Typography
+              sx={{
+                fontFamily: "Poppins, Helvetica",
+                fontWeight: 600,
+                fontSize: 14,
+                color: "#626262",
+              }}
+            >
               Overlay Colors
             </Typography>
 
@@ -473,16 +590,34 @@ function GrapConfig({
                   py: 0.5,
                 }}
               >
-                <Box sx={{ width: 12, height: 12, bgcolor: seriesColors[k], borderRadius: 1 }} />
-                <Typography sx={{ fontSize: 14, color: "#334155" }}>{label}</Typography>
-                <ColorPopoverPicker swatchSize={22} value={seriesColors[k]} onChange={(c) => onChangeColor?.(k, c)} />
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    bgcolor: seriesColors[k],
+                    borderRadius: 1,
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: 14,
+                    color: "#334155",
+                  }}
+                >
+                  {label}
+                </Typography>
+                <ColorPopoverPicker
+                  swatchSize={22}
+                  value={seriesColors[k]}
+                  onChange={(c) => onChangeColor?.(k, c)}
+                />
               </Box>
             ))}
           </Stack>
 
           <Divider />
 
-          {/* Data sources (kept, if you later re-enable) */}
+          {/* Data sources placeholder */}
           <Stack spacing={0.625} sx={{ py: 0.625 }}>
             {dataSourceOptions.map((option) => (
               <Stack
@@ -490,16 +625,44 @@ function GrapConfig({
                 direction="row"
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ py: 0.625, bgcolor: "background.paper", borderRadius: 1 }}
+                sx={{
+                  py: 0.625,
+                  bgcolor: "background.paper",
+                  borderRadius: 1,
+                }}
               >
                 <Checkbox
                   checked={!!selectedDataSources?.[option.id]}
                   onChange={() => onToggleDataSource?.(option.id)}
-                  sx={{ p: 0.625, "& .MuiSvgIcon-root": { width: 16, height: 16 } }}
+                  sx={{
+                    p: 0.625,
+                    "& .MuiSvgIcon-root": {
+                      width: 16,
+                      height: 16,
+                    },
+                  }}
                 />
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
-                  <RemoveIcon sx={{ width: 16, height: 16, color: seriesColors[option.id] || option.defaultColor }} />
-                  <Typography sx={{ flex: 1, fontWeight: 400, fontSize: 14, color: "#334155" }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ flex: 1 }}
+                >
+                  <RemoveIcon
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      color: seriesColors[option.id] || option.defaultColor,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      flex: 1,
+                      fontWeight: 400,
+                      fontSize: 14,
+                      color: "#334155",
+                    }}
+                  >
                     {option.label}
                   </Typography>
                 </Stack>
@@ -520,9 +683,6 @@ function GrapConfig({
   );
 }
 
-/* =========================
-   Tree menu bits
-========================= */
 const TreeMenuItem = ({ item, disabled }) => (
   <ListItem
     sx={{
@@ -538,9 +698,21 @@ const TreeMenuItem = ({ item, disabled }) => (
     <ListItemIcon sx={{ minWidth: 28 }}>
       <BlueCheckbox checked={item.checked} disabled />
     </ListItemIcon>
-    {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main", mr: 0.5 }} />}
+    {item.starred && (
+      <StarIcon
+        sx={{
+          fontSize: 14,
+          color: "warning.main",
+          mr: 0.5,
+        }}
+      />
+    )}
     <ListItemText
-      primary={<Typography variant="body2" color="text.secondary">{item.label}</Typography>}
+      primary={
+        <Typography variant="body2" color="text.secondary">
+          {item.label}
+        </Typography>
+      }
     />
   </ListItem>
 );
@@ -554,12 +726,21 @@ function TreeMenuSection({ section, modelName, setModelName }) {
       <Box
         onClick={toggle}
         sx={{
-          px: 1, py: 1, mb: 0.5, display: "flex", alignItems: "center", gap: 1,
-          borderRadius: 1, bgcolor: section.disabled ? "grey.100" : "primary.lighter",
-          cursor: section.disabled ? "not-allowed" : "pointer", opacity: section.disabled ? 0.6 : 1,
+          px: 1,
+          py: 1,
+          mb: 0.5,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          borderRadius: 1,
+          bgcolor: section.disabled ? "grey.100" : "primary.lighter",
+          cursor: section.disabled ? "not-allowed" : "pointer",
+          opacity: section.disabled ? 0.6 : 1,
         }}
       >
-        {section.id === 1 && section.disabled && <CircularProgress size={16} sx={{ mr: 1 }} />}
+        {section.id === 1 && section.disabled && (
+          <CircularProgress size={16} sx={{ mr: 1 }} />
+        )}
         <ExpandMoreIcon
           sx={{
             transform: open ? "rotate(0deg)" : "rotate(-90deg)",
@@ -567,19 +748,45 @@ function TreeMenuSection({ section, modelName, setModelName }) {
             color: section.disabled ? "grey.500" : "primary.main",
           }}
         />
-        <DescriptionOutlined sx={{ color: section.disabled ? "grey.500" : "primary.main" }} />
-        <Typography variant="subtitle2" fontWeight={600} sx={{ flexGrow: 1, color: section.disabled ? "grey.600" : "primary.main" }}>
+        <DescriptionOutlined
+          sx={{
+            color: section.disabled ? "grey.500" : "primary.main",
+          }}
+        />
+        <Typography
+          variant="subtitle2"
+          fontWeight={600}
+          sx={{
+            flexGrow: 1,
+            color: section.disabled ? "grey.600" : "primary.main",
+          }}
+        >
           {section.title}
           {section.id === 1 && section.disabled && " (Loading…)"}
         </Typography>
       </Box>
 
       {open && (
-        <Box sx={{ pl: 3, pointerEvents: section.disabled ? "none" : "auto", opacity: section.disabled ? 0.5 : 1 }}>
+        <Box
+          sx={{
+            pl: 3,
+            pointerEvents: section.disabled ? "none" : "auto",
+            opacity: section.disabled ? 0.5 : 1,
+          }}
+        >
           {section.type === "radio" ? (
-            <RadioGroup value={modelName} onChange={(e) => setModelName(e.target.value)} sx={{ display: "flex", gap: 0.5 }}>
+            <RadioGroup
+              value={modelName}
+              onChange={(e) => setModelName(e.target.value)}
+              sx={{
+                display: "flex",
+                gap: 0.5,
+              }}
+            >
               {section.items.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">No models available</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  No models available
+                </Typography>
               ) : (
                 section.items.map((item) => (
                   <FormControlLabel
@@ -587,8 +794,21 @@ function TreeMenuSection({ section, modelName, setModelName }) {
                     value={item.value}
                     control={<Radio size="small" />}
                     label={
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        {item.starred && <StarIcon sx={{ fontSize: 14, color: "warning.main" }} />}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        {item.starred && (
+                          <StarIcon
+                            sx={{
+                              fontSize: 14,
+                              color: "warning.main",
+                            }}
+                          />
+                        )}
                         <Typography variant="body2">{item.label}</Typography>
                       </Box>
                     }
@@ -600,7 +820,11 @@ function TreeMenuSection({ section, modelName, setModelName }) {
           ) : (
             <List disablePadding>
               {section.items.map((item) => (
-                <TreeMenuItem key={item.id} item={item} disabled={section.disabled} />
+                <TreeMenuItem
+                  key={item.id}
+                  item={item}
+                  disabled={section.disabled}
+                />
               ))}
             </List>
           )}
@@ -610,8 +834,18 @@ function TreeMenuSection({ section, modelName, setModelName }) {
   );
 }
 
-function TreeMenu({ open, onClose, modelName, setModelName, treeData, anchorEl }) {
-  const [pos, setPos] = useState({ top: 80, left: 40 });
+function TreeMenu({
+  open,
+  onClose,
+  modelName,
+  setModelName,
+  treeData,
+  anchorEl,
+}) {
+  const [pos, setPos] = useState({
+    top: 80,
+    left: 40,
+  });
 
   useEffect(() => {
     if (!open || !anchorEl) return;
@@ -623,15 +857,21 @@ function TreeMenu({ open, onClose, modelName, setModelName, treeData, anchorEl }
 
     let top = rect.bottom - parent.top + 8;
     let left = rect.left - parent.left;
+
     if (top + height > parent.height) top = rect.top - parent.top - height - 8;
     if (left + width > parent.width) left = parent.width - width - 16;
     if (left < 16) left = 16;
+
     setPos({ top, left });
   }, [open, anchorEl]);
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => !e.target.closest(".tree-menu-float") && onClose();
+    const handler = (e) => {
+      if (!e.target.closest(".tree-menu-float")) {
+        onClose();
+      }
+    };
     window.addEventListener("mousedown", handler);
     return () => window.removeEventListener("mousedown", handler);
   }, [open, onClose]);
@@ -642,30 +882,62 @@ function TreeMenu({ open, onClose, modelName, setModelName, treeData, anchorEl }
     <Paper
       className="tree-menu-float"
       elevation={4}
-      sx={{ position: "absolute", top: pos.top, left: pos.left, width: 260, maxHeight: 360, overflowY: "auto", p: 1, zIndex: 2000 }}
+      sx={{
+        position: "absolute",
+        top: pos.top,
+        left: pos.left,
+        width: 260,
+        maxHeight: 360,
+        overflowY: "auto",
+        p: 1,
+        zIndex: 2000,
+      }}
     >
       <Stack spacing={0.5}>
         {treeData.map((sec) => (
-          <TreeMenuSection key={sec.id} section={sec} modelName={modelName} setModelName={setModelName} />
+          <TreeMenuSection
+            key={sec.id}
+            section={sec}
+            modelName={modelName}
+            setModelName={setModelName}
+          />
         ))}
       </Stack>
     </Paper>
   );
 }
 
-/* =========================
-   Legend (uses current colors)
-========================= */
-const CustomLegend = ({ activeKeys, onToggle, showForecast, disableForecastLegend, getColor }) => (
-  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+const CustomLegend = ({
+  activeKeys,
+  onToggle,
+  showForecast,
+  disableForecastLegend,
+  getColor,
+}) => (
+  <Box
+    sx={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 2,
+      mb: 2,
+    }}
+  >
     {LEGEND_CONFIG.filter(({ key }) => {
       if (!showForecast) {
-        return !["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
+        return ![
+          "baseline_forecast",
+          "ml_forecast",
+          "consensus_forecast",
+        ].includes(key);
       }
       return true;
     }).map(({ key, label }) => {
       const color = getColor(key);
-      const isForecast = ["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
+      const isForecast = [
+        "baseline_forecast",
+        "ml_forecast",
+        "consensus_forecast",
+      ].includes(key);
       const disabled = isForecast && disableForecastLegend;
 
       return (
@@ -692,13 +964,24 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast, disableForecastLegen
             borderColor: "#CBD5E1",
             userSelect: "none",
             pointerEvents: disabled ? "none" : "auto",
-            "&:hover": { opacity: disabled ? 0.4 : 0.8 },
+            "&:hover": {
+              opacity: disabled ? 0.4 : 0.8,
+            },
           }}
           aria-disabled={disabled}
           title={disabled ? "No forecast data available" : undefined}
         >
           {isForecast ? (
-            <Box sx={{ width: 16, height: 12, mr: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 16,
+                height: 12,
+                mr: 1,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
               <Box
                 sx={{
                   width: "100%",
@@ -714,9 +997,24 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast, disableForecastLegen
               />
             </Box>
           ) : (
-            <Box sx={{ width: 12, height: 12, bgcolor: color, borderRadius: 1, mr: 1 }} />
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                bgcolor: color,
+                borderRadius: 1,
+                mr: 1,
+              }}
+            />
           )}
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 400, fontSize: 14, color: "#475569" }}>
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontSize: 14,
+              color: "#475569",
+            }}
+          >
             {label}
           </Typography>
         </Box>
@@ -725,10 +1023,12 @@ const CustomLegend = ({ activeKeys, onToggle, showForecast, disableForecastLegen
   </Box>
 );
 
-// ===== ISO week helpers =====
 const WEEK_LABEL_RE = /^(\d{4})-W(\d{2})$/;
+
 function getISOWeekParts(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
   const day = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - day);
   const year = d.getUTCFullYear();
@@ -754,9 +1054,17 @@ function parseISOWeekLabel(label) {
   return target;
 }
 
-/* =========================
-   Main component
-========================= */
+const formatEventDate = (dateStr) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "2-digit",
+  });
+};
+
 export default function ForecastChart({
   months,
   data,
@@ -776,11 +1084,13 @@ export default function ForecastChart({
   const [treeOpen, setTreeOpen] = useState(false);
   const [cfgOpen, setCfgOpen] = useState(false);
 
-  const [overlays, setOverlays] = useState({ holidays: false, promotions: false });
+  const [overlays, setOverlays] = useState({
+    holidays: false,
+    promotions: false,
+  });
   const [hiddenSeries, setHiddenSeries] = useState({});
   const [events, setEvents] = useState([]);
 
-  // NEW: grid & color state
   const [showGridLines, setShowGridLines] = useState(true);
   const [selectedDataSources, setSelectedDataSources] = useState({});
   const [seriesColors, setSeriesColors] = useState({
@@ -799,10 +1109,13 @@ export default function ForecastChart({
   });
 
   const handleColorChange = useCallback((key, color) => {
-    setSeriesColors((prev) => ({ ...prev, [key]: color }));
+    setSeriesColors((prev) => ({
+      ...prev,
+      [key]: color,
+    }));
   }, []);
 
-  // Wire grid lines to Highcharts
+  // grid lines
   useEffect(() => {
     const ch = chartRef.current?.chart;
     if (!ch) return;
@@ -814,9 +1127,20 @@ export default function ForecastChart({
 
   const handleDataSourceToggle = useCallback((id) => {
     setSelectedDataSources((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      if (id === "holiday") setOverlays((o) => ({ ...o, holidays: !!next[id] }));
-      if (id === "dips") setOverlays((o) => ({ ...o, promotions: !!next[id] }));
+      const next = {
+        ...prev,
+        [id]: !prev[id],
+      };
+      if (id === "holiday")
+        setOverlays((o) => ({
+          ...o,
+          holidays: !!next[id],
+        }));
+      if (id === "dips")
+        setOverlays((o) => ({
+          ...o,
+          promotions: !!next[id],
+        }));
       return next;
     });
   }, []);
@@ -849,15 +1173,28 @@ export default function ForecastChart({
     ];
   }, [models, loadingModels]);
 
-  // Fetch /events (resilient)
+  // Fetch /events
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
 
     const fetchEvents = async () => {
       const url = `${API_BASE_URL}/events?_=${Date.now()}`;
-      const opts = { method: "GET", signal: controller.signal, cache: "no-store", headers: { Accept: "application/json" } };
-      const withTimeout = (p, ms = 8000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+      const opts = {
+        method: "GET",
+        signal: controller.signal,
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+        },
+      };
+      const withTimeout = (p, ms = 8000) =>
+        Promise.race([
+          p,
+          new Promise((_, rej) =>
+            setTimeout(() => rej(new Error("timeout")), ms)
+          ),
+        ]);
 
       const tryOnce = async () => {
         const res = await withTimeout(fetch(url, opts));
@@ -866,7 +1203,11 @@ export default function ForecastChart({
         if (!text) return [];
         const ct = res.headers.get("content-type") || "";
         if (!ct.includes("application/json")) {
-          try { return JSON.parse(text); } catch { throw new Error("non-json body"); }
+          try {
+            return JSON.parse(text);
+          } catch {
+            throw new Error("non-json body");
+          }
         }
         return JSON.parse(text);
       };
@@ -888,7 +1229,10 @@ export default function ForecastChart({
     };
 
     fetchEvents();
-    return () => { alive = false; controller.abort(); };
+    return () => {
+      alive = false;
+      controller.abort();
+    };
   }, []);
 
   const filteredEvents = useMemo(() => {
@@ -907,100 +1251,277 @@ export default function ForecastChart({
   const createPlotBands = useCallback(
     (evts, monthsArr, overlayState) => {
       if (!Array.isArray(evts) || !evts.length) return [];
+      if (!Array.isArray(monthsArr) || !monthsArr.length) return [];
+
       const wantHoliday = !!overlayState.holidays;
       const wantPromo = !!overlayState.promotions;
-      const isHoliday = (ev) => (ev.event_type || "").toLowerCase() === "holiday";
-      const includeEvent = (ev) => (isHoliday(ev) ? wantHoliday : wantPromo) && (ev.start_date || ev.end_date);
 
-      // helper for weekly
+      const normalizeType = (ev) => (ev.event_type || "").toLowerCase();
+      const isHolidayEv = (ev) => normalizeType(ev) === "holiday";
+
+      const includeEvent = (ev) => {
+        if (!ev.start_date && !ev.end_date) return false;
+        const type = normalizeType(ev);
+        if (type === "holiday") return wantHoliday;
+        if (type === "promotion") return wantPromo;
+        return false;
+      };
+
+      // Build tooltip-style box for band
+      const buildBandWithTooltip = (base, ev) => {
+        const type = normalizeType(ev);
+        const isHoliday = type === "holiday";
+
+        const startLabel = formatEventDate(ev.start_date);
+        const endLabel = formatEventDate(ev.end_date || ev.start_date);
+        const isSameDay = !!startLabel && startLabel === endLabel;
+
+        const chipBg = isHoliday
+          ? "rgba(34,197,94,0.12)"
+          : "rgba(249,115,22,0.12)";
+        const chipColor = isHoliday ? "#16A34A" : "#F97316";
+        const chipText = isHoliday ? "Holiday" : "Promotion";
+
+        return {
+          ...base,
+          eventName: ev.event_name || ev.event_type || "Event",
+          eventType: ev.event_type,
+          startLabel,
+          endLabel,
+          isSameDay,
+          events: {
+            mouseover: function () {
+              const chart = this.axis && this.axis.chart;
+              if (!chart) return;
+
+              const opt = this.options || {};
+              const title = opt.eventName || opt.eventType || "Event";
+              const range = opt.startLabel
+                ? opt.isSameDay
+                  ? opt.startLabel
+                  : `${opt.startLabel} - ${opt.endLabel}`
+                : "";
+
+              const html =
+                `<div style="font-family:Poppins, sans-serif; font-size:11px; color:#111827;">` +
+                `<div style="margin-bottom:3px;">` +
+                `<span style="
+                    display:inline-block;
+                    padding:2px 6px;
+                    border-radius:999px;
+                    background:${chipBg};
+                    color:${chipColor};
+                    font-size:9px;
+                    font-weight:600;
+                    text-transform:uppercase;
+                    letter-spacing:0.5px;
+                  ">${chipText}</span>` +
+                `</div>` +
+                `<div style="font-weight:600; margin-bottom:2px; white-space:nowrap;">${title}</div>` +
+                (range
+                  ? `<div style="font-weight:400; font-size:10px; color:#111827; white-space:nowrap;">${range}</div>`
+                  : "") +
+                `</div>`;
+
+              if (!chart.customBandTooltip) {
+                chart.customBandTooltip = chart.renderer
+                  .label(html, 0, 0, "callout", 0, 0, true)
+                  .attr({
+                    padding: 8,
+                    r: 4,
+                    zIndex: 8,
+                  })
+                  .css({
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #D9D9D9",
+                    boxShadow: "0 2px 6px rgba(15,23,42,0.18)",
+                    borderRadius: "4px",
+                    pointerEvents: "none",
+                  })
+                  .add();
+              } else {
+                chart.customBandTooltip.attr({ text: html });
+              }
+
+              // mark as band-hovering & hide default tooltip
+              chart.bandHovering = true;
+              if (chart.tooltip) {
+                chart.tooltip.hide(0);
+              }
+
+              const from = opt.from ?? 0;
+              const to = opt.to ?? from;
+              const mid = (from + to) / 2;
+
+              const x = this.axis.toPixels(mid, true);
+              const y = chart.plotTop + 8;
+              const bbox = chart.customBandTooltip.getBBox();
+
+              chart.customBandTooltip.attr({
+                x: x - bbox.width / 2,
+                y,
+              });
+            },
+            mouseout: function () {
+              const chart = this.axis && this.axis.chart;
+              if (chart) {
+                chart.bandHovering = false;
+                if (chart.customBandTooltip) {
+                  chart.customBandTooltip.destroy();
+                  chart.customBandTooltip = null;
+                }
+              }
+            },
+          },
+        };
+      };
+
+      // weekly helpers
       const isoWeekday = (date) => {
-        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-        const wd = d.getUTCDay(); return wd === 0 ? 7 : wd;
+        const d = new Date(
+          Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+        );
+        const wd = d.getUTCDay();
+        return wd === 0 ? 7 : wd;
       };
       const weekFrac = (date) => (isoWeekday(date) - 1) / 7;
 
-      if (isWeekly) {
-        return evts.reduce((acc, ev) => {
-          if (!includeEvent(ev)) return acc;
-          const s = new Date(ev.start_date);
-          const e = new Date(ev.end_date || ev.start_date);
+      const bands = [];
+      const minWidth = 0.05;
+
+      evts.forEach((ev) => {
+        if (!includeEvent(ev)) return;
+
+        const s = new Date(ev.start_date);
+        const e = new Date(ev.end_date || ev.start_date);
+        if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return;
+
+        if (isWeekly) {
           const sLbl = isoWeekLabelFor(s);
           const eLbl = isoWeekLabelFor(e);
           const sIdx = monthsArr.indexOf(sLbl);
           const eIdx = monthsArr.indexOf(eLbl);
-          if (sIdx === -1) return acc;
+          if (sIdx === -1) return;
 
-          const fromPos = sIdx + weekFrac(s) - 0.5;
-          let toPos;
-          if (eIdx === -1) toPos = sIdx + 0.5;
-          else if (eIdx === sIdx) toPos = sIdx + Math.max(weekFrac(e), weekFrac(s)) - 0.5;
-          else toPos = eIdx + weekFrac(e) - 0.5;
+          const start = sIdx + weekFrac(s) - 0.5;
+          let end;
+          if (eIdx === -1) {
+            end = sIdx + 0.5;
+          } else if (eIdx === sIdx) {
+            end = sIdx + Math.max(weekFrac(e), weekFrac(s)) - 0.5;
+          } else {
+            end = eIdx + weekFrac(e) - 0.5;
+          }
 
-          const minWidth = 0.05;
-          const width = Math.max(toPos - fromPos, minWidth);
-          const color = isHoliday(ev) ? addAlpha(seriesColors.holidays, 0.22) : addAlpha(seriesColors.promotions, 0.22);
+          const width = Math.max(end - start, minWidth);
+          const color = isHolidayEv(ev)
+            ? addAlpha(seriesColors.holidays, 0.22)
+            : addAlpha(seriesColors.promotions, 0.22);
 
-          acc.push({ id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sLbl}_${eLbl}`}`, from: fromPos, to: fromPos + width, color });
-          return acc;
-        }, []);
-      }
+          const base = {
+            id: `${normalizeType(ev)}_${ev.event_id || `${sLbl}_${eLbl}`}`,
+            from: start,
+            to: start + width,
+            color,
+          };
 
-      // monthly
-      return evts.reduce((acc, ev) => {
-        if (!includeEvent(ev)) return acc;
-        const s = new Date(ev.start_date);
-        const e = new Date(ev.end_date || ev.start_date);
-        const sm = s.toLocaleString("default", { month: "short", year: "2-digit" });
-        const em = e.toLocaleString("default", { month: "short", year: "2-digit" });
-        const sIdx = monthsArr.indexOf(sm);
-        const eIdx = monthsArr.indexOf(em);
-        if (sIdx === -1) return acc;
+          bands.push(buildBandWithTooltip(base, ev));
+        } else {
+          const sm = s.toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          });
+          const em = e.toLocaleString("default", {
+            month: "short",
+            year: "2-digit",
+          });
 
-        const dayFrac = (date) => {
-          const year = date.getFullYear(); const month = date.getMonth(); const day = date.getDate();
-          const max = new Date(year, month + 1, 0).getDate();
-          return (day - 1) / max;
-        };
-        const minWidth = 0.05;
-        const fromPos = sIdx + dayFrac(s) - 0.5;
-        const toPos = eIdx === -1 ? sIdx + 0.5 : eIdx === sIdx ? sIdx + dayFrac(e) - 0.5 : eIdx + dayFrac(e) - 0.5;
-        const width = Math.max(toPos - fromPos, minWidth);
-        const color = (ev.event_type || "").toLowerCase() === "holiday"
-          ? addAlpha(seriesColors.holidays, 0.22)
-          : addAlpha(seriesColors.promotions, 0.22);
+          const sIdx = monthsArr.indexOf(sm);
+          const eIdx = monthsArr.indexOf(em);
+          if (sIdx === -1) return;
 
-        acc.push({ id: `${(ev.event_type || "event").toLowerCase()}_${ev.event_id || `${sm}_${em}`}`, from: fromPos, to: fromPos + width, color });
-        return acc;
-      }, []);
+          const dayFrac = (date) => {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+            const max = new Date(year, month + 1, 0).getDate();
+            return (day - 1) / max;
+          };
+
+          const start = sIdx + dayFrac(s) - 0.5;
+          let end;
+          if (eIdx === -1) {
+            end = sIdx + 0.5;
+          } else if (eIdx === sIdx) {
+            end = sIdx + dayFrac(e) - 0.5;
+          } else {
+            end = eIdx + dayFrac(e) - 0.5;
+          }
+
+          const width = Math.max(end - start, minWidth);
+          const color = isHolidayEv(ev)
+            ? addAlpha(seriesColors.holidays, 0.22)
+            : addAlpha(seriesColors.promotions, 0.22);
+
+          const base = {
+            id: `${normalizeType(ev)}_${ev.event_id || `${sm}_${em}`}`,
+            from: start,
+            to: start + width,
+            color,
+          };
+
+          bands.push(buildBandWithTooltip(base, ev));
+        }
+      });
+
+      return bands;
     },
     [isWeekly, seriesColors.holidays, seriesColors.promotions]
   );
 
   const today = new Date();
-  const monthlyTodayLabel = today.toLocaleString("default", { month: "short", year: "2-digit" });
+  const monthlyTodayLabel = today.toLocaleString("default", {
+    month: "short",
+    year: "2-digit",
+  });
   let safeTodayIdx = -1;
+
   if (isWeekly) {
     const wkLbl = isoWeekLabelFor(today);
     const exact = months?.indexOf(wkLbl);
     if (exact !== -1) safeTodayIdx = exact;
     else {
       const mapped = (months || []).map((l) => parseISOWeekLabel(String(l)));
-      safeTodayIdx = mapped.reduce((acc, d, i) => (d && d.getTime() <= today.getTime() ? i : acc), -1);
+      safeTodayIdx = mapped.reduce(
+        (acc, d, i) => (d && d.getTime() <= today.getTime() ? i : acc),
+        -1
+      );
       if (safeTodayIdx === -1 && (months || []).length) safeTodayIdx = -1;
     }
   } else {
     const idx = months?.indexOf(monthlyTodayLabel);
-    safeTodayIdx = idx === -1 ? ((months || []).length ? (months.length - 1) : -1) : idx;
+    safeTodayIdx =
+      idx === -1 ? ((months || []).length ? months.length - 1 : -1) : idx;
   }
 
   const seriesData = useMemo(() => {
     if (!months || !months.length) {
-      return { actual: [], baseline: [], baseline_forecast: [], ml: [], ml_forecast: [], consensus: [], consensus_forecast: [] };
+      return {
+        actual: [],
+        baseline: [],
+        baseline_forecast: [],
+        ml: [],
+        ml_forecast: [],
+        consensus: [],
+        consensus_forecast: [],
+      };
     }
-    const getRow = (row) => months.map((m) => {
-      const v = data?.[m]?.[row];
-      return v == null || v === "-" ? null : +v;
-    });
+
+    const getRow = (row) =>
+      months.map((m) => {
+        const v = data?.[m]?.[row];
+        return v == null || v === "-" ? null : +v;
+      });
 
     const baselineFull = getRow("Baseline Forecast");
     const mlFull = getRow("ML Forecast");
@@ -1014,7 +1535,10 @@ export default function ForecastChart({
       const out = [...futArr];
       let bridgePos = -1;
       for (let i = 1; i < out.length; i++) {
-        if (out[i] != null && out[i - 1] == null) { bridgePos = i - 1; break; }
+        if (out[i] != null && out[i - 1] == null) {
+          bridgePos = i - 1;
+          break;
+        }
       }
       if (bridgePos >= 0) {
         out[bridgePos] = histArr?.[bridgePos] ?? null;
@@ -1026,7 +1550,10 @@ export default function ForecastChart({
     const firstFutureOnly = (arr) => {
       let found = false;
       return arr.map((v, i) => {
-        if (i > safeTodayIdx && v != null && !found) { found = true; return v; }
+        if (i > safeTodayIdx && v != null && !found) {
+          found = true;
+          return v;
+        }
         return null;
       });
     };
@@ -1042,16 +1569,18 @@ export default function ForecastChart({
     let consFut = join(histMask(consFull), firstFutureOnly(consFull));
 
     const rangeSelected = selectedRangeActive ?? true;
+
     if (isWeekly && !rangeSelected) {
       const WEEKS_WINDOW = 6;
-      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+      const clampIdx = (v, min, max) => Math.max(min, Math.min(max, v));
       const lastIdx = months.length - 1;
       const todayIdx = safeTodayIdx === -1 ? 0 : safeTodayIdx;
-      const histFrom = clamp(todayIdx - (WEEKS_WINDOW - 1), 0, lastIdx);
-      const histTo = clamp(todayIdx, 0, lastIdx);
-      const futFrom = clamp(Math.max(safeTodayIdx, 0), 0, lastIdx);
-      const futTo = clamp(futFrom + WEEKS_WINDOW, 0, lastIdx);
-      const applyWindow = (arr, from, to) => arr.map((v, i) => (i >= from && i <= to ? v : null));
+      const histFrom = clampIdx(todayIdx - (WEEKS_WINDOW - 1), 0, lastIdx);
+      const histTo = clampIdx(todayIdx, 0, lastIdx);
+      const futFrom = clampIdx(Math.max(safeTodayIdx, 0), 0, lastIdx);
+      const futTo = clampIdx(futFrom + WEEKS_WINDOW, 0, lastIdx);
+      const applyWindow = (arr, from, to) =>
+        arr.map((v, i) => (i >= from && i <= to ? v : null));
 
       actual = applyWindow(actualFull, histFrom, futTo);
       baselineHist = applyWindow(baselineHist, histFrom, histTo);
@@ -1062,41 +1591,81 @@ export default function ForecastChart({
       consFut = applyWindow(consFut, futFrom, futTo);
     }
 
-    return { actual, baseline: baselineHist, baseline_forecast: baselineFut, ml: mlHist, ml_forecast: mlFut, consensus: consHist, consensus_forecast: consFut };
+    return {
+      actual,
+      baseline: baselineHist,
+      baseline_forecast: baselineFut,
+      ml: mlHist,
+      ml_forecast: mlFut,
+      consensus: consHist,
+      consensus_forecast: consFut,
+    };
   }, [months, data, safeTodayIdx, isWeekly, selectedRangeActive]);
 
-  const hasBaselineFc = (seriesData.baseline_forecast || []).some((v) => v != null);
+  const hasBaselineFc = (seriesData.baseline_forecast || []).some(
+    (v) => v != null
+  );
   const hasMlFc = (seriesData.ml_forecast || []).some((v) => v != null);
-  const hasConsFc = (seriesData.consensus_forecast || []).some((v) => v != null);
+  const hasConsFc = (seriesData.consensus_forecast || []).some(
+    (v) => v != null
+  );
   const hasAnyForecastData = hasBaselineFc || hasMlFc || hasConsFc;
 
   const handleDownloadPdf = useCallback(() => {
     const ch = chartRef.current?.chart;
     if (!ch) {
-      setErrorSnackbar?.({ open: true, message: "Chart not ready yet. Try again in a moment." });
+      setErrorSnackbar?.({
+        open: true,
+        message: "Chart not ready yet. Please try again.",
+      });
       return;
     }
     try {
-      if (ch.customTooltip) { ch.customTooltip.destroy(); ch.customTooltip = null; }
-      const filename = `demand_forecast_${new Date().toISOString().slice(0, 10)}`;
-      const exportOpts = { type: "application/pdf", filename, scale: 2, sourceWidth: ch.chartWidth, sourceHeight: ch.chartHeight };
-      if (typeof ch.exportChartLocal === "function") ch.exportChartLocal(exportOpts);
+      if (ch.customTooltip) {
+        ch.customTooltip.destroy();
+        ch.customTooltip = null;
+      }
+      if (ch.customBandTooltip) {
+        ch.customBandTooltip.destroy();
+        ch.customBandTooltip = null;
+      }
+
+      const filename =
+        "demand_forecast_" + new Date().toISOString().slice(0, 10);
+      const exportOpts = {
+        type: "application/pdf",
+        filename,
+        scale: 2,
+        sourceWidth: ch.chartWidth,
+        sourceHeight: ch.chartHeight,
+      };
+      if (typeof ch.exportChartLocal === "function")
+        ch.exportChartLocal(exportOpts);
       else if (typeof ch.exportChart === "function") ch.exportChart(exportOpts);
       else throw new Error("Highcharts exporting module not loaded");
     } catch {
       setErrorSnackbar?.({
         open: true,
-        message: "Unable to export PDF. Make sure exporting modules are loaded and try again.",
+        message:
+          "Unable to export PDF. Ensure exporting modules are loaded and try again.",
       });
     }
   }, [setErrorSnackbar]);
 
-  // Helper to get current color by key for legend/series
-  const getColor = useCallback((key) => seriesColors[key] || "#999", [seriesColors]);
+  const getColor = useCallback(
+    (key) => seriesColors[key] || "#999",
+    [seriesColors]
+  );
 
   const options = useMemo(
     () => ({
-      chart: { backgroundColor: "#fafafa", style: { fontFamily: "Inter" }, zoomType: "x" },
+      chart: {
+        backgroundColor: "#fafafa",
+        style: {
+          fontFamily: "Inter",
+        },
+        zoomType: "x",
+      },
       title: { text: "" },
       xAxis: {
         categories: months,
@@ -1105,16 +1674,28 @@ export default function ForecastChart({
         tickmarkPlacement: "on",
         startOnTick: true,
         endOnTick: true,
-        title: { text: "", style: AXIS_TITLE_STYLE },
-        labels: { style: AXIS_LABEL_STYLE, overflow: "justify", crop: false },
+        title: {
+          text: "",
+          style: AXIS_TITLE_STYLE,
+        },
+        labels: {
+          style: AXIS_LABEL_STYLE,
+          overflow: "justify",
+          crop: false,
+        },
         plotBands: createPlotBands(filteredEvents, months || [], overlays),
       },
       yAxis: {
-        title: { text: "Units (in thousands)", style: AXIS_TITLE_STYLE },
+        title: {
+          text: "Units (in thousands)",
+          style: AXIS_TITLE_STYLE,
+        },
         labels: {
           align: "center",
           style: AXIS_LABEL_STYLE,
-          formatter() { return this.value === 0 ? "0" : this.value / 1000; },
+          formatter() {
+            return this.value === 0 ? "0" : this.value / 1000;
+          },
         },
         gridLineDashStyle: "ShortDash",
         gridLineColor: "#e0e0e0",
@@ -1124,34 +1705,104 @@ export default function ForecastChart({
         shared: true,
         useHTML: true,
         formatter: function () {
-          const idx = (this.points && this.points[0] && this.points[0].point.x) ?? (this.point && this.point.x);
-          const categories = this.points?.[0]?.series?.xAxis?.categories || [];
-          const header = Number.isInteger(idx) && categories[idx] !== undefined ? categories[idx] : String(this.x);
+          const chart =
+            this.points?.[0]?.series?.chart || this.series?.chart;
+
+          // If we're hovering a band, suppress the point tooltip
+          if (chart && chart.bandHovering) {
+            return false;
+          }
+
+          const idx =
+            (this.points && this.points[0] && this.points[0].point.x) ??
+            (this.point && this.point.x);
+          const categories =
+            this.points?.[0]?.series?.xAxis?.categories || [];
+          const header =
+            Number.isInteger(idx) && categories[idx] !== undefined
+              ? categories[idx]
+              : String(this.x);
+
           let pts = this.points || [this];
           if (idx === safeTodayIdx) {
             const hideSolid = new Set(["Baseline", "ML", "Consensus"]);
             pts = pts.filter((p) => !hideSolid.has(p.series.name));
           }
-          let html = `<div style="font-weight:600;margin-bottom:4px">${header}</div>`;
+
+          let html =
+            '<div style="font-weight:600;margin-bottom:4px">' +
+            header +
+            "</div>";
           pts.forEach((p) => {
             if (p.y == null) return;
             const cleanName = p.series.name.replace(/\s*\(\d+\)\s*$/, "");
-            html += `<span style="color:${p.color}">●</span> ${cleanName}: <b>${Highcharts.numberFormat(p.y, 0)}</b><br/>`;
+            html += `<span style="color:${p.color}">●</span> ${cleanName}: <b>${Highcharts.numberFormat(
+              p.y,
+              0
+            )}</b><br/>`;
           });
           return html;
         },
       },
       legend: { enabled: false },
       credits: { enabled: false },
-      exporting: { enabled: false, fallbackToExportServer: true },
+      exporting: {
+        enabled: false,
+        fallbackToExportServer: true,
+      },
       series: [
-        { name: "Actual", data: seriesData.actual, color: getColor("actual"), marker: { enabled: false }, visible: !hiddenSeries[0] },
-        { name: "Baseline", data: seriesData.baseline, color: getColor("baseline"), marker: { enabled: false }, visible: !hiddenSeries[1] },
-        { name: "ML", data: seriesData.ml, color: getColor("ml"), marker: { enabled: false }, visible: !hiddenSeries[2] },
-        { name: "Consensus", data: seriesData.consensus, color: getColor("consensus"), marker: { enabled: false }, visible: !hiddenSeries[3] },
-        { name: "Baseline Forecast", data: seriesData.baseline_forecast, color: getColor("baseline_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[4] },
-        { name: "ML Forecast", data: seriesData.ml_forecast, color: getColor("ml_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[5] },
-        { name: "Consensus Forecast", data: seriesData.consensus_forecast, color: getColor("consensus_forecast"), dashStyle: "Dash", marker: { enabled: false }, visible: !hiddenSeries[6] },
+        {
+          name: "Actual",
+          data: seriesData.actual,
+          color: getColor("actual"),
+          marker: { enabled: false },
+          visible: !hiddenSeries[0],
+        },
+        {
+          name: "Baseline",
+          data: seriesData.baseline,
+          color: getColor("baseline"),
+          marker: { enabled: false },
+          visible: !hiddenSeries[1],
+        },
+        {
+          name: "ML",
+          data: seriesData.ml,
+          color: getColor("ml"),
+          marker: { enabled: false },
+          visible: !hiddenSeries[2],
+        },
+        {
+          name: "Consensus",
+          data: seriesData.consensus,
+          color: getColor("consensus"),
+          marker: { enabled: false },
+          visible: !hiddenSeries[3],
+        },
+        {
+          name: "Baseline Forecast",
+          data: seriesData.baseline_forecast,
+          color: getColor("baseline_forecast"),
+          dashStyle: "Dash",
+          marker: { enabled: false },
+          visible: !hiddenSeries[4],
+        },
+        {
+          name: "ML Forecast",
+          data: seriesData.ml_forecast,
+          color: getColor("ml_forecast"),
+          dashStyle: "Dash",
+          marker: { enabled: false },
+          visible: !hiddenSeries[5],
+        },
+        {
+          name: "Consensus Forecast",
+          data: seriesData.consensus_forecast,
+          color: getColor("consensus_forecast"),
+          dashStyle: "Dash",
+          marker: { enabled: false },
+          visible: !hiddenSeries[6],
+        },
       ],
     }),
     [
@@ -1167,11 +1818,16 @@ export default function ForecastChart({
   );
 
   const validateCountrySelection = useCallback(() => {
-    if (!countryName || (Array.isArray(countryName) && countryName.length === 0) || countryName === "") {
+    if (
+      !countryName ||
+      (Array.isArray(countryName) && countryName.length === 0) ||
+      countryName === ""
+    ) {
       if (setErrorSnackbar) {
         setErrorSnackbar({
           open: true,
-          message: "Country is not selected. Please select a country before accessing holidays and promotions.",
+          message:
+            "Country is not selected. Please select a country before accessing holidays and promotions.",
         });
       }
       return false;
@@ -1184,19 +1840,37 @@ export default function ForecastChart({
       const cfg = LEGEND_CONFIG.find((i) => i.key === key);
       if (!cfg) return;
 
-      const isForecastKey = ["baseline_forecast", "ml_forecast", "consensus_forecast"].includes(key);
+      const isForecastKey = [
+        "baseline_forecast",
+        "ml_forecast",
+        "consensus_forecast",
+      ].includes(key);
       if (isForecastKey && !hasAnyForecastData) return;
 
-      if ((key === "holidays" || key === "promotions") && !validateCountrySelection()) return;
+      if (
+        (key === "holidays" || key === "promotions") &&
+        !validateCountrySelection()
+      )
+        return;
 
       const ch = chartRef.current?.chart;
       if (!ch) return;
 
       if (cfg.isOverlay) {
         setOverlays((prev) => {
-          const next = { ...prev, [cfg.key]: !prev[cfg.key] };
+          const next = {
+            ...prev,
+            [cfg.key]: !prev[cfg.key],
+          };
+          // update plotBands with new overlay state
           setTimeout(() => {
-            ch.xAxis[0].update({ plotBands: createPlotBands(filteredEvents, months || [], next) });
+            ch.xAxis[0].update({
+              plotBands: createPlotBands(
+                filteredEvents,
+                months || [],
+                next
+              ),
+            });
           }, 0);
           return next;
         });
@@ -1204,20 +1878,33 @@ export default function ForecastChart({
         const s = ch.series[cfg.seriesIndex];
         if (!s) return;
         s.visible ? s.hide() : s.show();
-        setHiddenSeries((prev) => ({ ...prev, [cfg.seriesIndex]: !s.visible }));
+        setHiddenSeries((prev) => ({
+          ...prev,
+          [cfg.seriesIndex]: !s.visible,
+        }));
       }
     },
-    [createPlotBands, filteredEvents, months, validateCountrySelection, hasAnyForecastData]
+    [
+      createPlotBands,
+      filteredEvents,
+      months,
+      validateCountrySelection,
+      hasAnyForecastData,
+    ]
   );
 
+  // init hiddenSeries from chart
   useEffect(() => {
     const ch = chartRef.current?.chart;
     if (!ch) return;
     const init = {};
-    ch.series.forEach((s, i) => { init[i] = !s.visible; });
+    ch.series.forEach((s, i) => {
+      init[i] = !s.visible;
+    });
     setHiddenSeries(init);
   }, []);
 
+  // sync showForecast prop
   useEffect(() => {
     if (showForecast === undefined) return;
     const forecastIdx = [4, 5, 6];
@@ -1226,37 +1913,54 @@ export default function ForecastChart({
       const next = { ...prev };
       forecastIdx.forEach((i) => {
         next[i] = !showForecast;
-        if (ch?.series?.[i]) { showForecast ? ch.series[i].show(false) : ch.series[i].hide(false); }
+        if (ch?.series?.[i]) {
+          showForecast ? ch.series[i].show(false) : ch.series[i].hide(false);
+        }
       });
       return next;
     });
   }, [showForecast]);
 
-  useEffect(() => () => {
-    const ch = chartRef.current?.chart;
-    if (ch?.customTooltip) ch.customTooltip.destroy();
-  }, []);
+  // cleanup custom tooltips
+  useEffect(
+    () => () => {
+      const ch = chartRef.current?.chart;
+      if (ch?.customTooltip) ch.customTooltip.destroy();
+      if (ch?.customBandTooltip) ch.customBandTooltip.destroy();
+    },
+    []
+  );
 
-  const activeKeys = LEGEND_CONFIG
-    .filter((cfg) => (cfg.isOverlay ? overlays[cfg.key] : !hiddenSeries[cfg.seriesIndex]))
-    .map((i) => i.key);
+  const activeKeys = LEGEND_CONFIG.filter((cfg) =>
+    cfg.isOverlay ? overlays[cfg.key] : !hiddenSeries[cfg.seriesIndex]
+  ).map((i) => i.key);
 
   const mapeStr = avgMapeData ? Number(avgMapeData).toFixed(1) : "-";
   const mapeColor = getMapeColor(mapeStr);
 
+  // weekly auto zoom
   useEffect(() => {
     const ch = chartRef.current?.chart;
     if (!ch) return;
 
-    if (isWeekly && !selectedRangeActive) {
+    if (isWeekly && !(selectedRangeActive ?? true)) {
       const arrays = [
-        seriesData.actual, seriesData.baseline, seriesData.baseline_forecast,
-        seriesData.ml, seriesData.ml_forecast, seriesData.consensus, seriesData.consensus_forecast,
+        seriesData.actual,
+        seriesData.baseline,
+        seriesData.baseline_forecast,
+        seriesData.ml,
+        seriesData.ml_forecast,
+        seriesData.consensus,
+        seriesData.consensus_forecast,
       ];
-      let min = Infinity, max = -Infinity;
+      let min = Infinity,
+        max = -Infinity;
       arrays.forEach((arr) => {
         (arr || []).forEach((v, i) => {
-          if (v != null) { if (i < min) min = i; if (i > max) max = i; }
+          if (v != null) {
+            if (i < min) min = i;
+            if (i > max) max = i;
+          }
         });
       });
       if (min !== Infinity && max !== -Infinity) {
@@ -1270,6 +1974,7 @@ export default function ForecastChart({
     }
   }, [isWeekly, months, seriesData, selectedRangeActive]);
 
+  // reset extremes when full-range
   useEffect(() => {
     const ch = chartRef.current?.chart;
     if (!ch) return;
@@ -1281,27 +1986,96 @@ export default function ForecastChart({
   return (
     <Box
       sx={{
-        mt: 1, mx: 1, p: 1, bgcolor: "#fff", borderRadius: 1, boxShadow: 1, position: "relative", border: "1px solid #CBD5E1",
+        mt: 1,
+        mx: 1,
+        p: 1,
+        bgcolor: "#fff",
+        borderRadius: 1,
+        boxShadow: 1,
+        position: "relative",
+        border: "1px solid #CBD5E1",
       }}
     >
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 500, fontSize: 14, color: "#334155" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontSize: 14,
+              color: "#334155",
+            }}
+          >
             Demand Forecast
           </Typography>
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 500, fontSize: 14, color: "#4f4f58ff" }}>|</Typography>
-          <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: 14, color: "#555", display: "flex", alignItems: "center" }}>
-            MAPE:&nbsp;<Box component="span" sx={{ color: mapeColor }}>{mapeStr}</Box>
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontSize: 14,
+              color: "#4f4f58ff",
+            }}
+          >
+            |
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 600,
+              fontSize: 14,
+              color: "#555",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            MAPE:&nbsp;
+            <Box
+              component="span"
+              sx={{
+                color: mapeColor,
+              }}
+            >
+              {mapeStr}
+            </Box>
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.3 }}>
-          <IconButton ref={gridIconRef} size="small" onClick={() => setTreeOpen((v) => !v)}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.3,
+          }}
+        >
+          <IconButton
+            ref={gridIconRef}
+            size="small"
+            onClick={() => setTreeOpen((v) => !v)}
+          >
             <GridViewIcon fontSize="small" />
           </IconButton>
           <IconButton size="small" onClick={handleDownloadPdf}>
-            <DownloadIcon sx={{ width: 20, height: 20, color: "text.secondary" }} />
+            <DownloadIcon
+              sx={{
+                width: 20,
+                height: 20,
+                color: "text.secondary",
+              }}
+            />
           </IconButton>
           <IconButton size="small">
             <ShareIcon fontSize="small" />
@@ -1322,7 +2096,11 @@ export default function ForecastChart({
       />
 
       {/* Chart */}
-      <HighchartsReact ref={chartRef} highcharts={Highcharts} options={options} />
+      <HighchartsReact
+        ref={chartRef}
+        highcharts={Highcharts}
+        options={options}
+      />
 
       {/* Floating model menu */}
       <TreeMenu
@@ -1334,13 +2112,19 @@ export default function ForecastChart({
         anchorEl={gridIconRef.current}
       />
 
-      {/* RIGHT SIDEBAR DRAWER */}
+      {/* Right sidebar */}
       <Drawer
         anchor="right"
         open={cfgOpen}
         onClose={() => setCfgOpen(false)}
         keepMounted
-        PaperProps={{ sx: { width: 340, maxWidth: "90vw", p: 0 } }}
+        PaperProps={{
+          sx: {
+            width: 340,
+            maxWidth: "90vw",
+            p: 0,
+          },
+        }}
       >
         <GrapConfig
           onClose={() => setCfgOpen(false)}
